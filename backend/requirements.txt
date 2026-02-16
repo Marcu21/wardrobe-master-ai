@@ -3,3 +3,5 @@ uvicorn
 python-multipart
 rembg
 Pillow
+google-genai
+python-dotenv

@@ -10,7 +10,7 @@ class ApiService {
   // Use a default URL, but allow it to be overridden for flexibility (e.g. from environment or config)
   // 10.0.2.2 is the localhost alias for Android emulator
   // For physical devices, use your computer's local IP address (e.g. 192.168.x.x)
-  ApiService({this.baseUrl = 'http://192.168.0.49:8000'}); // Default to localhost
+  ApiService({this.baseUrl = 'http://10.212.123.106:8000'}); // Default to localhost
 
   Future<Map<String, dynamic>?> processItem(File itemFile, {File? tagFile}) async {
     var uri = Uri.parse('$baseUrl/process-item/');

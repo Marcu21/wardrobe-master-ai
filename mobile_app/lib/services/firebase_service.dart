@@ -60,4 +60,37 @@ class FirebaseService {
       throw Exception("Failed to update item: $e");
     }
   }
+  Future<List<Map<String, dynamic>>> getItemsByIds(List<String> ids) async {
+    if (ids.isEmpty) return [];
+
+    try {
+      // Firestore 'in' query supports up to 10 items. 
+      // If we have more, we might need to batch or loop. 
+      // For an outfit (usually 3-5 items), this is fine.
+      // If we expect more, we should split the list.
+      
+      List<Map<String, dynamic>> items = [];
+      
+      // Process in chunks of 10 just to be safe
+      for (var i = 0; i < ids.length; i += 10) {
+        var end = (i + 10 < ids.length) ? i + 10 : ids.length;
+        var chunk = ids.sublist(i, end);
+        
+        var querySnapshot = await _firestore
+            .collection('clothing')
+            .where(FieldPath.documentId, whereIn: chunk)
+            .get();
+
+        for (var doc in querySnapshot.docs) {
+          var data = doc.data();
+          data['id'] = doc.id; // Ensure ID is included
+          items.add(data);
+        }
+      }
+      return items;
+    } catch (e) {
+      debugPrint("Error fetching items by IDs: $e");
+      return [];
+    }
+  }
 }

@@ -52,4 +52,34 @@ class ApiService {
       throw Exception('Failed to connect to backend: $e');
     }
   }
+  Future<Map<String, dynamic>> generateOutfit({
+    required String userPrompt,
+    required String currentWeather,
+    required String hourlyForecast,
+    String userId = 'default_user', // Placeholder for now
+  }) async {
+    final uri = Uri.parse('$baseUrl/generate-outfit/');
+    
+    try {
+      final response = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'user_prompt': userPrompt,
+          'current_weather': currentWeather,
+          'hourly_forecast': hourlyForecast,
+          'user_id': userId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to generate outfit: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      print('Network error generating outfit: $e');
+      throw Exception('Failed to connect to backend: $e');
+    }
+  }
 }

@@ -20,6 +20,8 @@ class WeatherService {
   WeatherModel? _cachedWeather;
   DateTime? _lastFetchTime;
 
+  WeatherModel? get cachedWeather => _cachedWeather;
+
   Future<Position> determinePosition() async {
     bool serviceEnabled;
     LocationPermission permission;

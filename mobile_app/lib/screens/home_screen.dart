@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/weather_service.dart';
+import 'ai_stylist_chat_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -212,7 +213,10 @@ class _HomeScreenState extends State<HomeScreen> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                // TODO: Implement generate outfit
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AiStylistChatScreen()),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
@@ -503,6 +507,7 @@ class DynamicWeatherCard extends StatelessWidget {
               },
             ),
           ),
+
         ],
       ),
     );

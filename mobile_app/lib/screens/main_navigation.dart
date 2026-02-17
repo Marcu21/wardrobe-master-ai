@@ -15,11 +15,14 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: <Widget>[
-        const HomeScreen(),
-        const WardrobeGalleryScreen(),
-        const Center(child: Text('Laundry Screen Coming Soon')),
-      ][_selectedIndex],
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: const [
+          HomeScreen(),
+          WardrobeGalleryScreen(),
+          Center(child: Text('Laundry Screen Coming Soon')),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (int index) {

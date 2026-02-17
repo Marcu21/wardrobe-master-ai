@@ -1,0 +1,55 @@
+
+import 'dart:convert';
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart'; // For MediaType
+
+class ApiService {
+  final String baseUrl;
+
+  // Use a default URL, but allow it to be overridden for flexibility (e.g. from environment or config)
+  // 10.0.2.2 is the localhost alias for Android emulator
+  // For physical devices, use your computer's local IP address (e.g. 192.168.x.x)
+  ApiService({this.baseUrl = 'http://192.168.0.49:8000'}); // Default to localhost
+
+  Future<Map<String, dynamic>?> processItem(File itemFile, {File? tagFile}) async {
+    var uri = Uri.parse('$baseUrl/process-item/');
+    var request = http.MultipartRequest('POST', uri);
+
+    // Add itemFile (mandatory)
+    // We can try to guess mime type or just use standard image/*
+    request.files.add(await http.MultipartFile.fromPath(
+      'file',
+      itemFile.path,
+      contentType: MediaType('image', 'jpeg'), // Adjust if needed, or detect
+    ));
+
+    // Add tagFile (optional)
+    if (tagFile != null) {
+      request.files.add(await http.MultipartFile.fromPath(
+        'tag_file',
+        tagFile.path,
+        contentType: MediaType('image', 'jpeg'),
+      ));
+    }
+
+    try {
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        // Decode JSON
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else {
+        // Handle server errors
+        print('Server error: ${response.statusCode} - ${response.body}');
+        // You might want to throw a custom exception here
+        throw Exception('Failed to process item: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      // Handle network or other errors
+      print('Network error: $e');
+      throw Exception('Failed to connect to backend: $e');
+    }
+  }
+}

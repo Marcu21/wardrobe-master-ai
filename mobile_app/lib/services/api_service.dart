@@ -4,13 +4,16 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart'; // For MediaType
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class ApiService {
   final String baseUrl;
 
   // Use a default URL, but allow it to be overridden for flexibility (e.g. from environment or config)
   // 10.0.2.2 is the localhost alias for Android emulator
   // For physical devices, use your computer's local IP address (e.g. 192.168.x.x)
-  ApiService({this.baseUrl = 'http://192.168.1.6:8000'}); // Default to localhost
+  ApiService({String? baseUrl}) 
+      : baseUrl = baseUrl ?? dotenv.env['SERVER_URL'] ?? 'http://10.0.2.2:8000';
 
   Future<Map<String, dynamic>?> processItem(File itemFile, {File? tagFile}) async {
     var uri = Uri.parse('$baseUrl/process-item/');

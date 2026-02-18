@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../widgets/save_outfit_dialog.dart';
 
 class VirtualDressingRoomScreen extends StatefulWidget {
   const VirtualDressingRoomScreen({super.key});
@@ -97,11 +98,13 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
     if (_bottoms.isNotEmpty) selectedIds.add(_bottoms[_bottomsIndex]['id']);
     if (_shoes.isNotEmpty) selectedIds.add(_shoes[_shoesIndex]['id']);
 
-    debugPrint('Selected Outfit IDs: $selectedIds');
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Outfit IDs printed to console: $selectedIds')),
-    );
+    if (selectedIds.isNotEmpty) {
+      SaveOutfitDialog.show(context, itemIds: selectedIds, isAiGenerated: false);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select at least one item')),
+      );
+    }
   }
 
   @override

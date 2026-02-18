@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../services/api_service.dart';
 import '../services/firebase_service.dart';
 import '../services/weather_service.dart';
+import '../widgets/save_outfit_dialog.dart';
 
 class ChatMessage {
   final String role; // 'user' or 'ai'
@@ -293,10 +294,14 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () {
-                          // TODO: Implement Save Outfit
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Outfit saved to favorites! (Coming Soon)")),
-                          );
+                          List<String> ids = items.map((e) => e['id'].toString()).toList();
+                          if (ids.isNotEmpty) {
+                            SaveOutfitDialog.show(context, itemIds: ids, isAiGenerated: true);
+                          } else {
+                             ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("No items to save.")),
+                             );
+                          }
                         },
                         icon: const Icon(Icons.favorite_border, size: 18),
                         label: const Text("Save"),

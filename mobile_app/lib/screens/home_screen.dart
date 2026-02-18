@@ -1,7 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../services/weather_service.dart';
 import 'ai_stylist_chat_screen.dart';
 import 'virtual_dressing_room_screen.dart';
+import 'lookbook_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -57,6 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
+          // Lookbook moved to main navigation
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
@@ -651,17 +654,23 @@ class DynamicWeatherCard extends StatelessWidget {
 
   IconData _getIconForCondition(String condition) {
     condition = condition.toLowerCase();
+    
     if (condition.contains('rain') || condition.contains('drizzle')) {
-      return Icons.beach_access_rounded; // Or water_drop
+      return CupertinoIcons.drop_fill; 
+      
     } else if (condition.contains('cloud')) {
-      return Icons.cloud_rounded;
+      return CupertinoIcons.cloud_fill;
+      
     } else if (condition.contains('snow')) {
-      return Icons.ac_unit_rounded;
-    } else if (condition.contains('clear')) {
-      return Icons.wb_sunny_rounded;
+      return CupertinoIcons.snow;
+      
+    } else if (condition.contains('clear') || condition.contains('sun')) {
+      return CupertinoIcons.sun_max_fill;
     }
-    return Icons.wb_sunny_rounded;
+    
+    return CupertinoIcons.sun_max_fill;
   }
+  
 }
 
 

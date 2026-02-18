@@ -93,4 +93,20 @@ class FirebaseService {
       return [];
     }
   }
+  Future<void> saveOutfit(Map<String, dynamic> outfitData) async {
+    try {
+      // Ensure required fields are present
+      final data = {
+        ...outfitData,
+        'created_at': FieldValue.serverTimestamp(),
+        'user_id': 'test_user', // Hardcoded for now as requested
+      };
+
+      await _firestore.collection('outfits').add(data);
+      debugPrint("Outfit saved to Firestore");
+    } catch (e) {
+      debugPrint("Failed to save outfit: $e");
+      throw Exception("Failed to save outfit: $e");
+    }
+  }
 }

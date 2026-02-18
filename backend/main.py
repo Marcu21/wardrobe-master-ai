@@ -76,6 +76,10 @@ async def remove_background(file: UploadFile = File(...)):
         
         # Remove the background
         output_image = remove(input_image)
+
+        bbox = output_image.getbbox()
+        if bbox:
+            output_image = output_image.crop(bbox)
         
         # Save the result to a byte buffer
         img_byte_arr = io.BytesIO()
@@ -101,6 +105,10 @@ async def process_item(file: UploadFile = File(...), tag_file: Optional[UploadFi
         contents = await file.read()
         input_image = Image.open(io.BytesIO(contents))
         output_image = remove(input_image)
+
+        bbox = output_image.getbbox()
+        if bbox:
+            output_image = output_image.crop(bbox)
         
         # Convert processed image to base64 for response
         img_byte_arr = io.BytesIO()
@@ -185,7 +193,7 @@ async def process_item(file: UploadFile = File(...), tag_file: Optional[UploadFi
             request_contents.append(tag_image)
 
         response = client.models.generate_content(
-            model='gemini-flash-latest', 
+            model='gemini-flash-lite-latest', 
             contents=request_contents,
             config=types.GenerateContentConfig(
                 response_mime_type='application/json'

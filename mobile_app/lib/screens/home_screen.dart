@@ -4,6 +4,7 @@ import '../services/weather_service.dart';
 import 'ai_stylist_chat_screen.dart';
 import 'virtual_dressing_room_screen.dart';
 import 'lookbook_screen.dart';
+import 'calendar_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -60,6 +61,16 @@ class _HomeScreenState extends State<HomeScreen> {
         elevation: 0,
         actions: [
           // Lookbook moved to main navigation
+          IconButton(
+            icon: const Icon(Icons.calendar_month),
+            tooltip: 'Style Calendar',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CalendarScreen()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/firebase_service.dart';
+import '../services/calendar_service.dart';
 
 class OutfitDetailScreen extends StatefulWidget {
   final Map<String, dynamic> outfitData;
@@ -144,6 +145,38 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
             SnackBar(content: Text('Error deleting outfit: $e')),
           );
         }
+      }
+    }
+  }
+
+  Future<void> _logWear() async {
+    try {
+      // 1. Update Firestore
+      await FirebaseFirestore.instance
+          .collection('outfits')
+          .doc(widget.outfitId)
+          .update({
+        'wear_count': FieldValue.increment(1),
+        'wear_dates': FieldValue.arrayUnion([Timestamp.now()]),
+      });
+
+      // 2. Log to Calendar (Stub)
+      final calendarService = CalendarService();
+      await calendarService.addOutfitEvent(
+        widget.outfitData['name'] ?? 'Untitled Outfit',
+        DateTime.now(),
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Outfit logged! Your style history has been updated.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error logging wear: $e')),
+        );
       }
     }
   }
@@ -339,11 +372,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                       ),
                       icon: const Icon(Icons.calendar_today),
                       label: const Text("Log Wear"),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Coming soon: Log this outfit to your calendar!')),
-                        );
-                      },
+                      onPressed: _logWear,
                     ),
                   ),
                   const SizedBox(width: 16),

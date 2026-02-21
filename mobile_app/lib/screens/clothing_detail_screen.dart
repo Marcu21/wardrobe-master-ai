@@ -1,6 +1,7 @@
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mobile_app/services/firebase_service.dart';
 
 class ClothingDetailScreen extends StatefulWidget {
@@ -227,78 +228,80 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Image Header
-            _buildImageHeader(imageUrl),
-
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                children: [
-                   _buildSectionHeader("Basic Info", Icons.info_outline),
-                   _buildCard([
-                     _buildTextField("Category", _categoryController),
-                     _buildTextField("Sub Category", _subCategoryController),
-                     _buildTextField("Material", _materialController),
-                     _buildTextField("Colors (comma separated)", _primaryColorController),
-                     _buildTextField("Pattern", _patternController),
-                   ]),
-
-                   _buildSectionHeader("Sustainability & Purchase", Icons.eco_outlined),
-                   _buildCard([
-                     _buildTextField("Brand", _brandController),
-                     Row(children: [
-                       Expanded(child: _buildTextField("Price", _priceController, keyboardType: TextInputType.number)),
-                       const SizedBox(width: 12),
-                       Expanded(child: _buildTextField("Currency", _currencyController)),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Image Header
+              _buildImageHeader(imageUrl),
+  
+              Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  children: [
+                     _buildSectionHeader("Basic Info", Icons.info_outline),
+                     _buildCard([
+                       _buildTextField("Category", _categoryController),
+                       _buildTextField("Sub Category", _subCategoryController),
+                       _buildTextField("Material", _materialController),
+                       _buildTextField("Colors (comma separated)", _primaryColorController),
+                       _buildTextField("Pattern", _patternController),
                      ]),
-                     _buildTextField("Purchase Date", _purchaseDateController, hint: "YYYY-MM-DD"),
-                   ]),
-
-                   _buildSectionHeader("Styling", Icons.style_outlined),
-                   _buildCard([
-                     _buildTextField("Fit", _fitController),
-                     _buildTextField("Length", _lengthController),
-                     _buildTextField("Neckline", _necklineController),
-                     _buildTextField("Sleeve Length", _sleeveLengthController),
-                     _buildTextField("Occasions (comma separated)", _styleOccasionsController),
-                     _buildTextField("Seasonality (comma separated)", _seasonalityController),
-                   ]),
-
-                   _buildSectionHeader("Laundry & Care", Icons.local_laundry_service_outlined),
-                   _buildCard([
-                     _buildTextField("Care Instructions (one per line)", _careInstructionsController, maxLines: 4),
-                     _buildTextField("Color Group", _colorGroupController),
-                     _buildTextField("Max Temp (°C)", _maxTempController, keyboardType: TextInputType.number),
-                   ]),
-
-                   const SizedBox(height: 32),
-                   SizedBox(
-                     height: 56,
-                     width: double.infinity,
-                     child: ElevatedButton(
-                       onPressed: _isUpdating ? null : _updateItem,
-                       style: ElevatedButton.styleFrom(
-                         backgroundColor: Colors.black,
-                         foregroundColor: Colors.white,
-                         elevation: 0,
-                         shape: RoundedRectangleBorder(
-                           borderRadius: BorderRadius.circular(28), // M3 full round
+  
+                     _buildSectionHeader("Sustainability & Purchase", Icons.eco_outlined),
+                     _buildCard([
+                       _buildTextField("Brand", _brandController),
+                       Row(children: [
+                         Expanded(child: _buildTextField("Price", _priceController, keyboardType: TextInputType.number)),
+                         const SizedBox(width: 12),
+                         Expanded(child: _buildTextField("Currency", _currencyController)),
+                       ]),
+                       _buildTextField("Purchase Date", _purchaseDateController, hint: "YYYY-MM-DD"),
+                     ]),
+  
+                     _buildSectionHeader("Styling", Icons.style_outlined),
+                     _buildCard([
+                       _buildTextField("Fit", _fitController),
+                       _buildTextField("Length", _lengthController),
+                       _buildTextField("Neckline", _necklineController),
+                       _buildTextField("Sleeve Length", _sleeveLengthController),
+                       _buildTextField("Occasions (comma separated)", _styleOccasionsController),
+                       _buildTextField("Seasonality (comma separated)", _seasonalityController),
+                     ]),
+  
+                     _buildSectionHeader("Laundry & Care", Icons.local_laundry_service_outlined),
+                     _buildCard([
+                       _buildTextField("Care Instructions (one per line)", _careInstructionsController, maxLines: 4),
+                       _buildTextField("Color Group", _colorGroupController),
+                       _buildTextField("Max Temp (°C)", _maxTempController, keyboardType: TextInputType.number),
+                     ]),
+  
+                     const SizedBox(height: 32),
+                     SizedBox(
+                       height: 56,
+                       width: double.infinity,
+                       child: ElevatedButton(
+                         onPressed: _isUpdating ? null : _updateItem,
+                         style: ElevatedButton.styleFrom(
+                           backgroundColor: Colors.black,
+                           foregroundColor: Colors.white,
+                           elevation: 0,
+                           shape: RoundedRectangleBorder(
+                             borderRadius: BorderRadius.circular(28), // M3 full round
+                           ),
                          ),
+                         child: _isUpdating 
+                           ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                           : const Text("Update Item", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                        ),
-                       child: _isUpdating 
-                         ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                         : const Text("Update Item", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                      ),
-                   ),
-                   const SizedBox(height: 32),
-                ],
+                     const SizedBox(height: 32),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -349,7 +352,15 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
     Widget imageWidget;
     if (imageUrl != null && imageUrl.isNotEmpty) {
       if (imageUrl.startsWith('http')) {
-        imageWidget = Image.network(imageUrl, fit: BoxFit.contain);
+        imageWidget = CachedNetworkImage(
+          imageUrl: imageUrl,
+          fit: BoxFit.contain,
+          placeholder: (context, url) => Container(
+            color: Colors.grey[100],
+            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          ),
+          errorWidget: (context, url, error) => _buildPlaceholderIcon(Icons.broken_image),
+        );
       } else if (imageUrl.startsWith('data:image')) {
         final base64String = imageUrl.split(',').last;
         try {

@@ -1,6 +1,7 @@
 
 import 'dart:io';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
@@ -9,34 +10,35 @@ class FirebaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
+  Future<String?> uploadImageToStorage(Uint8List imageBytes, String folderName) async {
+    try {
+      final String fileName = '${DateTime.now().millisecondsSinceEpoch}.png';
+      final Reference ref = FirebaseStorage.instance.ref().child(folderName).child(fileName);
+      final SettableMetadata metadata = SettableMetadata(contentType: 'image/png');
+      
+      final UploadTask uploadTask = ref.putData(imageBytes, metadata);
+      final TaskSnapshot snapshot = await uploadTask;
+      
+      final String downloadUrl = await snapshot.ref.getDownloadURL();
+      return downloadUrl;
+    } catch (e) {
+      debugPrint('Error uploading to storage: $e');
+      return null;
+    }
+  }
+
   Future<void> saveItem({
-    required File itemImage,
-    required String imageBase64,
+    required String imageUrl,
     required Map<String, dynamic> metadata,
   }) async {
-    String imageUrl;
-    String fileName = 'clothing/${DateTime.now().millisecondsSinceEpoch}.jpg';
-
-    // 1. Try to upload image to Firebase Storage
-    try {
-      final ref = _storage.ref().child(fileName);
-      await ref.putFile(itemImage);
-      imageUrl = await ref.getDownloadURL();
-      debugPrint("Image uploaded to Storage: $imageUrl");
-    } catch (e) {
-      debugPrint("Storage upload failed, falling back to base64: $e");
-      // Fallback: Use base64 string directly
-      imageUrl = 'data:image/png;base64,$imageBase64';
-    }
-
-    // 2. Prepare data for Firestore
+    // Prepare data for Firestore
     Map<String, dynamic> itemData = {
       'imageUrl': imageUrl,
       'createdAt': FieldValue.serverTimestamp(),
       ...metadata,
     };
 
-    // 3. Save to Firestore
+    // Save to Firestore
     try {
       await _firestore.collection('clothing').add(itemData);
       debugPrint("Item saved to Firestore");

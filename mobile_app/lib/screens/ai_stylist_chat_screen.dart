@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../services/api_service.dart';
 import '../services/firebase_service.dart';
 import '../services/weather_service.dart';
@@ -259,10 +260,11 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                                           return const Icon(Icons.error, color: Colors.grey);
                                         }
                                       } else if (imageUrl.startsWith('http')) {
-                                        return Image.network(
-                                          imageUrl,
+                                        return CachedNetworkImage(
+                                          imageUrl: imageUrl,
                                           fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.grey),
+                                          placeholder: (context, url) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                                          errorWidget: (context, url, error) => const Icon(Icons.broken_image, color: Colors.grey),
                                         );
                                       } else {
                                         return const Icon(Icons.checkroom, color: Colors.grey, size: 40);

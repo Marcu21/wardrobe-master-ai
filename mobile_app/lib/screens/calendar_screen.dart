@@ -3,6 +3,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../services/firebase_service.dart';
 import 'outfit_detail_screen.dart';
 
@@ -305,11 +306,12 @@ class _CalendarOutfitCardState extends State<CalendarOutfitCard> {
           errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.grey),
         );
       } else if (rawData.startsWith('http')) {
-        imageWidget = Image.network(
-          rawData,
+        imageWidget = CachedNetworkImage(
+          imageUrl: rawData,
           fit: BoxFit.contain,
            alignment: Alignment.center,
-          errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.grey),
+          placeholder: (context, url) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          errorWidget: (context, url, error) => const Icon(Icons.broken_image, color: Colors.grey),
         );
       } else {
          // Try raw base64 if no prefix

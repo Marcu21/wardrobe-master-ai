@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../services/firebase_service.dart';
 import 'outfit_detail_screen.dart';
 
@@ -162,11 +163,12 @@ class _OutfitGridCardState extends State<OutfitGridCard> {
           errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.grey),
         );
       } else if (rawData.startsWith('http')) {
-        imageWidget = Image.network(
-          rawData,
+        imageWidget = CachedNetworkImage(
+          imageUrl: rawData,
           fit: BoxFit.contain,
            alignment: Alignment.center,
-          errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.grey),
+          placeholder: (context, url) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          errorWidget: (context, url, error) => const Icon(Icons.broken_image, color: Colors.grey),
         );
       } else {
          imageWidget = const Icon(Icons.checkroom, color: Colors.grey);

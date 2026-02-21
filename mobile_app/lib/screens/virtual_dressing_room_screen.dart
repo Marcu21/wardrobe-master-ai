@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../widgets/save_outfit_dialog.dart';
 
 class VirtualDressingRoomScreen extends StatefulWidget {
@@ -239,10 +240,11 @@ class _ClothingCarouselRowInternalState extends State<_ClothingCarouselRowIntern
           errorBuilder: (ctx, err, stack) => const Icon(Icons.broken_image, size: 50, color: Colors.grey),
         );
       } else if (rawData.startsWith('http')) {
-        imageWidget = Image.network(
-          rawData, 
+        imageWidget = CachedNetworkImage(
+          imageUrl: rawData, 
           fit: BoxFit.contain,
-          errorBuilder: (ctx, err, stack) => const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+          placeholder: (context, url) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          errorWidget: (context, url, error) => const Icon(Icons.broken_image, size: 50, color: Colors.grey),
         );
       } else {
         imageWidget = const Icon(Icons.checkroom, size: 50, color: Colors.grey);

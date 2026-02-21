@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mobile_app/screens/add_clothing_screen.dart';
 import 'package:mobile_app/screens/clothing_detail_screen.dart';
 
@@ -229,7 +230,18 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
     Widget imageWidget;
     if (imageUrl != null && imageUrl.isNotEmpty) {
       if (imageUrl.startsWith('http')) {
-        imageWidget = Image.network(imageUrl, fit: BoxFit.contain);
+        imageWidget = CachedNetworkImage(
+          imageUrl: imageUrl, 
+          fit: BoxFit.contain,
+          placeholder: (context, url) => Container(
+            color: Colors.grey[100],
+            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          ),
+          errorWidget: (context, url, error) => Container(
+            color: Colors.grey[200], 
+            child: const Icon(Icons.broken_image)
+          ),
+        );
       } else if (imageUrl.startsWith('data:image')) {
         final base64String = imageUrl.split(',').last;
         try {

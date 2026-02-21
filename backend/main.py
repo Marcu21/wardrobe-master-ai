@@ -3,6 +3,7 @@ from datetime import datetime
 from fastapi import FastAPI, File, UploadFile, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
+from fastapi.concurrency import run_in_threadpool
 from rembg import remove
 from PIL import Image
 import io
@@ -75,7 +76,7 @@ async def remove_background(file: UploadFile = File(...)):
         input_image = Image.open(io.BytesIO(contents))
         
         # Remove the background
-        output_image = remove(input_image)
+        output_image = await run_in_threadpool(remove, input_image)
 
         bbox = output_image.getbbox()
         if bbox:
@@ -104,7 +105,7 @@ async def process_item(file: UploadFile = File(...), tag_file: Optional[UploadFi
         # 1. Read and Process Image (Remove BG)
         contents = await file.read()
         input_image = Image.open(io.BytesIO(contents))
-        output_image = remove(input_image)
+        output_image = await run_in_threadpool(remove, input_image)
 
         bbox = output_image.getbbox()
         if bbox:
@@ -135,52 +136,58 @@ async def process_item(file: UploadFile = File(...), tag_file: Optional[UploadFi
         current_date = datetime.now().strftime("%Y-%m-%d")
         
         prompt = f"""
-        Analyze the provided image(s) as a textile care expert.
+        You are an elite textile technologist, master tailor, and fashion taxonomist.
+        
+        ### INPUTS:
         IMAGE 1: The clothing item.
         IMAGE 2: The laundry/care tag (OPTIONAL).
 
-        ### PROCESSING PRIORITIES:
-        1. If IMAGE 2 is present, locate the horizontal row of international laundry care symbols (ISO 3758 pictograms).
-        2. Completely ignore all numbers and text OUTSIDE of that specific symbols row (especially sizes like 30, 32, 40, etc.); these pictograms take absolute priority over any general text on the tag.
-        3. Interpret EVERY symbol present in that specific row (washing, bleaching, drying, ironing, and professional care).
-        4. MATERIAL ANALYSIS: You MUST provide a material composition. NEVER return "Unknown". 
-           - Search for composition text on IMAGE 2 first. 
-           - If IMAGE 2 is missing or unreadable, analyze the visual texture, weave, and drape of the garment in IMAGE 1. 
-           - Provide only the most likely material name (e.g., "Cotton", "Polyester", "Wool", "Denim").
-        5. If IMAGE 2 is NOT present, set 'laundry_info' to null. NEVER guess care instructions from Image 1.
+        ### STEP-BY-STEP ANALYSIS (Crucial for accuracy):
+        1. TEXTURE & DRAPE: Examine Image 1 closely. Look at the weave, how the fabric reflects light (sheen), and how it folds. 
+        2. TAG EXTRACTION: If Image 2 is present, read the exact material composition percentages first. 
+        3. SYMBOL DECODING: If Image 2 is present, locate the horizontal row of ISO 3758 laundry pictograms. Ignore general text/numbers outside this row.
 
+        ### STRICT TAXONOMY RULES:
+        - "category" MUST be one of: Top, Bottom, Outerwear, Shoes, Accessories, Full Body.
+        - "sub_category" MUST be highly specific (e.g., T-Shirt, Zip-up Hoodie, Pullover Hoodie, Sweater, Cardigan, Jeans, Chinos). Crucially, distinguish between open-front tops (like Zip-up Hoodies or Cardigans) and closed tops (like Pullover Hoodies).
+        - "primary_colors": Use standard hex-compatible names (e.g., Navy Blue, Burgundy, Olive Green). Max 2 colors.
+        - "material": If Tag is visible, extract exact composition (e.g., "80% Cotton, 20% Polyester"). If no tag, provide the single most accurate expert guess based on visual texture (e.g., "Cotton", "Linen", "Denim", "Wool"). NEVER output "Unknown".
+        - "fit": Must be one of: Skinny, Slim, Regular, Relaxed, Oversized.
+        
         ### METADATA RULES:
-        - Identify category, sub_category, and primary_colors from Image 1.
-        - Identify brand from Image 2 (if visible) or Image 1 (logos).
-        - Material: Follow the "MATERIAL ANALYSIS" rule above for a clean string response.
-        - Set 'sustainability_info.purchase_date' to exactly "{current_date}".
-        - Return ONLY a valid JSON object.
+        - Brand: Extract from tag or logos. If none visible, use "Unbranded".
+        - 'sustainability_info.purchase_date' MUST be exactly "{current_date}".
+        - If IMAGE 2 is missing/unreadable, set 'laundry_info' to null. Do NOT hallucinate care instructions.
+        
+        ### RESPONSE FORMAT:
+        Return ONLY a valid JSON object. Do not include markdown blocks like ```json.
         
         JSON Structure:
         {{
+          "analysis_reasoning": "Briefly explain your visual findings: fabric texture, tag details, and symbol interpretations. Doing this first improves your accuracy.",
           "basic_info": {{
-            "category": "String (e.g. Top, Bottom, Shoes)",
-            "sub_category": "String (e.g. T-Shirt, Jeans, Sneakers)",
+            "category": "String",
+            "sub_category": "String",
             "primary_colors": ["String"],
             "material": "String",
-            "pattern": "String"
+            "pattern": "String (e.g., Solid, Striped, Plaid, Floral)"
           }},
           "styling_info": {{
-            "fit": "String (e.g. Regular, Slim, Oversized)",
+            "fit": "String",
             "length": "String",
-            "neckline": "String (if applicable)",
-            "sleeve_length": "String (if applicable)",
-            "style_occasions": ["String"],
-            "seasonality": ["String"],
+            "neckline": "String (or null)",
+            "sleeve_length": "String (or null)",
+            "style_occasions": ["String (e.g., Casual, Office, Formal, Sport)"],
+            "seasonality": ["String (Spring, Summer, Autumn, Winter)"],
             "mood": ["String"]
           }},
           "laundry_info": {{
             "color_group": "String (Dark, Light, Color)",
-            "max_temp_celsius": Integer (estimate based on material),
-            "care_instructions": ["String"]
+            "max_temp_celsius": Integer (or null),
+            "care_instructions": ["String (Translate the decoded ISO symbols here)"]
           }} OR null,
           "sustainability_info": {{
-            "brand": "String (guess if visible, else Unknown)",
+            "brand": "String",
             "price": 0.0,
             "currency": "RON",
             "purchase_date": "YYYY-MM-DD"
@@ -193,7 +200,7 @@ async def process_item(file: UploadFile = File(...), tag_file: Optional[UploadFi
             request_contents.append(tag_image)
 
         response = client.models.generate_content(
-            model='gemini-flash-lite-latest', 
+            model='gemini-flash-latest', 
             contents=request_contents,
             config=types.GenerateContentConfig(
                 response_mime_type='application/json'
@@ -238,10 +245,11 @@ async def generate_outfit(request: OutfitRequest):
                 "category": data.get('basic_info', {}).get('category'),
                 "sub_category": data.get('basic_info', {}).get('sub_category'),
                 "primary_colors": data.get('basic_info', {}).get('primary_colors'),
-                "brand": data.get('sustainability_info', {}).get('brand', 'Unknown brand'), # <--- AM ADAUGAT BRANDUL AICI
+                "brand": data.get('sustainability_info', {}).get('brand', 'Unknown brand'),
                 "material": data.get('basic_info', {}).get('material'),
                 "fit": data.get('styling_info', {}).get('fit'),
                 "style_occasions": data.get('styling_info', {}).get('style_occasions'),
+                "seasonality": data.get('styling_info', {}).get('seasonality'),
             }
             clothing_items.append(item_summary)
 
@@ -264,10 +272,13 @@ async def generate_outfit(request: OutfitRequest):
         ### INSTRUCTIONS
         1. Select the best possible outfit from the available 'CLOTHING ITEMS' list below.
         2. You MUST provide a COMPLETE outfit. A complete outfit ALWAYS includes at least one top, one bottom (pants, jeans, shorts, skirt), and shoes. Never return an outfit without a bottom!
-        3. Analyze the hourly forecast. If the temperature drops or weather worsens, recommend layered clothing.
+        3. LAYERING STRATEGY: Analyze the hourly forecast. If it is cold, raining, or snowing, you MUST recommend layered clothing. 
+        CRITICAL: It is highly encouraged to use "Summer" or "Spring" items (like t-shirts or thin tops) as BASE LAYERS underneath "Autumn" or "Winter" outerwear (like hoodies, sweaters, jackets, or coats). Do not exclude a t-shirt just because it is cold outside, as long as you pair it with warm outerwear.
         4. In your 'explanation', refer to items naturally by their Color, Brand, and Sub-category (e.g., "your black Nike t-shirt" or "the blue Zara jeans").
         5. CRITICAL RULE: NEVER include the raw database IDs in the 'explanation' text. The IDs must ONLY be placed inside the 'selected_item_ids' array.
-        
+        6. COLOR THEORY: Ensure the selected items match aesthetically. Avoid clashing colors. Favor neutral bases (black, white, grey, navy, beige) with maximum one or two accent colors.
+        7. VISIBLE VS. HIDDEN LAYERING: If you want to showcase a T-shirt as a key visual part of the outfit, you MUST pair it with an open-front layer (e.g., "Zip-up Hoodie", "Cardigan", "Jacket", "Overshirt"). If you pair a T-shirt with a closed top (e.g., "Pullover Hoodie", "Sweater"), you must treat the T-shirt purely as a hidden thermal base layer in your explanation, not as a visual centerpiece.
+
         ### CLOTHING ITEMS
         {clothing_json}
         

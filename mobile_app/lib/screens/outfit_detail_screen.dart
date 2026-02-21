@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../services/firebase_service.dart';
 import '../services/calendar_service.dart';
 
@@ -209,10 +210,14 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
           errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.grey),
         );
       } else if (rawData.startsWith('http')) {
-        imageWidget = Image.network(
-          rawData,
+        imageWidget = CachedNetworkImage(
+          imageUrl: rawData,
           fit: BoxFit.contain,
-          errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.grey),
+          placeholder: (context, url) => Container(
+            color: Colors.grey[100],
+            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          ),
+          errorWidget: (context, url, error) => const Icon(Icons.broken_image, color: Colors.grey),
         );
       } else {
         imageWidget = const Icon(Icons.checkroom, color: Colors.grey);

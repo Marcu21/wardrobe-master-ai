@@ -14,15 +14,22 @@ class VirtualDressingRoomScreen extends StatefulWidget {
 class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
   // Lists for each category
   final List<Map<String, dynamic>> _outerwear = [];
+  final List<Map<String, dynamic>> _midwear = [];
   final List<Map<String, dynamic>> _tops = [];
   final List<Map<String, dynamic>> _bottoms = [];
   final List<Map<String, dynamic>> _shoes = [];
 
   // Indices for PageViews - tracked in parent for saving
   int _outerwearIndex = 0;
+  int _midwearIndex = 0;
   int _topsIndex = 0;
   int _bottomsIndex = 0;
   int _shoesIndex = 0;
+
+  // Visibility state
+  bool _showOuterwear = false;
+  bool _showMidwear = false;
+  bool _showTops = true;
 
   bool _isLoading = true;
 
@@ -38,6 +45,7 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
 
       // Temporary lists
       final List<Map<String, dynamic>> newOuterwear = [];
+      final List<Map<String, dynamic>> newMidwear = [];
       final List<Map<String, dynamic>> newTops = [];
       final List<Map<String, dynamic>> newBottoms = [];
       final List<Map<String, dynamic>> newShoes = [];
@@ -56,9 +64,11 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
           newShoes.add(data);
         } else if (category.contains('bottom') || category.contains('pant') || subCategory.contains('jean') || subCategory.contains('short')) {
           newBottoms.add(data);
-        } else if (category.contains('outerwear') || subCategory.contains('jacket') || subCategory.contains('coat') || subCategory.contains('hoodie')) {
+        } else if (category.contains('outerwear') || subCategory.contains('jacket') || subCategory.contains('coat')) {
           newOuterwear.add(data);
-        } else if (category.contains('top') || subCategory.contains('shirt') || subCategory.contains('sweater') || subCategory.contains('t-shirt')) {
+        } else if (category.contains('midwear') || subCategory.contains('sweater') || subCategory.contains('hoodie') || subCategory.contains('cardigan')) {
+          newMidwear.add(data);
+        } else if (category.contains('top') || subCategory.contains('shirt') || subCategory.contains('t-shirt')) {
           newTops.add(data);
         } else {
           // Fallback
@@ -69,11 +79,13 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
       if (mounted) {
         setState(() {
           _outerwear.clear();
+          _midwear.clear();
           _tops.clear();
           _bottoms.clear();
           _shoes.clear();
 
           _outerwear.addAll(newOuterwear);
+          _midwear.addAll(newMidwear);
           _tops.addAll(newTops);
           _bottoms.addAll(newBottoms);
           _shoes.addAll(newShoes);
@@ -94,10 +106,22 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
   void _saveOutfit() {
     final selectedIds = <String>[];
     
-    if (_outerwear.isNotEmpty) selectedIds.add(_outerwear[_outerwearIndex]['id']);
-    if (_tops.isNotEmpty) selectedIds.add(_tops[_topsIndex]['id']);
-    if (_bottoms.isNotEmpty) selectedIds.add(_bottoms[_bottomsIndex]['id']);
-    if (_shoes.isNotEmpty) selectedIds.add(_shoes[_shoesIndex]['id']);
+    if (_showOuterwear && _outerwear.isNotEmpty) {
+      selectedIds.add(_outerwear[_outerwearIndex]['id']);
+    }
+    if (_showMidwear && _midwear.isNotEmpty) {
+      selectedIds.add(_midwear[_midwearIndex]['id']);
+    }
+    if (_showTops && _tops.isNotEmpty) {
+      selectedIds.add(_tops[_topsIndex]['id']);
+    }
+    
+    if (_bottoms.isNotEmpty) {
+      selectedIds.add(_bottoms[_bottomsIndex]['id']);
+    }
+    if (_shoes.isNotEmpty) {
+      selectedIds.add(_shoes[_shoesIndex]['id']);
+    }
 
     if (selectedIds.isNotEmpty) {
       SaveOutfitDialog.show(context, itemIds: selectedIds, isAiGenerated: false);
@@ -108,10 +132,88 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
     }
   }
 
+  void _openLayersMenu() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      "Manage Outfit Layers", 
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
+                    ),
+                    const SizedBox(height: 16),
+                    SwitchListTile(
+                      title: const Text('Outerwear (Jackets, Coats)'),
+                      value: _showOuterwear,
+                      activeColor: Colors.black,
+                      onChanged: (bool value) {
+                        setModalState(() => _showOuterwear = value);
+                        setState(() => _showOuterwear = value);
+                      },
+                    ),
+                    SwitchListTile(
+                      title: const Text('Midwear (Hoodies, Sweaters)'),
+                      value: _showMidwear,
+                      activeColor: Colors.black,
+                      onChanged: (bool value) {
+                        setModalState(() => _showMidwear = value);
+                        setState(() => _showMidwear = value);
+                      },
+                    ),
+                    SwitchListTile(
+                      title: const Text('Tops (T-Shirts, Shirts)'),
+                      value: _showTops,
+                      activeColor: Colors.black,
+                      onChanged: (bool value) {
+                        setModalState(() => _showTops = value);
+                        setState(() => _showTops = value);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    int fOuter = _showOuterwear ? 4 : 0;
+    int fMid = _showMidwear ? 4 : 0;
+    int fTop = _showTops ? 3 : 0;
+    int fBot = 5;
+    int fShoe = 2;
+
+    int activeLayers = 2;
+    if (_showOuterwear) activeLayers++;
+    if (_showMidwear) activeLayers++;
+    if (_showTops) activeLayers++;
+
+    double vpBottoms = activeLayers <= 3 ? 0.75 : 0.60;
+    
+    double vpTops = activeLayers <= 3 ? 0.65 : 0.50;
+    
+    double vpMidwear = activeLayers <= 3 ? 0.75 : 0.60;
+    
+    double vpOuterwear = activeLayers <= 3 ? 0.85 : 0.70;
+
+    double vpShoes = activeLayers <= 3 ? 0.5 : 0.5;
+
     return Scaffold(
-      backgroundColor: Colors.white, // Clean background
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text("Dressing Room", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
         backgroundColor: Colors.transparent,
@@ -119,46 +221,104 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           IconButton(
+            icon: const Icon(Icons.layers_outlined, color: Colors.black),
+            onPressed: _openLayersMenu,
+          ),
+          IconButton(
             icon: const Icon(Icons.check, color: Colors.black),
             onPressed: _saveOutfit,
           )
         ],
       ),
       body: SafeArea(
-        child: _isLoading 
-            ? const Center(child: CircularProgressIndicator())
-            : Column(
-                children: [
-                  _ClothingCarouselRow(
-                    items: _outerwear,
-                    flex: 4,
-                    onIndexChanged: (index) => _outerwearIndex = index,
-                  ),
-                  _ClothingCarouselRow(
-                    items: _tops,
-                    flex: 3,
-                    onIndexChanged: (index) => _topsIndex = index,
-                  ),
-                  Expanded(
-                    flex: 5, // Increased flex for Bottoms (Pants usually longer)
-                    child: Transform.translate(
-                      offset: const Offset(0, -20), // Gently pull pants up
-                      child: _ClothingCarouselRowInternal(
-                        items: _bottoms,
-                        onIndexChanged: (index) => _bottomsIndex = index,
-                      ),
+        child: Column(
+          children: [
+            Expanded(
+              child: _isLoading 
+                  ? const Center(child: CircularProgressIndicator())
+                  : Stack(
+                      children: [
+                        // STRATUL 1: Bottoms & Shoes
+                        Column(
+                          children: [
+                            if (fOuter + fMid + fTop > 0)
+                              Spacer(flex: fOuter + fMid + fTop),
+                            Expanded(
+                              flex: fBot,
+                              child: _ClothingCarouselRowInternal(
+                                key: ValueKey(vpBottoms),
+                                items: _bottoms,
+                                onIndexChanged: (index) => _bottomsIndex = index,
+                                viewportFraction: vpBottoms,
+                              ),
+                            ),
+                            _ClothingCarouselRow(
+                              key: ValueKey(vpShoes),
+                              items: _shoes,
+                              flex: fShoe,
+                              onIndexChanged: (index) => _shoesIndex = index,
+                              alignment: Alignment.bottomCenter,
+                              viewportFraction: vpShoes,
+                            ),
+                          ],
+                        ),
+                        
+                        // STRATUL 2: Tops
+                        if (_showTops)
+                          Column(
+                            children: [
+                              if (fOuter + fMid > 0)
+                                Spacer(flex: fOuter + fMid),
+                              _ClothingCarouselRow(
+                                key: ValueKey(vpTops),
+                                items: _tops,
+                                flex: fTop,
+                                onIndexChanged: (index) => _topsIndex = index,
+                                viewportFraction: vpTops,
+                              ),
+                              if (fBot + fShoe > 0)
+                                Spacer(flex: fBot + fShoe),
+                            ],
+                          ),
+
+                        // STRATUL 3: Midwear
+                        if (_showMidwear)
+                          Column(
+                            children: [
+                              if (fOuter > 0)
+                                Spacer(flex: fOuter),
+                              _ClothingCarouselRow(
+                                key: ValueKey(vpMidwear),
+                                items: _midwear,
+                                flex: fMid,
+                                onIndexChanged: (index) => _midwearIndex = index,
+                                viewportFraction: vpMidwear,
+                              ),
+                              if (fTop + fBot + fShoe > 0)
+                                Spacer(flex: fTop + fBot + fShoe),
+                            ],
+                          ),
+
+                        // STRATUL 4: Outerwear
+                        if (_showOuterwear)
+                          Column(
+                            children: [
+                              _ClothingCarouselRow(
+                                key: ValueKey(vpOuterwear),
+                                items: _outerwear,
+                                flex: fOuter,
+                                onIndexChanged: (index) => _outerwearIndex = index,
+                                viewportFraction: vpOuterwear,
+                              ),
+                              if (fMid + fTop + fBot + fShoe > 0)
+                                Spacer(flex: fMid + fTop + fBot + fShoe),
+                            ],
+                          ),
+                      ],
                     ),
-                  ),
-                  // Shoes - No transform, aligned to bottom
-                  _ClothingCarouselRow(
-                    items: _shoes,
-                    flex: 2,
-                    onIndexChanged: (index) => _shoesIndex = index,
-                    alignment: Alignment.bottomCenter, // Sit on the floor/bottom
-                    viewportFraction: 0.5,
-                  ),
-                ],
-              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -173,6 +333,7 @@ class _ClothingCarouselRow extends StatelessWidget {
   final double viewportFraction;
 
   const _ClothingCarouselRow({
+    super.key,
     required this.items,
     required this.flex,
     required this.onIndexChanged,
@@ -202,6 +363,7 @@ class _ClothingCarouselRowInternal extends StatefulWidget {
   final double viewportFraction;
 
   const _ClothingCarouselRowInternal({
+    super.key,
     required this.items,
     required this.onIndexChanged,
     this.alignment = Alignment.center,

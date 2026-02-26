@@ -19,6 +19,17 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
   String _selectedCategory = 'All';
   String _selectedSubCategory = 'All';
 
+  late Stream<QuerySnapshot> _clothingStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _clothingStream = _firestore
+        .collection('clothing')
+        .orderBy('createdAt', descending: true)
+        .snapshots();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,10 +54,7 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
         child: const Icon(Icons.add, color: Colors.white),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: _firestore
-            .collection('clothing')
-            .orderBy('createdAt', descending: true)
-            .snapshots(),
+        stream: _clothingStream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));

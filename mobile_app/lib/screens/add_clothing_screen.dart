@@ -420,7 +420,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                 ),
                 const SizedBox(width: 15),
                 Text(
-                  "AI-ul scanează materialul...",
+                  "Scanning your new item...",
                   style: TextStyle(
                     color: Colors.grey[800],
                     fontWeight: FontWeight.w600,

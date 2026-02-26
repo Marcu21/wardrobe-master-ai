@@ -197,6 +197,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           itemBuilder: (context, index) {
                             final data = dayOutfits[index];
                             return CalendarOutfitCard(
+                              key: ValueKey(data['id']),
                               outfitData: data,
                               wearDateTarget: _selectedDay,
                             );
@@ -269,19 +270,25 @@ class _CalendarOutfitCardState extends State<CalendarOutfitCard> {
   }
 
   List<Map<String, dynamic>> _sortItems(List<Map<String, dynamic>> items) {
-    // Helper to get score for sorting (Head -> Feet)
     int getScore(Map<String, dynamic> item) {
       final info = item['basic_info'] ?? {};
       String cat = (info['category'] ?? '').toString().toLowerCase();
       String sub = (info['sub_category'] ?? '').toString().toLowerCase();
 
-      if (cat.contains('head') || sub.contains('hat') || sub.contains('cap')) return 0; // Head
-      if (cat.contains('outerwear') || sub.contains('jacket') || sub.contains('coat')) return 1; // Outer
-      if (cat.contains('top') || sub.contains('shirt') || sub.contains('blouse') || sub.contains('sweater')) return 2; // Tops
-      if (cat.contains('bottom') || cat.contains('pant') || sub.contains('jean') || sub.contains('skirt') || sub.contains('short')) return 3; // Bottoms
-      if (cat.contains('shoe') || cat.contains('footwear') || sub.contains('sneaker') || sub.contains('boot')) return 4; // Shoes
+      // 0. Head 
+      if (cat.contains('head') || sub.contains('hat') || sub.contains('cap')) return 0; 
+      // 1. Outerwear 
+      if (cat.contains('outerwear') || sub.contains('jacket') || sub.contains('coat')) return 1; 
+      // 2. Midwear
+      if (cat.contains('midwear') || sub.contains('sweater') || sub.contains('hoodie') || sub.contains('cardigan')) return 2; 
+      // 3. Tops 
+      if (cat.contains('top') || sub.contains('shirt') || sub.contains('blouse') || sub.contains('t-shirt')) return 3; 
+      // 4. Bottoms 
+      if (cat.contains('bottom') || cat.contains('pant') || sub.contains('jean') || sub.contains('skirt') || sub.contains('short')) return 4; 
+      // 5. Shoes 
+      if (cat.contains('shoe') || cat.contains('footwear') || sub.contains('sneaker') || sub.contains('boot')) return 5; 
       
-      return 2; // Default to Top/Middle if unknown
+      return 3; // Default Tops
     }
 
     items.sort((a, b) => getScore(a).compareTo(getScore(b)));

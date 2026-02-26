@@ -64,7 +64,12 @@ class LookbookScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               final doc = snapshot.data!.docs[index];
               final data = doc.data() as Map<String, dynamic>;
-              return OutfitGridCard(outfitData: data, outfitId: doc.id);
+              
+              return OutfitGridCard(
+                key: ValueKey(doc.id),
+                outfitData: data, 
+                outfitId: doc.id,
+              );
             },
           );
         },
@@ -132,13 +137,25 @@ class _OutfitGridCardState extends State<OutfitGridCard> {
       String cat = (info['category'] ?? '').toString().toLowerCase();
       String sub = (info['sub_category'] ?? '').toString().toLowerCase();
 
-      if (cat.contains('head') || sub.contains('hat') || sub.contains('cap')) return 0; // Head
-      if (cat.contains('outerwear') || sub.contains('jacket') || sub.contains('coat')) return 1; // Outer
-      if (cat.contains('top') || sub.contains('shirt') || sub.contains('blouse') || sub.contains('sweater')) return 2; // Tops
-      if (cat.contains('bottom') || cat.contains('pant') || sub.contains('jean') || sub.contains('skirt') || sub.contains('short')) return 3; // Bottoms
-      if (cat.contains('shoe') || cat.contains('footwear') || sub.contains('sneaker') || sub.contains('boot')) return 4; // Shoes
+      // 0. Head
+      if (cat.contains('head') || sub.contains('hat') || sub.contains('cap')) return 0; 
       
-      return 2; // Default to Top/Middle if unknown
+      // 1. Outerwear
+      if (cat.contains('outerwear') || sub.contains('jacket') || sub.contains('coat')) return 1; 
+      
+      // 2. Midwear
+      if (cat.contains('midwear') || sub.contains('sweater') || sub.contains('hoodie') || sub.contains('cardigan')) return 2; 
+      
+      // 3. Tops
+      if (cat.contains('top') || sub.contains('shirt') || sub.contains('blouse') || sub.contains('t-shirt')) return 3; 
+      
+      // 4. Bottoms
+      if (cat.contains('bottom') || cat.contains('pant') || sub.contains('jean') || sub.contains('skirt') || sub.contains('short')) return 4; 
+      
+      // 5. Shoes
+      if (cat.contains('shoe') || cat.contains('footwear') || sub.contains('sneaker') || sub.contains('boot')) return 5; 
+      
+      return 3; // Default to Tops if unknown
     }
 
     items.sort((a, b) => getScore(a).compareTo(getScore(b)));

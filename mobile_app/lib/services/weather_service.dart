@@ -126,6 +126,7 @@ class WeatherService {
           temperature: (current['main']['temp'] as num).round(),
           condition: current['weather'][0]['main'],
           description: current['weather'][0]['description'],
+          iconCode: current['weather'][0]['icon'],
           forecast: forecastList,
         );
 
@@ -148,6 +149,7 @@ class WeatherModel {
   final int temperature;
   final String condition;
   final String description;
+  final String iconCode;
   final List<ForecastItem> forecast;
 
   WeatherModel({
@@ -155,6 +157,7 @@ class WeatherModel {
     required this.temperature,
     required this.condition,
     required this.description,
+    required this.iconCode,
     required this.forecast,
   });
 }

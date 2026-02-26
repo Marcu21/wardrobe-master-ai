@@ -397,8 +397,8 @@ class DynamicWeatherCard extends StatelessWidget {
 
     if (weather == null) return const SizedBox.shrink();
 
-    final gradient = _getGradient(weather!.condition);
-    final icon = _getIconForCondition(weather!.condition);
+    final gradient = _getGradient(weather!.condition, weather!.iconCode);
+    final icon = _getIconForCondition(weather!.condition, weather!.iconCode);
     final now = DateTime.now();
     final dateString = "${_getWeekday(now.weekday)}, ${now.day} ${_getMonth(now.month)}";
 
@@ -526,7 +526,7 @@ class DynamicWeatherCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Icon(
-                      _getIconForCondition(item.condition),
+                      _getIconForCondition(item.condition, item.iconCode),
                       size: 20,
                       color: Colors.white,
                     ),
@@ -560,58 +560,67 @@ class DynamicWeatherCard extends StatelessWidget {
     return months[month - 1];
   }
 
-  LinearGradient _getGradient(String condition) {
+  LinearGradient _getGradient(String condition, String iconCode) {
     condition = condition.toLowerCase();
-    if (condition.contains('clear')) {
+    bool isNight = iconCode.endsWith('n'); // verificam daca e noapte
+
+    if (condition.contains('clear') || condition.contains('sun')) {
+      if (isNight) {
+        // cer senin de noapte (Albastru foarte inchis spre Negru)
+        return const LinearGradient(
+          colors: [Color(0xFF1A237E), Color(0xFF000000)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      }
+      // cer senin de zi
       return const LinearGradient(
-        colors: [Color(0xFFFF9800), Color(0xFFFFEB3B)], // Orange to Yellow
+        colors: [Color(0xFFFF9800), Color(0xFFFFEB3B)], 
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       );
     } else if (condition.contains('cloud')) {
       return const LinearGradient(
-        colors: [Color(0xFF607D8B), Color(0xFF90A4AE)], // Blue Grey
+        colors: [Color(0xFF607D8B), Color(0xFF90A4AE)], 
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       );
     } else if (condition.contains('rain') || condition.contains('drizzle')) {
       return const LinearGradient(
-        colors: [Color(0xFF1A237E), Color(0xFF3949AB)], // Deep Indigo
+        colors: [Color(0xFF1A237E), Color(0xFF3949AB)], 
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
       );
     } else if (condition.contains('snow')) {
       return const LinearGradient(
-        colors: [Color(0xFF81D4FA), Color(0xFFE1F5FE)], // Light Blue to White
+        colors: [Color(0xFF81D4FA), Color(0xFFE1F5FE)], 
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       );
     }
-    // Default
-    return const LinearGradient(
-      colors: [Color(0xFF5E35B1), Color(0xFF9575CD)], // Deep Purple
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    );
+    
+    // fallback
+    return isNight 
+      ? const LinearGradient(colors: [Color(0xFF311B92), Color(0xFF512DA8)], begin: Alignment.topLeft, end: Alignment.bottomRight)
+      : const LinearGradient(colors: [Color(0xFF5E35B1), Color(0xFF9575CD)], begin: Alignment.topLeft, end: Alignment.bottomRight);
   }
 
-  IconData _getIconForCondition(String condition) {
+  IconData _getIconForCondition(String condition, String iconCode) {
     condition = condition.toLowerCase();
+    bool isNight = iconCode.endsWith('n'); // verificam daca e noapte
     
     if (condition.contains('rain') || condition.contains('drizzle')) {
       return CupertinoIcons.drop_fill; 
-      
     } else if (condition.contains('cloud')) {
       return CupertinoIcons.cloud_fill;
-      
     } else if (condition.contains('snow')) {
       return CupertinoIcons.snow;
-      
     } else if (condition.contains('clear') || condition.contains('sun')) {
-      return CupertinoIcons.sun_max_fill;
+      return isNight ? CupertinoIcons.moon_stars_fill : CupertinoIcons.sun_max_fill;
     }
     
-    return CupertinoIcons.sun_max_fill;
+    // default
+    return isNight ? CupertinoIcons.moon_stars_fill : CupertinoIcons.sun_max_fill;
   }
   
 }

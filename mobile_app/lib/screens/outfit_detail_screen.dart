@@ -163,16 +163,27 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
 
   Future<void> _logWear() async {
     try {
-      // 1. Update Firestore
-      await FirebaseFirestore.instance
-          .collection('outfits')
-          .doc(widget.outfitId)
-          .update({
+      final db = FirebaseFirestore.instance;
+      final batch = db.batch();
+
+      final outfitRef = db.collection('outfits').doc(widget.outfitId);
+      batch.update(outfitRef, {
         'wear_count': FieldValue.increment(1),
         'wear_dates': FieldValue.arrayUnion([Timestamp.now()]),
       });
 
-      // 2. Log to Calendar (Stub)
+      final List<dynamic> itemIdsDynamic = widget.outfitData['item_ids'] ?? [];
+      for (var id in itemIdsDynamic) {
+        final itemRef = db.collection('clothing').doc(id.toString());
+        
+        batch.set(itemRef, {
+          'wear_count': FieldValue.increment(1),
+          'last_worn': Timestamp.now(),
+        }, SetOptions(merge: true));
+      }
+
+      await batch.commit();
+
       final calendarService = CalendarService();
       await calendarService.addOutfitEvent(
         widget.outfitData['name'] ?? 'Untitled Outfit',

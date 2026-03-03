@@ -80,7 +80,7 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
     // Laundry
     _careInstructionsController = _listToController(laundry['care_instructions'], separator: '\n');
     _colorGroupController = TextEditingController(text: laundry['color_group'] ?? '');
-    _maxTempController = TextEditingController(text: laundry['max_temp']?.toString() ?? '');
+    _maxTempController = TextEditingController(text: laundry['max_temp_celsius']?.toString() ?? '');
   }
 
   TextEditingController _listToController(dynamic listVal, {String separator = ', '}) {
@@ -178,9 +178,9 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
       // Parse Max Temp
       if (_maxTempController.text.isNotEmpty) {
          final temp = int.tryParse(_maxTempController.text);
-         laundryInfo['max_temp'] = temp ?? _maxTempController.text;
+         laundryInfo['max_temp_celsius'] = temp ?? _maxTempController.text;
       } else {
-         laundryInfo['max_temp'] = null;
+         laundryInfo['max_temp_celsius'] = null;
       }
 
 

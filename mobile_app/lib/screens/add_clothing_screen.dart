@@ -242,7 +242,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
         _careInstructionsController.text = (metadata['laundry_info']['care_instructions'] as List).join('\n');
       }
       _colorGroupController.text = metadata['laundry_info']['color_group'] ?? '';
-      _maxTempController.text = metadata['laundry_info']['max_temp']?.toString() ?? '';
+      _maxTempController.text = metadata['laundry_info']['max_temp_celsius']?.toString() ?? '';
     }
 
     if (metadata['sustainability_info'] != null) {
@@ -602,9 +602,9 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                 finalMetadata['laundry_info']['color_group'] = _colorGroupController.text;
                 if (_maxTempController.text.isNotEmpty) {
                   final temp = int.tryParse(_maxTempController.text);
-                  finalMetadata['laundry_info']['max_temp'] = temp ?? _maxTempController.text;
+                  finalMetadata['laundry_info']['max_temp_celsius'] = temp ?? _maxTempController.text;
                 } else {
-                  finalMetadata['laundry_info']['max_temp'] = null;
+                  finalMetadata['laundry_info']['max_temp_celsius'] = null;
                 }
 
 

@@ -63,6 +63,18 @@ class OutfitResponse(BaseModel):
     selected_item_ids: List[str]
     explanation: str
 
+class ItemMetadata(BaseModel):
+    item_id: str
+    category: str
+    sub_category: str
+    primary_colors: List[str]
+    style_occasions: List[str]
+    seasonality: List[str]
+
+class OutfitGenerationRequest(BaseModel):
+    scanned_item: ItemMetadata
+    wardrobe: List[ItemMetadata]
+
 @app.post("/remove-bg/")
 async def remove_background(file: UploadFile = File(...)):
     if not file.content_type.startswith("image/"):
@@ -300,6 +312,75 @@ async def generate_outfit(request: OutfitRequest):
         )
         
         # 4. Return Parsed Response
+        if hasattr(response, 'parsed') and response.parsed:
+             result = response.parsed
+        else:
+             result = json.loads(response.text)
+             
+        return result
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/generate-outfits/")
+async def generate_outfits(request: OutfitGenerationRequest):
+    if not client:
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
+    
+    try:
+        scanned_item_json = request.scanned_item.model_dump_json()
+        wardrobe_json = json.dumps([item.model_dump() for item in request.wardrobe])
+        
+        prompt = f"""
+        You are an elite personal fashion stylist and wardrobe manager.
+        
+        ### CONTEXT
+        Newly Scanned Item: {scanned_item_json}
+        User's Wardrobe: {wardrobe_json}
+        
+        ### INSTRUCTIONS
+        1. Evaluate how well the "Newly Scanned Item" fits into the "User's Wardrobe".
+        2. Apply color theory, style layering rules, and consider wardrobe gaps versus duplicates.
+        3. Generate up to 3 different outfit combinations. Every outfit MUST include the scanned item. The other items MUST be selected ONLY from the provided wardrobe list.
+        4. Provide a match score (0-100) representing how well the new item fits the wardrobe.
+        
+        ### STYLING RULES FOR REASONING (Pros & Cons):
+        - DO NOT mention technical Item IDs in the "pros" or "cons" sections.
+        - Refer to items by their descriptions (e.g., "your navy blue chinos" or "the brown zip-hoodie you already own").
+        - Be conversational but professional.
+        
+        ### RESPONSE FORMAT
+        Return ONLY a valid JSON object matching this schema:
+        {{
+          "score": 85,
+          "pros": [
+            "This specific shade of [Color] perfectly complements your [Item from wardrobe].",
+            "It fills a gap in your [Season/Style] collection."
+          ],
+          "cons": [
+            "You already own a very similar [Sub-category] in [Color].",
+            "This style might be redundant given your current [Category] count."
+          ],
+          "outfits": [
+            {{
+              "outfit_name": "Name of the vibe",
+              "styling_notes": "Why this combination works stylistically.",
+              "item_ids": ["scanned_new_item", "actual_id_from_wardrobe"] 
+            }}
+          ]
+        }}
+        """
+        
+        response = client.models.generate_content(
+            model='gemini-flash-latest', 
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type='application/json'
+            )
+        )
+        
         if hasattr(response, 'parsed') and response.parsed:
              result = response.parsed
         else:

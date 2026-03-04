@@ -6,6 +6,7 @@ import 'virtual_dressing_room_screen.dart';
 import 'lookbook_screen.dart';
 import 'calendar_screen.dart';
 import 'sustainability_screen.dart';
+import 'shopping_assistant_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -114,7 +115,8 @@ class _HomeScreenState extends State<HomeScreen> {
             _buildWeatherCard(),
             const SizedBox(height: 24),
             _buildAIStylistCard(),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+            _buildShoppingAssistantCard(),
             const SizedBox(height: 24),
             _buildVirtualDressingRoomCard(),
             const SizedBox(height: 24),
@@ -235,6 +237,80 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildShoppingAssistantCard() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.teal.shade50, Colors.white],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.teal.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+        border: Border.all(color: Colors.teal.withValues(alpha: 0.3)),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ShoppingAssistantScreen()),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Should I Buy This?",
+                      style: TextStyle(
+                        color: Colors.teal,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      "Scan an item in-store to see its Wardrobe Match Score.",
+                      style: TextStyle(
+                        color: Colors.teal.shade700,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.teal.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.document_scanner_outlined,
+                  color: Colors.teal,
+                  size: 28,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

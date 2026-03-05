@@ -334,40 +334,43 @@ async def generate_outfits(request: OutfitGenerationRequest):
         wardrobe_json = json.dumps([item.model_dump() for item in request.wardrobe])
         
         prompt = f"""
-        You are an elite personal fashion stylist and wardrobe manager.
+        You are an elite personal fashion stylist. Your goal is to provide a professional wardrobe compatibility report.
         
         ### CONTEXT
-        Newly Scanned Item: {scanned_item_json}
-        User's Wardrobe: {wardrobe_json}
+        - Newly Scanned Item: {scanned_item_json}
+        - User's Wardrobe: {wardrobe_json}
+        
+        ### MANDATORY OUTFIT RULES
+        1. COMPLETE LOOKS ONLY: Each outfit must be a functional, full look.
+           - If Scanned Item is a TOP/OUTERWEAR: Add 1 Bottom and 1 Pair of Shoes from the wardrobe.
+           - If Scanned Item is a BOTTOM: Add 1 Top and 1 Pair of Shoes from the wardrobe.
+           - If Scanned Item is SHOES: Add 1 Top and 1 Bottom from the wardrobe.
+        
+        2. THE ZIP-UP RULE: If the "Newly Scanned Item" is a 'Zip-up Hoodie' (or any hoodie with a zipper), you MUST add a T-shirt from the wardrobe underneath it. An outfit with a zip-up hoodie and no t-shirt is considered incomplete and invalid.
+        
+        3. SEASONAL & STYLE COHERENCE: Do not pair summer items with winter items. Ensure the "vibe" (e.g., Streetwear, Formal, Sport) is consistent across all items in an outfit.
         
         ### INSTRUCTIONS
-        1. Evaluate how well the "Newly Scanned Item" fits into the "User's Wardrobe".
-        2. Apply color theory, style layering rules, and consider wardrobe gaps versus duplicates.
-        3. Generate up to 3 different outfit combinations. Every outfit MUST include the scanned item. The other items MUST be selected ONLY from the provided wardrobe list.
-        4. Provide a match score (0-100) representing how well the new item fits the wardrobe.
+        1. Evaluate compatibility based on color theory (complementary, analogous, or monochromatic scales).
+        2. Identify if the item fills a gap (e.g., "You don't have many winter tops") or is redundant.
+        3. Generate exactly 3 outfit combinations (unless the wardrobe is too small to provide valid matches).
         
         ### STYLING RULES FOR REASONING (Pros & Cons):
-        - DO NOT mention technical Item IDs in the "pros" or "cons" sections.
-        - Refer to items by their descriptions (e.g., "your navy blue chinos" or "the brown zip-hoodie you already own").
-        - Be conversational but professional.
+        - DO NOT mention technical Item IDs in "pros" or "cons".
+        - Refer to items by their descriptions (e.g., "your black slim-fit jeans").
+        - Be insightful: explain WHY a color works or WHY a layer is needed.
         
         ### RESPONSE FORMAT
         Return ONLY a valid JSON object matching this schema:
         {{
           "score": 85,
-          "pros": [
-            "This specific shade of [Color] perfectly complements your [Item from wardrobe].",
-            "It fills a gap in your [Season/Style] collection."
-          ],
-          "cons": [
-            "You already own a very similar [Sub-category] in [Color].",
-            "This style might be redundant given your current [Category] count."
-          ],
+          "pros": ["Bullet point 1", "Bullet point 2"],
+          "cons": ["Bullet point 1", "Bullet point 2"],
           "outfits": [
             {{
-              "outfit_name": "Name of the vibe",
-              "styling_notes": "Why this combination works stylistically.",
-              "item_ids": ["scanned_new_item", "actual_id_from_wardrobe"] 
+              "outfit_name": "Urban Layering",
+              "styling_notes": "Since the hoodie has a zipper, we paired it with your white cotton t-shirt for a clean layered look.",
+              "item_ids": ["scanned_new_item", "wardrobe_id_1", "wardrobe_id_2", "wardrobe_id_3"]
             }}
           ]
         }}

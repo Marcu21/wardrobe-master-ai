@@ -215,26 +215,12 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
         Container(
           constraints: const BoxConstraints(maxHeight: 400),
           width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05), 
-                blurRadius: 10, 
-                offset: const Offset(0, 5),
-              )
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: processedImageBase64 != null 
-                ? Image.memory(
-                    base64Decode(processedImageBase64), 
-                    fit: BoxFit.contain
-                  )
-                : Image.file(widget.imageFile, fit: BoxFit.contain),
-          ),
+          child: processedImageBase64 != null 
+              ? Image.memory(
+                  base64Decode(processedImageBase64), 
+                  fit: BoxFit.contain
+                )
+              : Image.file(widget.imageFile, fit: BoxFit.contain),
         ),
         const SizedBox(height: 24),
         Text(
@@ -254,51 +240,32 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
   }
 
   Widget _buildImageThumbnail(Map<String, dynamic> item) {
-  final imageBase64 = item['image_base64'] as String?;
-  final imageUrl = item['imageUrl'] as String?;
+    final imageBase64 = item['image_base64'] as String?;
+    final imageUrl = item['imageUrl'] as String?;
 
-  Widget imageWidget;
-  if (imageBase64 != null) {
-    imageWidget = Image.memory(base64Decode(imageBase64), fit: BoxFit.contain);
-  } else if (imageUrl != null) {
-    imageWidget = CachedNetworkImage(
-      imageUrl: imageUrl, 
-      fit: BoxFit.contain,
-      placeholder: (context, url) => Container(color: Colors.grey[100]),
-      errorWidget: (context, url, error) => const Icon(Icons.error_outline, color: Colors.grey),
-    );
-  } else {
-    imageWidget = Container(
-      color: Colors.grey[100],
-      child: const Icon(Icons.checkroom, color: Colors.grey),
+    Widget imageWidget;
+    if (imageBase64 != null) {
+      imageWidget = Image.memory(
+        base64Decode(imageBase64), 
+        fit: BoxFit.contain
+      );
+    } else if (imageUrl != null && imageUrl.isNotEmpty) {
+      imageWidget = CachedNetworkImage(
+        imageUrl: imageUrl, 
+        fit: BoxFit.contain,
+        placeholder: (context, url) => const SizedBox(width: 80),
+        errorWidget: (context, url, error) => const Icon(Icons.error_outline, color: Colors.grey),
+      );
+    } else {
+      imageWidget = const SizedBox(width: 80, child: Icon(Icons.checkroom, color: Colors.grey, size: 40));
+    }
+
+    return Container(
+      height: 160, 
+      margin: const EdgeInsets.only(right: 12),
+      child: imageWidget,
     );
   }
-
-  return Container(
-    width: 110,
-    height: 110,
-    margin: const EdgeInsets.only(right: 14),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: Colors.grey.shade100),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.04), 
-          blurRadius: 8, 
-          offset: const Offset(0, 4)
-        ),
-      ],
-    ),
-    child: ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.all(6.0),
-        child: imageWidget,
-      ),
-    ),
-  );
-}
 
   @override
   Widget build(BuildContext context) {
@@ -311,199 +278,223 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
         foregroundColor: Colors.black,
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 16.0),
+          child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // Scanned Item Header
                     _buildScannedItemHeader(),
                     
-                    if (_isLoading)
-                      const Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 40.0),
-                          child: Column(
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 400),
+                      curve: Curves.easeInOut,
+                      alignment: Alignment.topCenter,
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 400),
+                        switchInCurve: Curves.easeIn,
+                        switchOutCurve: Curves.easeOut,
+                        layoutBuilder: (currentChild, previousChildren) {
+                          return Stack(
+                            alignment: Alignment.topCenter,
                             children: [
-                              CircularProgressIndicator(color: Colors.teal),
-                              SizedBox(height: 16),
-                              Text("Styling with AI...", style: TextStyle(color: Colors.teal, fontWeight: FontWeight.bold)),
+                              ...previousChildren,
+                              if (currentChild != null) currentChild,
                             ],
-                          ),
-                        ),
-                      ),
-
-                    if (!_isLoading) ...[
-                      // Match Score UI
-                      Center(
-                        child: Container(
-                          padding: const EdgeInsets.all(40),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: _getScoreColor(_matchScore).withOpacity(0.3), width: 6),
-                            boxShadow: [
-                              BoxShadow(
-                                color: _getScoreColor(_matchScore).withOpacity(0.15),
-                                blurRadius: 30,
-                                spreadRadius: 10,
-                              )
-                            ]
-                          ),
-                          child: Column(
-                            children: [
-                              Text(
-                                "$_matchScore%",
-                                style: TextStyle(
-                                  fontSize: 48, 
-                                  fontWeight: FontWeight.w900, 
-                                  color: _getScoreColor(_matchScore)
-                                ),
-                              ),
-                              Text(
-                                "Match",
-                                style: TextStyle(
-                                  fontSize: 18, 
-                                  fontWeight: FontWeight.bold, 
-                                  color: _getScoreColor(_matchScore).withOpacity(0.8)
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 40),
-
-                      // Pros UI
-                      _buildAnalysisBox(
-                        title: "Why it works",
-                        items: _pros,
-                        color: Colors.green[700]!,
-                        bgColor: Colors.green[50]!,
-                        icon: Icons.check_circle_outline,
-                      ),
-
-                      // Cons UI
-                      _buildAnalysisBox(
-                        title: "Keep in mind",
-                        items: _cons,
-                        color: Colors.orange[800]!,
-                        bgColor: Colors.orange[50]!,
-                        icon: Icons.warning_amber_rounded,
-                      ),
-
-                      // Generated Outfits
-                      if (_generatedOutfits.isNotEmpty) ...[
-                        const Text(
-                          "Ways to Wear It",
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
-                        ),
-                        const SizedBox(height: 16),
-                        ..._generatedOutfits.map((outfit) {
-                          final String name = outfit['outfit_name'] ?? 'Outfit';
-                          final String notes = outfit['styling_notes'] ?? '';
-                          final List<Map<String, dynamic>> items = List<Map<String, dynamic>>.from(outfit['items'] ?? []);
-                          
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 24),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(24),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.03), 
-                                  blurRadius: 15, 
-                                  offset: const Offset(0, 8)
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                          );
+                        },
+                        child: _isLoading
+                            ? const Padding(
+                                key: ValueKey('loading'),
+                                padding: EdgeInsets.symmetric(vertical: 40.0),
+                                child: Center(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Row(
-                                        children: [
-                                          Container(
-                                            width: 4,
-                                            height: 18,
-                                            decoration: BoxDecoration(
-                                              color: Colors.teal,
-                                              borderRadius: BorderRadius.circular(2),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 10),
-                                          Text(name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
-                                        ],
-                                      ),
-                                      if (notes.isNotEmpty) ...[
-                                        const SizedBox(height: 6),
-                                        Text(notes, style: TextStyle(fontSize: 14, color: Colors.grey[600], height: 1.3)),
-                                      ],
+                                      CircularProgressIndicator(color: Colors.teal),
+                                      SizedBox(height: 16),
+                                      Text("Styling with AI...", style: TextStyle(color: Colors.teal, fontWeight: FontWeight.bold)),
                                     ],
                                   ),
                                 ),
-                                // Clothing area (Horizontal Scroll)
-                                SizedBox(
-                                  height: 140,
-                                  child: ListView.builder(
-                                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                                    scrollDirection: Axis.horizontal,
-                                    itemCount: items.length,
-                                    itemBuilder: (context, index) {
-                                      return Row(
+                              )
+                            : Column(
+                                key: const ValueKey('content'),
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  // Match Score UI
+                                  Center(
+                                    child: Container(
+                                      padding: const EdgeInsets.all(40),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: _getScoreColor(_matchScore).withOpacity(0.3), width: 6),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: _getScoreColor(_matchScore).withOpacity(0.15),
+                                            blurRadius: 30,
+                                            spreadRadius: 10,
+                                          )
+                                        ]
+                                      ),
+                                      child: Column(
                                         children: [
-                                          _buildImageThumbnail(items[index]),
-                                          if (index < items.length - 1)
-                                            Padding(
-                                              padding: const EdgeInsets.only(right: 14),
-                                              child: Icon(Icons.add, color: Colors.grey.shade300, size: 20),
+                                          Text(
+                                            "$_matchScore%",
+                                            style: TextStyle(
+                                              fontSize: 48, 
+                                              fontWeight: FontWeight.w900, 
+                                              color: _getScoreColor(_matchScore)
                                             ),
+                                          ),
+                                          Text(
+                                            "Match",
+                                            style: TextStyle(
+                                              fontSize: 18, 
+                                              fontWeight: FontWeight.bold, 
+                                              color: _getScoreColor(_matchScore).withOpacity(0.8)
+                                            ),
+                                          ),
                                         ],
-                                      );
-                                    },
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 20),
-                              ],
-                            ),
-                          );
-                        }),
-                      ] else ...[
-                        const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(24.0),
-                            child: Text(
-                              "No outfits could be generated.",
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ], // Closes if (!_isLoading) ...[
-                  ],
-                ),
-              ),
-            ),
+                                  const SizedBox(height: 40),
 
-            // Action Buttons
-            Container(
-                padding: const EdgeInsets.all(24.0),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5)),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
+                                  // Pros UI
+                                  _buildAnalysisBox(
+                                    title: "Why it works",
+                                    items: _pros,
+                                    color: Colors.green[700]!,
+                                    bgColor: Colors.green[50]!,
+                                    icon: Icons.check_circle_outline,
+                                  ),
+
+                                  // Cons UI
+                                  _buildAnalysisBox(
+                                    title: "Keep in mind",
+                                    items: _cons,
+                                    color: Colors.orange[800]!,
+                                    bgColor: Colors.orange[50]!,
+                                    icon: Icons.warning_amber_rounded,
+                                  ),
+
+                                  // Generated Outfits
+                                  if (_generatedOutfits.isNotEmpty) ...[
+                                    const Text(
+                                      "Ways to Wear It",
+                                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    ..._generatedOutfits.map((outfit) {
+                                      final String name = outfit['outfit_name'] ?? 'Outfit';
+                                      final String notes = outfit['styling_notes'] ?? '';
+                                      final List<Map<String, dynamic>> items = List<Map<String, dynamic>>.from(outfit['items'] ?? []);
+
+                                      items.sort((a, b) {
+                                        int getOrderScore(Map<String, dynamic> item) {
+                                          final info = item['metadata']?['basic_info'] ?? item['basic_info'] ?? {};
+                                          String cat = (info['category'] ?? '').toString().toLowerCase();
+                                          String sub = (info['sub_category'] ?? '').toString().toLowerCase();
+
+                                          if (cat.contains('head') || sub.contains('hat') || sub.contains('cap')) return 0;
+                                          if (cat.contains('outerwear') || sub.contains('jacket') || sub.contains('coat')) return 1;
+                                          if (cat.contains('midwear') || sub.contains('sweater') || sub.contains('hoodie')) return 2;
+                                          if (cat.contains('top') || sub.contains('shirt') || sub.contains('t-shirt')) return 3;
+                                          if (cat.contains('bottom') || cat.contains('pant') || sub.contains('jean')) return 4;
+                                          if (cat.contains('shoe') || cat.contains('footwear') || sub.contains('sneaker')) return 5;
+                                          
+                                          return 3;
+                                        }
+                                        return getOrderScore(a).compareTo(getOrderScore(b));
+                                      });
+                                      
+                                      return Container(
+                                        margin: const EdgeInsets.only(bottom: 24),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(24),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(0.03), 
+                                              blurRadius: 15, 
+                                              offset: const Offset(0, 8)
+                                            ),
+                                          ],
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Padding(
+                                              padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      Container(
+                                                        width: 4,
+                                                        height: 18,
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.teal,
+                                                          borderRadius: BorderRadius.circular(2),
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 10),
+                                                      Text(name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+                                                    ],
+                                                  ),
+                                                  if (notes.isNotEmpty) ...[
+                                                    const SizedBox(height: 6),
+                                                    Text(notes, style: TextStyle(fontSize: 14, color: Colors.grey[600], height: 1.3)),
+                                                  ],
+                                                ],
+                                              ),
+                                            ),
+                                            // Clothing area (Horizontal Scroll)
+                                            SizedBox(
+                                              height: 190,
+                                              child: ListView.builder(
+                                                padding: const EdgeInsets.symmetric(horizontal: 20),
+                                                scrollDirection: Axis.horizontal,
+                                                itemCount: items.length,
+                                                itemBuilder: (context, index) {
+                                                  return Row(
+                                                    children: [
+                                                      _buildImageThumbnail(items[index]),
+                                                      if (index < items.length - 1)
+                                                        Padding(
+                                                          padding: const EdgeInsets.only(right: 12),
+                                                          child: Icon(Icons.add, color: Colors.grey.shade300, size: 24),
+                                                        ),
+                                                    ],
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                            const SizedBox(height: 20),
+                                          ],
+                                        ),
+                                      );
+                                    }),
+                                  ] else ...[
+                                    const Center(
+                                      child: Padding(
+                                        padding: EdgeInsets.all(24.0),
+                                        child: Text(
+                                          "No outfits could be generated.",
+                                          style: TextStyle(color: Colors.grey),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                      ),
+                    ),
+
+                    // Action Buttons
+                    const SizedBox(height: 32),
                     ElevatedButton(
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Item added to Wardrobe!')));
@@ -517,15 +508,22 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
                       child: const Text("Buy & Add to Wardrobe", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                     ),
                     const SizedBox(height: 12),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text("Discard", style: TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.bold)),
-                    ),
+                    OutlinedButton(
+                                onPressed: () => Navigator.pop(context),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.teal,
+                                  side: const BorderSide(color: Colors.teal, width: 2),
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                                child: const Text(
+                                  "Discard", 
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
+                                ),
+                              ),
                   ],
                 ),
-              ),
-            ],
-          ),
+        ),
       ),
     );
   }

@@ -186,6 +186,24 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
     
     if (message.isOutfit) {
       final items = message.outfitItems ?? [];
+
+      items.sort((a, b) {
+        int getOrderScore(Map<String, dynamic> item) {
+          final info = item['metadata']?['basic_info'] ?? item['basic_info'] ?? {};
+          String cat = (info['category'] ?? '').toString().toLowerCase();
+          String sub = (info['sub_category'] ?? '').toString().toLowerCase();
+
+          if (cat.contains('head') || sub.contains('hat') || sub.contains('cap')) return 0;
+          if (cat.contains('outerwear') || sub.contains('jacket') || sub.contains('coat')) return 1;
+          if (cat.contains('midwear') || sub.contains('sweater') || sub.contains('hoodie')) return 2;
+          if (cat.contains('top') || sub.contains('shirt') || sub.contains('t-shirt')) return 3;
+          if (cat.contains('bottom') || cat.contains('pant') || sub.contains('jean')) return 4;
+          if (cat.contains('shoe') || cat.contains('footwear') || sub.contains('sneaker')) return 5;
+          
+          return 3;
+        }
+        return getOrderScore(a).compareTo(getOrderScore(b));
+      });
       
       return Container(
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -219,72 +237,29 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
               // Scrollable Horizontal List of Items or Grid
               Container(
                 height: 180,
-                decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(0)), // Flattened top
-                ),
+                color: Colors.transparent, // Fără fundal gri, fundal curat
                 child: items.isEmpty 
-                  ? const Center(child: Text("No items found"))
+                  ? const Center(child: Text("No items found", style: TextStyle(color: Colors.grey)))
                   : ListView.builder(
                       scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), // Padding potrivit pentru bulă
                       itemCount: items.length,
                       itemBuilder: (context, index) {
                         final item = items[index];
-                        return Container(
-                          width: 120,
-                          margin: const EdgeInsets.only(right: 12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.shade200),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Expanded(
-                                child: ClipRRect(
-                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                                  child: Builder(
-                                    builder: (context) {
-                                      final String imageUrl = item['imageUrl'] ?? '';
-                                      if (imageUrl.startsWith('data:image')) {
-                                        try {
-                                          final String base64String = imageUrl.split(',').last;
-                                          return Image.memory(
-                                            base64Decode(base64String),
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.grey),
-                                          );
-                                        } catch (e) {
-                                          return const Icon(Icons.error, color: Colors.grey);
-                                        }
-                                      } else if (imageUrl.startsWith('http')) {
-                                        return CachedNetworkImage(
-                                          imageUrl: imageUrl,
-                                          fit: BoxFit.cover,
-                                          placeholder: (context, url) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                                          errorWidget: (context, url, error) => const Icon(Icons.broken_image, color: Colors.grey),
-                                        );
-                                      } else {
-                                        return const Icon(Icons.checkroom, color: Colors.grey, size: 40);
-                                      }
-                                    },
-                                  ),
-                                ),
-                              ),
+                        
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Folosim funcția nouă, fără chenar!
+                            _buildChatImageThumbnail(item),
+                            
+                            // Adăugăm '+' între haine
+                            if (index < items.length - 1)
                               Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(
-                                  item['basic_info']?['sub_category'] ?? 'Item',
-                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.center,
-                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 8), 
+                                child: Icon(Icons.add, color: Colors.grey.shade400, size: 24),
                               ),
-                            ],
-                          ),
+                          ],
                         );
                       },
                     ),
@@ -463,6 +438,38 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildChatImageThumbnail(Map<String, dynamic> item) {
+    final imageBase64 = item['image_base64'] as String?;
+    final imageUrl = item['imageUrl'] as String?;
+
+    Widget imageWidget;
+    if (imageBase64 != null && imageBase64.isNotEmpty) {
+      try {
+        final String cleanBase64 = imageBase64.contains(',') ? imageBase64.split(',').last : imageBase64;
+        imageWidget = Image.memory(
+          base64Decode(cleanBase64), 
+          fit: BoxFit.contain
+        );
+      } catch (e) {
+        imageWidget = const Icon(Icons.broken_image, color: Colors.grey);
+      }
+    } else if (imageUrl != null && imageUrl.isNotEmpty) {
+      imageWidget = CachedNetworkImage(
+        imageUrl: imageUrl, 
+        fit: BoxFit.contain,
+        placeholder: (context, url) => const SizedBox(width: 80, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
+        errorWidget: (context, url, error) => const Icon(Icons.error_outline, color: Colors.grey),
+      );
+    } else {
+      imageWidget = const SizedBox(width: 80, child: Icon(Icons.checkroom, color: Colors.grey, size: 40));
+    }
+
+    return SizedBox(
+      height: 160, 
+      child: imageWidget,
     );
   }
 }

@@ -7,10 +7,23 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint("Eroare la incarcarea .env: $e");
+  }
+
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    }
+  } catch (e) {
+    debugPrint("Firebase a fost deja initializat: $e");
+  }
+
   runApp(const WardrobeApp());
 }
 

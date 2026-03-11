@@ -3,3 +3,6 @@ backend/__pycache__/
 *.pyc
 .env
 .DS_Store
+backend/firebase_credentials.json
+mobile_app/lib/firebase_options.dart
+mobile_app/android/app/google-services.json

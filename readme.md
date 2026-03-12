@@ -1,4 +1,4 @@
-# Wardrobe Master AI 👗🤖
+# Wardrobe Master AI 🧠👕
 
 **An AI-powered mobile app for wardrobe management, outfit recommendations, smarter shopping decisions and clothing care.**
 

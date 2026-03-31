@@ -1,0 +1,616 @@
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:mobile_app/services/laundry_service.dart';
+
+class LaundryScreen extends StatefulWidget {
+  const LaundryScreen({super.key});
+
+  @override
+  State<LaundryScreen> createState() => _LaundryScreenState();
+}
+
+class _LaundryScreenState extends State<LaundryScreen> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final LaundryService _laundryService = LaundryService();
+
+  List<Map<String, dynamic>> _allWardrobeItems = [];
+  List<Map<String, dynamic>> _basketItems = [];
+  
+  String _selectedCategory = 'All';
+  String _selectedSubCategory = 'All';
+
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchWardrobe();
+  }
+
+  Future<void> _fetchWardrobe() async {
+    try {
+      final snapshot = await _firestore.collection('clothing').get();
+      final items = snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+
+      setState(() {
+        _allWardrobeItems = items;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Failed to load wardrobe. Please try again.';
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _addToBasket(Map<String, dynamic> item) {
+    setState(() {
+      _basketItems.add(item);
+    });
+  }
+
+  void _removeFromBasket(Map<String, dynamic> item) {
+    setState(() {
+      _basketItems.removeWhere((element) => element['id'] == item['id']);
+    });
+  }
+
+  Widget _buildImageWidget(String? imageUrl) {
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      if (imageUrl.startsWith('http')) {
+        return CachedNetworkImage(
+          imageUrl: imageUrl,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => Container(
+            color: Colors.grey[100],
+            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          ),
+          errorWidget: (context, url, error) => Container(
+            color: Colors.grey[200],
+            child: const Icon(Icons.broken_image),
+          ),
+        );
+      } else if (imageUrl.startsWith('data:image')) {
+        final base64String = imageUrl.split(',').last;
+        try {
+          return Image.memory(
+            base64Decode(base64String),
+            fit: BoxFit.cover,
+          );
+        } catch (e) {
+          return Container(color: Colors.grey[200], child: const Icon(Icons.broken_image));
+        }
+      } else {
+        try {
+          return Image.memory(
+            base64Decode(imageUrl),
+            fit: BoxFit.cover,
+          );
+        } catch (e) {
+          return Container(color: Colors.grey[200], child: const Icon(Icons.image));
+        }
+      }
+    }
+    return Container(color: Colors.grey[200], child: const Icon(Icons.checkroom));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          title: const Text('Smart Laundry', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          iconTheme: const IconThemeData(color: Colors.black),
+        ),
+        body: const Center(child: CircularProgressIndicator(color: Colors.blueGrey)),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          title: const Text('Smart Laundry', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          iconTheme: const IconThemeData(color: Colors.black),
+        ),
+        body: Center(child: Text(_errorMessage!, style: const TextStyle(color: Colors.red))),
+      );
+    }
+
+    final result = _laundryService.analyzeBasket(_basketItems);
+
+    Color statusColor;
+    IconData statusIcon;
+    String statusTitle;
+
+    if (_basketItems.isEmpty) {
+      statusColor = Colors.blueGrey;
+      statusIcon = Icons.local_laundry_service;
+      statusTitle = 'Ready to Wash';
+    } else {
+      switch (result.status) {
+        case LaundryStatus.Safe:
+          statusColor = Colors.green;
+          statusIcon = Icons.check_circle_outline;
+          statusTitle = 'Safe to Wash';
+          break;
+        case LaundryStatus.Warning:
+          statusColor = Colors.amber.shade700;
+          statusIcon = Icons.warning_amber_rounded;
+          statusTitle = 'Warning';
+          break;
+        case LaundryStatus.Critical:
+          statusColor = Colors.red.shade600;
+          statusIcon = Icons.dangerous_outlined;
+          statusTitle = 'Critical Issue';
+          break;
+      }
+    }
+
+    // Determine which items are already in the basket
+    final Set<String> basketItemIds = _basketItems.map((e) => e['id'] as String).toSet();
+
+    // Filter Documents for the grid
+    final filteredDocs = _allWardrobeItems.where((doc) {
+      if (basketItemIds.contains(doc['id'])) return false; // Hide items already in the basket
+      final cat = doc['basic_info']?['category'] as String?;
+      final sub = doc['basic_info']?['sub_category'] as String?;
+      bool matchCategory = (_selectedCategory == 'All') || (cat == _selectedCategory);
+      bool matchSubCategory = (_selectedSubCategory == 'All') || (sub == _selectedSubCategory);
+      return matchCategory && matchSubCategory;
+    }).toList();
+
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      body: SafeArea(
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // 1. The Main Title (Scrolls away)
+            const SliverAppBar(
+              pinned: false,
+              floating: false,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+              iconTheme: IconThemeData(color: Colors.black),
+              title: Text('Smart Laundry', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            ),
+
+            // 2. Sticky Status Header
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _StatusHeaderDelegate(
+                height: 80.0,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  height: 64.0, // Compact banner
+                  margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  decoration: BoxDecoration(
+                    color: statusColor,
+                    borderRadius: BorderRadius.circular(16.0),
+                    boxShadow: [
+                      BoxShadow(
+                        color: statusColor.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(statusIcon, color: Colors.white, size: 28),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          statusTitle,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (_basketItems.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.thermostat, color: Colors.white, size: 16),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Max ${result.recommendedTemp}°C',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // 2. Explanations (Alerts)
+            if (_basketItems.isNotEmpty && result.alerts.isNotEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: AnimatedSize(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    child: Column(
+                      children: result.alerts.map((alert) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: statusColor.withOpacity(0.3)),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2.0),
+                                child: Icon(Icons.info_outline, color: statusColor, size: 18),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  alert,
+                                  style: TextStyle(
+                                    color: Colors.grey[800],
+                                    fontSize: 13,
+                                    height: 1.4,
+                                  ),
+                                  softWrap: true,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )).toList(),
+                    ),
+                  ),
+                ),
+              ),
+
+            // 3. Virtual Basket & Filters
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 8),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 4.0),
+                    child: Text(
+                      'Virtual Basket',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
+                    ),
+                  ),
+                  Container(
+                    height: 120,
+                    margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16.0),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: _basketItems.isEmpty
+                        ? Center(
+                            child: Text(
+                              'Tap items below to add to the wash',
+                              style: TextStyle(color: Colors.grey.shade500, fontStyle: FontStyle.italic, fontSize: 13),
+                            ),
+                          )
+                        : ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.all(8.0),
+                            itemCount: _basketItems.length,
+                            itemBuilder: (context, index) {
+                              final item = _basketItems[index];
+                              return GestureDetector(
+                                onTap: () => _removeFromBasket(item),
+                                child: Container(
+                                  width: 94,
+                                  margin: const EdgeInsets.only(right: 10.0),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.08),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Stack(
+                                      fit: StackFit.expand,
+                                      children: [
+                                        _buildImageWidget(item['imageUrl']?.toString()),
+                                        Container(
+                                          color: Colors.black.withOpacity(0.35),
+                                        ),
+                                        const Center(
+                                          child: Icon(
+                                            Icons.remove_circle_outline,
+                                            color: Colors.white,
+                                            size: 28,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(20.0, 24.0, 20.0, 4.0),
+                    child: Text(
+                      'My Wardrobe',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
+                    ),
+                  ),
+                  _buildFiltersWidget(),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
+
+            // 4. Wardrobe Grid
+            filteredDocs.isEmpty
+                ? SliverToBoxAdapter(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 40.0),
+                        child: Text(
+                          'No available items match the criteria.',
+                          style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                        ),
+                      ),
+                    ),
+                  )
+                : SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    sliver: SliverGrid(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 10.0,
+                        mainAxisSpacing: 10.0,
+                        childAspectRatio: 0.8,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final item = filteredDocs[index];
+                          return GestureDetector(
+                            onTap: () => _addToBasket(item),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.06),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    _buildImageWidget(item['imageUrl']?.toString()),
+                                    Positioned(
+                                      right: 6,
+                                      bottom: 6,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.blueAccent.withOpacity(0.95),
+                                          shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(0.2),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        padding: const EdgeInsets.all(6),
+                                        child: const Icon(
+                                          Icons.add,
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                        childCount: filteredDocs.length,
+                      ),
+                    ),
+                  ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFiltersWidget() {
+    // 1. Extract Categories
+    final Set<String> categories = {'All'};
+    for (var doc in _allWardrobeItems) {
+      final cat = doc['basic_info']?['category'] as String?;
+      if (cat != null && cat.isNotEmpty) {
+        categories.add(cat);
+      }
+    }
+    final categoryList = categories.toList()..sort();
+    categoryList.remove('All');
+    categoryList.insert(0, 'All');
+
+    // Keep selected category valid
+    if (!categories.contains(_selectedCategory)) {
+      _selectedCategory = 'All';
+    }
+
+    // 2. Extract Subcategories based on selected category
+    final Set<String> subCategories = {'All'};
+    if (_selectedCategory != 'All') {
+      for (var doc in _allWardrobeItems) {
+        final cat = doc['basic_info']?['category'] as String?;
+        if (cat == _selectedCategory) {
+          final sub = doc['basic_info']?['sub_category'] as String?;
+          if (sub != null && sub.isNotEmpty) {
+            subCategories.add(sub);
+          }
+        }
+      }
+    }
+    final subCategoryList = subCategories.toList()..sort();
+    subCategoryList.remove('All');
+    subCategoryList.insert(0, 'All');
+
+    // Keep selected subcategory valid
+    if (!subCategories.contains(_selectedSubCategory)) {
+      _selectedSubCategory = 'All';
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min, // Essential for space optimization
+      children: [
+        const SizedBox(height: 12),
+        _buildChoiceChipRow(categoryList, _selectedCategory, (val) {
+          setState(() {
+            _selectedCategory = val;
+            _selectedSubCategory = 'All'; // Reset sub on category change
+          });
+        }),
+        if (_selectedCategory != 'All')
+          _buildChoiceChipRow(subCategoryList, _selectedSubCategory, (val) {
+            setState(() {
+              _selectedSubCategory = val;
+            });
+          }, isSecondary: true),
+      ],
+    );
+  }
+
+  Widget _buildChoiceChipRow(List<String> items, String selectedItem, Function(String) onSelected, {bool isSecondary = false}) {
+    return SizedBox(
+      height: 40, // Space optimized height
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          final item = items[index];
+          final isSelected = selectedItem == item;
+          
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Text(
+                item,
+                style: TextStyle(
+                  color: isSelected ? (isSecondary ? Colors.white : Colors.white) : Colors.black87,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                  fontSize: isSecondary ? 12 : 13,
+                ),
+              ),
+              selected: isSelected,
+              showCheckmark: false,
+              selectedColor: isSecondary ? Colors.blueGrey.shade700 : Colors.black,
+              backgroundColor: isSecondary ? Colors.grey.shade100 : Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(
+                  color: isSelected 
+                      ? Colors.transparent 
+                      : (isSecondary ? Colors.grey.shade300 : Colors.grey.shade300),
+                  width: 1.0,
+                ),
+              ),
+              onSelected: (bool selected) {
+                if (selected) {
+                  onSelected(item);
+                }
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _StatusHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  final double height;
+
+  _StatusHeaderDelegate({required this.child, this.height = 80.0});
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: Colors.grey[50],
+      alignment: Alignment.center,
+      child: child,
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _StatusHeaderDelegate oldDelegate) {
+    return oldDelegate.child != child || oldDelegate.height != height;
+  }
+}

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'wardrobe_gallery_screen.dart';
 import 'lookbook_screen.dart';
+import 'laundry_screen.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -17,8 +18,8 @@ class _MainNavigationState extends State<MainNavigation> {
   final List<Widget> _screens = const [
     HomeScreen(),            // Index 0
     WardrobeGalleryScreen(), // Index 1
-    LookbookScreen(),        // Index 2 (Outfits)
-    Center(child: Text('Laundry Screen Coming Soon')), // Index 3
+    LookbookScreen(),        // Index 2
+    LaundryScreen(),         // Index 3
   ];
 
   @override

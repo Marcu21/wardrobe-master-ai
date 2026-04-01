@@ -5,7 +5,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../widgets/save_outfit_dialog.dart';
 
 class VirtualDressingRoomScreen extends StatefulWidget {
-  const VirtualDressingRoomScreen({super.key});
+  final List<String>? initialItemIds;
+
+  const VirtualDressingRoomScreen({super.key, this.initialItemIds});
 
   @override
   State<VirtualDressingRoomScreen> createState() => _VirtualDressingRoomScreenState();
@@ -78,6 +80,62 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
 
       if (mounted) {
         setState(() {
+          // Default: maintain zero indices
+          _outerwearIndex = 0;
+          _midwearIndex = 0;
+          _topsIndex = 0;
+          _bottomsIndex = 0;
+          _shoesIndex = 0;
+          
+          // Check if we are in REMIX MODE
+          if (widget.initialItemIds != null && widget.initialItemIds!.isNotEmpty) {
+            // 1. Force ALL optional layers to FALSE initially
+            _showOuterwear = false;
+            _showMidwear = false;
+            _showTops = false; 
+
+            // 2. ONLY set them to true if the item is physically found in the filtered lists
+            int foundOuter = newOuterwear.indexWhere((item) => widget.initialItemIds!.contains(item['id']));
+            if (foundOuter != -1) {
+              final item = newOuterwear.removeAt(foundOuter);
+              newOuterwear.insert(0, item);
+              _showOuterwear = true;
+            }
+
+            int foundMid = newMidwear.indexWhere((item) => widget.initialItemIds!.contains(item['id']));
+            if (foundMid != -1) {
+              final item = newMidwear.removeAt(foundMid);
+              newMidwear.insert(0, item);
+              _showMidwear = true;
+            }
+
+            int foundTop = newTops.indexWhere((item) => widget.initialItemIds!.contains(item['id']));
+            if (foundTop != -1) {
+              final item = newTops.removeAt(foundTop);
+              newTops.insert(0, item);
+              _showTops = true;
+            }
+
+            // Do the same find-and-move for Bottoms and Shoes (they are usually always shown, but move them to index 0)
+            int foundBottom = newBottoms.indexWhere((item) => widget.initialItemIds!.contains(item['id']));
+            if (foundBottom != -1) {
+              final item = newBottoms.removeAt(foundBottom);
+              newBottoms.insert(0, item);
+            }
+
+            int foundShoe = newShoes.indexWhere((item) => widget.initialItemIds!.contains(item['id']));
+            if (foundShoe != -1) {
+              final item = newShoes.removeAt(foundShoe);
+              newShoes.insert(0, item);
+            }
+
+          } else {
+            // NORMAL MODE (Not a Remix)
+            _showTops = true; // Default behavior
+            _showOuterwear = false;
+            _showMidwear = false;
+          }
+
           _outerwear.clear();
           _midwear.clear();
           _tops.clear();

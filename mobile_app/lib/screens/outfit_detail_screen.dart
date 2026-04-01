@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../services/firebase_service.dart';
 import '../services/calendar_service.dart';
+import 'virtual_dressing_room_screen.dart';
 
 class OutfitDetailScreen extends StatefulWidget {
   final Map<String, dynamic> outfitData;
@@ -414,8 +415,13 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                       icon: const Icon(Icons.edit),
                       label: const Text("Remix"),
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Coming soon: Open in Dressing Room!')),
+                        final List<dynamic> itemIdsDynamic = widget.outfitData['item_ids'] ?? [];
+                        final List<String> itemIds = itemIdsDynamic.map((e) => e.toString()).toList();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => VirtualDressingRoomScreen(initialItemIds: itemIds),
+                          ),
                         );
                       },
                     ),

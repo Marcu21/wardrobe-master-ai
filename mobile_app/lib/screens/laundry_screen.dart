@@ -68,7 +68,7 @@ class _LaundryScreenState extends State<LaundryScreen> {
       if (imageUrl.startsWith('http')) {
         return CachedNetworkImage(
           imageUrl: imageUrl,
-          fit: BoxFit.cover,
+          fit: BoxFit.contain,
           placeholder: (context, url) => Container(
             color: Colors.grey[100],
             child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
@@ -83,7 +83,7 @@ class _LaundryScreenState extends State<LaundryScreen> {
         try {
           return Image.memory(
             base64Decode(base64String),
-            fit: BoxFit.cover,
+            fit: BoxFit.contain,
           );
         } catch (e) {
           return Container(color: Colors.grey[200], child: const Icon(Icons.broken_image));
@@ -92,7 +92,7 @@ class _LaundryScreenState extends State<LaundryScreen> {
         try {
           return Image.memory(
             base64Decode(imageUrl),
-            fit: BoxFit.cover,
+            fit: BoxFit.contain,
           );
         } catch (e) {
           return Container(color: Colors.grey[200], child: const Icon(Icons.image));
@@ -100,6 +100,125 @@ class _LaundryScreenState extends State<LaundryScreen> {
       }
     }
     return Container(color: Colors.grey[200], child: const Icon(Icons.checkroom));
+  }
+
+  void _showAutoSplitBottomSheet(BuildContext context, List<Map<String, dynamic>> items) {
+    final suggestions = _laundryService.suggestOptimalSplits(items);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: CustomScrollView(
+            shrinkWrap: true,
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.auto_awesome, color: Colors.amber),
+                        SizedBox(width: 8),
+                        Text(
+                          'Optimal Splits',
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (suggestions.isEmpty)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: Center(
+                    child: Text('Add more items to see optimal combinations.'),
+                  ),
+                ),
+              ),
+            if (suggestions.isNotEmpty)
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final load = suggestions[index];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                      child: Container(
+                        padding: const EdgeInsets.all(12.0),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(16.0),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              load.title,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              load.reason,
+                              style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              height: 70, // compact horizontal list
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: load.items.length,
+                                itemBuilder: (context, idx) {
+                                  final item = load.items[idx];
+                                  return Container(
+                                    width: 60,
+                                    margin: const EdgeInsets.only(right: 8.0),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.05),
+                                          blurRadius: 2,
+                                          offset: const Offset(0, 1),
+                                        ),
+                                      ],
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      child: _buildImageWidget(item['imageUrl']?.toString()),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  childCount: suggestions.length,
+                ),
+              ),
+            const SliverToBoxAdapter(child: SizedBox(height: 32)),
+          ],
+        ),
+        );
+      },
+    );
   }
 
   @override
@@ -267,38 +386,60 @@ class _LaundryScreenState extends State<LaundryScreen> {
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeInOut,
                     child: Column(
-                      children: result.alerts.map((alert) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: statusColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: statusColor.withOpacity(0.3)),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(top: 2.0),
-                                child: Icon(Icons.info_outline, color: statusColor, size: 18),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  alert,
-                                  style: TextStyle(
-                                    color: Colors.grey[800],
-                                    fontSize: 13,
-                                    height: 1.4,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        ...result.alerts.map((alert) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: statusColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: statusColor.withOpacity(0.3)),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 2.0),
+                                  child: Icon(Icons.info_outline, color: statusColor, size: 18),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    alert,
+                                    style: TextStyle(
+                                      color: Colors.grey[800],
+                                      fontSize: 13,
+                                      height: 1.4,
+                                    ),
+                                    softWrap: true,
                                   ),
-                                  softWrap: true,
+                                ),
+                              ],
+                            ),
+                          ),
+                        )),
+                        if (result.status == LaundryStatus.Warning || result.status == LaundryStatus.Critical)
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 4.0),
+                              child: OutlinedButton.icon(
+                                onPressed: () => _showAutoSplitBottomSheet(context, _basketItems),
+                                icon: const Icon(Icons.auto_awesome, size: 18),
+                                label: const Text('Auto-Split Load', style: TextStyle(fontWeight: FontWeight.bold)),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: statusColor,
+                                  side: BorderSide(color: statusColor, width: 1.5),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
                                 ),
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      )).toList(),
+                      ],
                     ),
                   ),
                 ),
@@ -414,9 +555,9 @@ class _LaundryScreenState extends State<LaundryScreen> {
                     sliver: SliverGrid(
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 3,
-                        crossAxisSpacing: 10.0,
-                        mainAxisSpacing: 10.0,
-                        childAspectRatio: 0.8,
+                        crossAxisSpacing: 4.0,
+                        mainAxisSpacing: 6.0,
+                        childAspectRatio: 0.75,
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
@@ -425,6 +566,7 @@ class _LaundryScreenState extends State<LaundryScreen> {
                             onTap: () => _addToBasket(item),
                             child: Container(
                               decoration: BoxDecoration(
+                                color: Colors.white,
                                 borderRadius: BorderRadius.circular(16),
                                 boxShadow: [
                                   BoxShadow(
@@ -439,7 +581,10 @@ class _LaundryScreenState extends State<LaundryScreen> {
                                 child: Stack(
                                   fit: StackFit.expand,
                                   children: [
-                                    _buildImageWidget(item['imageUrl']?.toString()),
+                                    Padding(
+                                      padding: const EdgeInsets.all(2.0),
+                                      child: _buildImageWidget(item['imageUrl']?.toString()),
+                                    ),
                                     Positioned(
                                       right: 6,
                                       bottom: 6,

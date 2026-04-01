@@ -16,6 +16,18 @@ class LaundryAnalysisResult {
   });
 }
 
+class LaundryLoadSuggestion {
+  final String title;
+  final String reason;
+  final List<Map<String, dynamic>> items;
+
+  LaundryLoadSuggestion({
+    required this.title,
+    required this.reason,
+    required this.items,
+  });
+}
+
 class LaundryService {
   /// Analyzes a list of clothing items to determine if they are safe to wash together.
   LaundryAnalysisResult analyzeBasket(List<Map<String, dynamic>> items) {
@@ -152,5 +164,113 @@ class LaundryService {
       status: status,
       alerts: alerts,
     );
+  }
+
+  /// Suggests how to safely split items into mutually exclusive laundry loads.
+  List<LaundryLoadSuggestion> suggestOptimalSplits(List<Map<String, dynamic>> items) {
+    if (items.isEmpty) return [];
+
+    final List<Map<String, dynamic>> footwear = [];
+    final List<Map<String, dynamic>> delicates = [];
+    final List<Map<String, dynamic>> lights = [];
+    final List<Map<String, dynamic>> darks = [];
+    final List<Map<String, dynamic>> colors = [];
+
+    final List<String> delicateKeywords = ['silk', 'lace', 'linen', 'chiffon', 'satin'];
+    final List<String> footwearKeywords = ['shoe', 'shoes', 'sneaker', 'sneakers', 'footwear', 'boot', 'boots'];
+
+    for (final item in items) {
+      final basicInfo = item['basic_info'] as Map<String, dynamic>? ?? {};
+      final laundryInfo = item['laundry_info'] as Map<String, dynamic>? ?? {};
+
+      final category = basicInfo['category']?.toString().toLowerCase() ?? '';
+      final subCategory = basicInfo['sub_category']?.toString().toLowerCase() ?? '';
+      final material = basicInfo['material']?.toString().toLowerCase() ?? '';
+      final colorGroup = laundryInfo['color_group']?.toString();
+
+      final categoryCombined = '$category $subCategory';
+      final materialCombined = '$material $subCategory';
+
+      bool isFootwear = false;
+      for (final kw in footwearKeywords) {
+        if (categoryCombined.contains(kw)) {
+          isFootwear = true;
+          break;
+        }
+      }
+
+      if (isFootwear) {
+        footwear.add(item);
+        continue;
+      }
+
+      bool isDelicate = false;
+      for (final kw in delicateKeywords) {
+        if (materialCombined.contains(kw)) {
+          isDelicate = true;
+          break;
+        }
+      }
+
+      if (isDelicate) {
+        delicates.add(item);
+        continue;
+      }
+
+      if (colorGroup == 'Light') {
+        lights.add(item);
+      } else if (colorGroup == 'Dark') {
+        darks.add(item);
+      } else if (colorGroup == 'Color') {
+        colors.add(item);
+      } else {
+        // Default to colors if unknown
+        colors.add(item);
+      }
+    }
+
+    final List<LaundryLoadSuggestion> suggestions = [];
+
+    if (footwear.isNotEmpty) {
+      suggestions.add(LaundryLoadSuggestion(
+        title: 'Footwear Load',
+        reason: 'Shoes must be washed separately for hygiene and machine safety.',
+        items: footwear,
+      ));
+    }
+
+    if (delicates.isNotEmpty) {
+      suggestions.add(LaundryLoadSuggestion(
+        title: 'Delicates Load',
+        reason: 'Delicate fabrics need a gentle, cold cycle to prevent damage.',
+        items: delicates,
+      ));
+    }
+
+    if (lights.isNotEmpty) {
+      suggestions.add(LaundryLoadSuggestion(
+        title: 'Whites & Lights Load',
+        reason: 'Wash light colors together to prevent color bleeding.',
+        items: lights,
+      ));
+    }
+
+    if (darks.isNotEmpty) {
+      suggestions.add(LaundryLoadSuggestion(
+        title: 'Darks Load',
+        reason: 'Dark items can bleed; keep them separated from lights.',
+        items: darks,
+      ));
+    }
+
+    if (colors.isNotEmpty) {
+      suggestions.add(LaundryLoadSuggestion(
+        title: 'Colors Load',
+        reason: 'Wash colored items together to maintain vibrancy.',
+        items: colors,
+      ));
+    }
+
+    return suggestions;
   }
 }

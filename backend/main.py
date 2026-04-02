@@ -75,6 +75,13 @@ class OutfitGenerationRequest(BaseModel):
     scanned_item: ItemMetadata
     wardrobe: List[ItemMetadata]
 
+class PackingRequest(BaseModel):
+    destination: str
+    days: int
+    vibe: str
+    weather_forecast: str
+    user_id: str
+
 @app.post("/remove-bg/")
 async def remove_background(file: UploadFile = File(...)):
     if not file.content_type.startswith("image/"):
@@ -410,6 +417,97 @@ async def generate_outfits(request: OutfitGenerationRequest):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/generate-packing/")
+async def generate_packing(request: PackingRequest):
+    if not client:
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
+    
+    if not db:
+       raise HTTPException(status_code=500, detail="Firestore not initialized")
+
+    try:
+        # 1. Fetch Clothing Items from Firestore
+        # In a real app, you would filter by request.user_id here
+        clothing_ref = db.collection('clothing')
+        docs = clothing_ref.stream()
+        
+        clothing_items = []
+        for doc in docs:
+            data = doc.to_dict()
+            item_summary = {
+                "id": doc.id,
+                "category": data.get('basic_info', {}).get('category'),
+                "sub_category": data.get('basic_info', {}).get('sub_category'),
+                "primary_colors": data.get('basic_info', {}).get('primary_colors'),
+                "material": data.get('basic_info', {}).get('material'),
+                "style_occasions": data.get('styling_info', {}).get('style_occasions'),
+                "seasonality": data.get('styling_info', {}).get('seasonality'),
+            }
+            clothing_items.append(item_summary)
+
+        if not clothing_items:
+             return {
+                "selected_item_ids": [],
+                "reasoning": "No clothing items found in your wardrobe.",
+                "outfits": []
+            }
+
+        clothing_json = json.dumps(clothing_items)
+        
+        prompt = f"""
+        You are an elite travel stylist. 
+        The user is packing for a trip to {request.destination} for {request.days} days. 
+        The trip vibe/purpose is '{request.vibe}'.
+        
+        ### WEATHER FORECAST:
+        {request.weather_forecast}
+        
+        ### USER WARDROBE:
+        {clothing_json}
+        
+        ### INSTRUCTIONS:
+        1. Create a "Capsule Wardrobe" from the user's wardrobe. Select a minimal number of highly versatile items that mix and match well.
+        2. Ensure the colors coordinate and the materials fit the destination/vibe.
+        3. Using ONLY the items you selected for the capsule wardrobe, generate {request.days} distinct daily outfits.
+        4. NEVER include the raw database IDs in the text descriptions. IDs must only be in the arrays.
+        5. Each outfit must be a complete look (must have a top, a bottom, and shoes).
+        
+        ### RESPONSE FORMAT:
+        Return ONLY a valid JSON object matching this schema:
+        {{
+          "selected_item_ids": ["id1", "id2", "id3", "id4", "id5"],
+          "reasoning": "Explain concisely why you chose this capsule wardrobe for the destination and vibe.",
+          "outfits": [
+            {{
+              "title": "Day 1: Arrival & Exploring",
+              "description": "A comfortable but stylish look for walking around...",
+              "item_ids": ["id1", "id3", "id5"]
+            }}
+          ]
+        }}
+        """
+        
+        response = client.models.generate_content(
+            model='gemini-flash-latest', 
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type='application/json'
+            )
+        )
+        
+        if hasattr(response, 'parsed') and response.parsed:
+             result = response.parsed
+        else:
+             result = json.loads(response.text)
+             
+        return result
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 if __name__ == "__main__":
     import uvicorn

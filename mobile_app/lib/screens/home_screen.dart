@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../services/weather_service.dart';
+import '../services/firebase_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'ai_stylist_chat_screen.dart';
 import 'virtual_dressing_room_screen.dart';
 import 'lookbook_screen.dart';
@@ -84,12 +86,43 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              // TODO: Implement settings
+          PopupMenuButton<String>(
+            offset: const Offset(0, 48), // Opens downwards
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            icon: _buildUserAvatar(),
+            onSelected: (value) async {
+              if (value == 'settings') {
+                // TODO: Implement settings screen navigation
+              } else if (value == 'logout') {
+                await FirebaseService().signOut();
+              }
             },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'settings',
+                child: Row(
+                  children: [
+                    Icon(Icons.settings, color: Colors.black87, size: 20),
+                    SizedBox(width: 12),
+                    Text('Settings', style: TextStyle(fontWeight: FontWeight.w500)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout, color: Colors.red, size: 20),
+                    SizedBox(width: 12),
+                    Text('Logout', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w500)),
+                  ],
+                ),
+              ),
+            ],
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: SingleChildScrollView(
@@ -97,12 +130,30 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              "Hello!",
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
+            StreamBuilder<DocumentSnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(FirebaseService().currentUser?.uid)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                String name = '';
+                if (snapshot.hasData && snapshot.data!.exists) {
+                  final data = snapshot.data!.data() as Map<String, dynamic>?;
+                  if (data != null) {
+                    name = data['name'] ?? '';
+                  }
+                } else if (FirebaseService().currentUser?.displayName != null) {
+                  name = FirebaseService().currentUser!.displayName!;
+                }
+
+                return Text(
+                  name.isNotEmpty ? "Hello, $name!" : "Hello!",
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 4),
             Text(
@@ -126,6 +177,63 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildUserAvatar() {
+    final user = FirebaseService().currentUser;
+    if (user == null) {
+      return const CircleAvatar(
+        radius: 16,
+        backgroundColor: Colors.blueAccent,
+        child: Icon(Icons.person, color: Colors.white, size: 20),
+      );
+    }
+
+    final photoUrl = user.photoURL;
+    if (photoUrl != null && photoUrl.isNotEmpty) {
+      return CircleAvatar(
+        radius: 16,
+        backgroundImage: NetworkImage(photoUrl),
+      );
+    }
+
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .snapshots(),
+      builder: (context, snapshot) {
+        String fallbackLetter = 'U';
+
+        if (snapshot.hasData && snapshot.data!.exists) {
+          final data = snapshot.data!.data() as Map<String, dynamic>?;
+          if (data != null && data['name'] != null && data['name'].toString().trim().isNotEmpty) {
+            fallbackLetter = data['name'].toString().trim().substring(0, 1).toUpperCase();
+          } else if (user.displayName != null && user.displayName!.trim().isNotEmpty) {
+            fallbackLetter = user.displayName!.trim().substring(0, 1).toUpperCase();
+          } else if (user.email != null && user.email!.trim().isNotEmpty) {
+            fallbackLetter = user.email!.trim().substring(0, 1).toUpperCase();
+          }
+        } else if (user.displayName != null && user.displayName!.trim().isNotEmpty) {
+          fallbackLetter = user.displayName!.trim().substring(0, 1).toUpperCase();
+        } else if (user.email != null && user.email!.trim().isNotEmpty) {
+          fallbackLetter = user.email!.trim().substring(0, 1).toUpperCase();
+        }
+
+        return CircleAvatar(
+          radius: 16,
+          backgroundColor: Colors.blueAccent,
+          child: Text(
+            fallbackLetter,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+        );
+      },
     );
   }
 

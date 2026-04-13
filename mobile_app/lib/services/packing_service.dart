@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:mobile_app/services/firebase_service.dart';
 
 class TripOutfit {
   final String title;
@@ -70,7 +71,7 @@ class PackingService {
           'days': days,
           'vibe': vibe,
           'weather_forecast': weatherForecast,
-          'user_id': 'test_user',
+          'user_id': FirebaseService().currentUser?.uid ?? 'unknown_user',
         }),
       );
 

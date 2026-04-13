@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart'; // For MediaType
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:mobile_app/services/firebase_service.dart';
 
 class ApiService {
   final String baseUrl;
@@ -59,7 +60,7 @@ class ApiService {
     required String userPrompt,
     required String currentWeather,
     required String hourlyForecast,
-    String userId = 'default_user', // Placeholder for now
+    String? userId,
   }) async {
     final uri = Uri.parse('$baseUrl/generate-outfit/');
     
@@ -71,7 +72,7 @@ class ApiService {
           'user_prompt': userPrompt,
           'current_weather': currentWeather,
           'hourly_forecast': hourlyForecast,
-          'user_id': userId,
+          'user_id': userId ?? FirebaseService().currentUser?.uid ?? 'unknown_user',
         }),
       );
 

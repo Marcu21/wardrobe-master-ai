@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import '../services/packing_service.dart';
@@ -55,7 +56,10 @@ class _PackingResultScreenState extends State<PackingResultScreen> {
         weatherForecast: weatherSummary,
       );
 
-      final snapshot = await _firestore.collection('clothing').get();
+      final snapshot = await _firestore
+          .collection('clothing')
+          .where('userId', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
+          .get();
       // Filter locally to avoid 10-item limit of 'whereIn'
       final items = snapshot.docs
           .where((doc) => wardrobe.selectedItemIds.contains(doc.id))

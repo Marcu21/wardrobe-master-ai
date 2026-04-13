@@ -43,6 +43,7 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
   late TextEditingController _maxTempController;
 
   bool _isUpdating = false;
+  bool _isDeleting = false;
 
   @override
   void initState() {
@@ -123,6 +124,72 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
     _colorGroupController.dispose();
     _maxTempController.dispose();
     super.dispose();
+  }
+
+  Future<void> _deleteItem() async {
+    setState(() {
+      _isDeleting = true;
+    });
+
+    try {
+      final String docId = widget.itemData['id'];
+      final String? imageUrl = widget.itemData['imageUrl'];
+      await FirebaseService().deleteItem(docId, imageUrl: imageUrl);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Item deleted successfully"),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context); // Return to gallery
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error deleting item: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isDeleting = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _confirmDelete() async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Delete Item"),
+          content: const Text("Are you sure you want to delete this item? This action cannot be undone."),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text(
+                "Delete",
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm == true) {
+      _deleteItem();
+    }
   }
 
   Future<void> _updateItem() async {
@@ -227,6 +294,21 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
         surfaceTintColor: Colors.transparent,
         backgroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          _isDeleting
+              ? const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              : IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: _confirmDelete,
+                ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(

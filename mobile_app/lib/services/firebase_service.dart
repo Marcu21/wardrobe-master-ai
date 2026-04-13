@@ -62,6 +62,29 @@ class FirebaseService {
       throw Exception("Failed to update item: $e");
     }
   }
+
+  Future<void> deleteItem(String docId, {String? imageUrl}) async {
+    try {
+      // Delete image from storage if it's a Firebase Storage URL
+      if (imageUrl != null && imageUrl.startsWith('https://firebasestorage.googleapis.com')) {
+        try {
+          final Reference ref = _storage.refFromURL(imageUrl);
+          await ref.delete();
+          debugPrint("Image deleted from Firebase Storage");
+        } catch (e) {
+          debugPrint("Failed to delete image: $e");
+          // Proceed with document deletion even if image deletion fails
+        }
+      }
+
+      // Delete document from Firestore
+      await _firestore.collection('clothing').doc(docId).delete();
+      debugPrint("Item deleted from Firestore: $docId");
+    } catch (e) {
+      debugPrint("Firestore delete failed: $e");
+      throw Exception("Failed to delete item: $e");
+    }
+  }
   Future<List<Map<String, dynamic>>> getItemsByIds(List<String> ids) async {
     if (ids.isEmpty) return [];
 

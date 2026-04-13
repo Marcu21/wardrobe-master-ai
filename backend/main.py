@@ -255,8 +255,7 @@ async def generate_outfit(request: OutfitRequest):
 
     try:
         # 1. Fetch Clothing Items from Firestore
-        # In a real app, filtering by user_id would happen here
-        clothing_ref = db.collection('clothing')
+        clothing_ref = db.collection('clothing').where('userId', '==', request.user_id)
         docs = clothing_ref.stream()
         
         clothing_items = []
@@ -431,8 +430,7 @@ async def generate_packing(request: PackingRequest):
 
     try:
         # 1. Fetch Clothing Items from Firestore
-        # In a real app, you would filter by request.user_id here
-        clothing_ref = db.collection('clothing')
+        clothing_ref = db.collection('clothing').where('userId', '==', request.user_id)
         docs = clothing_ref.stream()
         
         clothing_items = []

@@ -176,7 +176,10 @@ async def process_item(file: UploadFile = File(...), tag_file: Optional[UploadFi
         ### METADATA RULES:
         - Brand: Extract from tag or logos. If none visible, use "Unbranded".
         - 'sustainability_info.purchase_date' MUST be exactly "{current_date}".
-        - If IMAGE 2 is missing/unreadable, set 'laundry_info' to null. Do NOT hallucinate care instructions.
+        - ALWAYS return the 'laundry_info' object. 
+        - Deduce 'laundry_info.color_group' visually from IMAGE 1.
+        - If IMAGE 2 is missing/unreadable (or if the item is Shoes), set 'laundry_info.max_temp_celsius' to a safe default (e.g., 30).
+        - If IMAGE 2 is missing/unreadable, set 'laundry_info.care_instructions' to an empty array []. Do NOT hallucinate care instructions.
         
         ### RESPONSE FORMAT:
         Return ONLY a valid JSON object. Do not include markdown blocks like ```json.
@@ -202,9 +205,9 @@ async def process_item(file: UploadFile = File(...), tag_file: Optional[UploadFi
           }},
           "laundry_info": {{
             "color_group": "String (Dark, Light, Color)",
-            "max_temp_celsius": Integer (or null),
+            "max_temp_celsius": Integer,
             "care_instructions": ["String (Translate the decoded ISO symbols here)"]
-          }} OR null,
+          }},
           "sustainability_info": {{
             "brand": "String",
             "price": 0.0,

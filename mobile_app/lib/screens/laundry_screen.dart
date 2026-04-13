@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mobile_app/services/laundry_service.dart';
 
@@ -24,31 +26,93 @@ class _LaundryScreenState extends State<LaundryScreen> {
   bool _isLoading = true;
   String? _errorMessage;
 
+  StreamSubscription<QuerySnapshot>? _wardrobeSubscription;
+
   @override
   void initState() {
     super.initState();
-    _fetchWardrobe();
+    _listenToWardrobe();
   }
 
-  Future<void> _fetchWardrobe() async {
-    try {
-      final snapshot = await _firestore.collection('clothing').get();
+  void _listenToWardrobe() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'User not logged in.';
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
+    _wardrobeSubscription = _firestore
+        .collection('clothing')
+        .where('userId', isEqualTo: currentUser.uid)
+        .snapshots()
+        .listen((snapshot) {
+      
       final items = snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
         return data;
       }).toList();
 
-      setState(() {
-        _allWardrobeItems = items;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Failed to load wardrobe. Please try again.';
-        _isLoading = false;
-      });
-    }
+      if (mounted) {
+        setState(() {
+          _allWardrobeItems = items;
+
+          // React dynamically if items have a status indicating they are dirty
+          final dbDirtyItems = items.where((item) {
+            final category = item['basic_info']?['category'] ?? ''; // Some apps use category to infer
+            final status = item['status']?.toString().toLowerCase();
+            final isDirty = item['is_dirty'] == true || item['isDirty'] == true;
+            return status == 'dirty' || status == 'laundry' || isDirty;
+          }).toList();
+
+          // Auto-add dirty items to basket if not already there
+          for (var dirty in dbDirtyItems) {
+            bool exists = _basketItems.any((bItem) => bItem['id'] == dirty['id']);
+            if (!exists) {
+              _basketItems.add(dirty);
+            }
+          }
+
+          // Automatically remove from basket if the item was marked clean remotely
+          _basketItems.removeWhere((basketItem) {
+             final serverItem = items.firstWhere(
+                 (i) => i['id'] == basketItem['id'], 
+                 orElse: () => <String, dynamic>{}
+             );
+             if (serverItem.isEmpty) return true; // deleted
+             
+             final status = serverItem['status']?.toString().toLowerCase();
+             final isDirty = serverItem['is_dirty'] == true || serverItem['isDirty'] == true;
+             
+             // If we rely strictly on server states for removal, we only remove if explicitly marked clean
+             if (status == 'clean' || serverItem['is_dirty'] == false || serverItem['isDirty'] == false) {
+                 return true; 
+             }
+             return false;
+          });
+
+          _isLoading = false;
+        });
+      }
+    }, onError: (error) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Failed to load wardrobe realtime. ${error.toString()}';
+          _isLoading = false;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _wardrobeSubscription?.cancel();
+    super.dispose();
   }
 
   void _addToBasket(Map<String, dynamic> item) {

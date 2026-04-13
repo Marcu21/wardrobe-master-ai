@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -25,6 +26,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     _selectedDay = _focusedDay;
     _outfitsStream = FirebaseFirestore.instance
         .collection('outfits')
+        .where('user_id', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
         .where('wear_count', isGreaterThan: 0)
         .snapshots();
   }
@@ -72,6 +74,24 @@ class _CalendarScreenState extends State<CalendarScreen> {
         child: StreamBuilder<QuerySnapshot>(
           stream: _outfitsStream,
           builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              debugPrint("Calendar Error: ${snapshot.error}");
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Text(
+                    "Database Index Error.\nCheck your debug console for a direct link to create the required Firestore index.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              );
+            }
+
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
             final Map<DateTime, List<Map<String, dynamic>>> groupedOutfits = {};
 
             if (snapshot.hasData) {

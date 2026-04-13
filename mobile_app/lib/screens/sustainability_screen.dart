@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mobile_app/screens/clothing_detail_screen.dart';
 
@@ -18,7 +19,10 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
   @override
   void initState() {
     super.initState();
-    _clothingStream = _firestore.collection('clothing').snapshots();
+    _clothingStream = _firestore
+        .collection('clothing')
+        .where('userId', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
+        .snapshots();
   }
 
   // Robust image fetching helper

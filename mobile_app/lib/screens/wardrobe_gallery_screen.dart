@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:mobile_app/services/firebase_service.dart';
 import 'package:mobile_app/screens/add_clothing_screen.dart';
 import 'package:mobile_app/screens/clothing_detail_screen.dart';
 
@@ -24,8 +25,10 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
   @override
   void initState() {
     super.initState();
+    final currentUserId = FirebaseService().currentUser?.uid;
     _clothingStream = _firestore
         .collection('clothing')
+        .where('userId', isEqualTo: currentUserId)
         .orderBy('createdAt', descending: true)
         .snapshots();
   }

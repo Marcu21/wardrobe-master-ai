@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../widgets/save_outfit_dialog.dart';
 
@@ -43,7 +44,10 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
 
   Future<void> _fetchClothingItems() async {
     try {
-      final snapshot = await FirebaseFirestore.instance.collection('clothing').get();
+      final snapshot = await FirebaseFirestore.instance
+          .collection('clothing')
+          .where('userId', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
+          .get();
 
       // Temporary lists
       final List<Map<String, dynamic>> newOuterwear = [];

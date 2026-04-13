@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../services/firebase_service.dart';
 import 'outfit_detail_screen.dart';
@@ -25,6 +26,7 @@ class LookbookScreen extends StatelessWidget {
         child:StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('outfits')
+            .where('user_id', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
             .orderBy('created_at', descending: true)
             .snapshots(),
         builder: (context, snapshot) {

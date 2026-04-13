@@ -118,9 +118,14 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
       ),
       builder: (BuildContext context) {
         return Container(
-          padding: const EdgeInsets.all(20),
-          height: 180,
+          padding: EdgeInsets.only(
+            top: 20,
+            left: 20,
+            right: 20,
+            bottom: 20 + MediaQuery.of(context).padding.bottom,
+          ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 isTag ? 'Select Tag Photo' : 'Select Item Photo',

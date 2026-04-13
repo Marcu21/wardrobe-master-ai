@@ -5,10 +5,97 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
 
 class FirebaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  User? get currentUser => _auth.currentUser;
+
+  Future<UserCredential?> signInWithGoogle() async {
+    try {
+      // Trigger the authentication flow
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+
+      // Obtain the auth details from the request
+      final GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
+
+      if (googleAuth == null) {
+        return null;
+      }
+
+      // Create a new credential
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Once signed in, return the UserCredential
+      return await _auth.signInWithCredential(credential);
+    } catch (e) {
+      debugPrint("Error signing in with Google: $e");
+      return null;
+    }
+  }
+
+  Future<UserCredential?> signUpWithEmail({required String email, required String password, required String name}) async {
+    try {
+      final userCredential = await _auth.createUserWithEmailAndPassword(email: email, password: password);
+      if (userCredential.user != null) {
+        await _firestore.collection('users').doc(userCredential.user!.uid).set({
+          'name': name,
+          'email': email,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      String errorMessage = 'An error occurred during sign up.';
+      if (e.code == 'weak-password') {
+        errorMessage = 'The password provided is too weak.';
+      } else if (e.code == 'email-already-in-use') {
+        errorMessage = 'The account already exists for that email.';
+      } else if (e.code == 'invalid-email') {
+        errorMessage = 'The email address is not valid.';
+      }
+      throw Exception(errorMessage);
+    } catch (e) {
+      throw Exception('An unexpected error occurred: $e');
+    }
+  }
+
+  Future<UserCredential?> signInWithEmail({required String email, required String password}) async {
+    try {
+      return await _auth.signInWithEmailAndPassword(email: email, password: password);
+    } on FirebaseAuthException catch (e) {
+      String errorMessage = 'An error occurred during sign in.';
+      if (e.code == 'user-not-found') {
+        errorMessage = 'No user found for that email.';
+      } else if (e.code == 'wrong-password') {
+        errorMessage = 'Wrong password provided for that user.';
+      } else if (e.code == 'invalid-credential') {
+        errorMessage = 'Invalid email or password.';
+      } else if (e.code == 'invalid-email') {
+        errorMessage = 'The email address is not valid.';
+      }
+      throw Exception(errorMessage);
+    } catch (e) {
+      throw Exception('An unexpected error occurred: $e');
+    }
+  }
+
+  Future<void> signOut() async {
+    try {
+      await GoogleSignIn().signOut();
+      await _auth.signOut();
+    } catch (e) {
+      debugPrint("Error signing out: $e");
+    }
+  }
 
   Future<String?> uploadImageToStorage(Uint8List imageBytes, String folderName) async {
     try {
@@ -35,6 +122,7 @@ class FirebaseService {
     Map<String, dynamic> itemData = {
       'imageUrl': imageUrl,
       'createdAt': FieldValue.serverTimestamp(),
+      'userId': _auth.currentUser?.uid,
       ...metadata,
     };
 
@@ -124,7 +212,7 @@ class FirebaseService {
       final data = {
         ...outfitData,
         'created_at': FieldValue.serverTimestamp(),
-        'user_id': 'test_user', // Hardcoded for now as requested
+        'user_id': _auth.currentUser?.uid ?? 'unknown_user',
       };
 
       await _firestore.collection('outfits').add(data);

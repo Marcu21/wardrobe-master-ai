@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'package:mobile_app/screens/main_navigation.dart';
+import 'package:mobile_app/screens/auth_wrapper.dart';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -39,7 +39,7 @@ class WardrobeApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MainNavigation(),
+      home: const AuthWrapper(),
     );
   }
 }

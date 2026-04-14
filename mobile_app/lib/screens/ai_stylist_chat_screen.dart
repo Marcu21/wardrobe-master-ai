@@ -5,6 +5,8 @@ import '../services/api_service.dart';
 import '../services/firebase_service.dart';
 import '../services/weather_service.dart';
 import '../widgets/save_outfit_dialog.dart';
+import '../services/wardrobe_state_service.dart';
+import '../widgets/global_wardrobe_selector.dart';
 
 class ChatMessage {
   final String role; // 'user' or 'ai'
@@ -82,6 +84,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
         userPrompt: text,
         currentWeather: currentWeatherStr,
         hourlyForecast: hourlyForecastStr,
+        wardrobeId: wardrobeStateService.activeWardrobeId,
       );
 
       final explanation = response['explanation'] as String;
@@ -362,6 +365,9 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: const BackButton(color: Colors.black),
+        actions: const [
+          GlobalWardrobeSelector(isActionItem: true),
+        ],
       ),
       body: Column(
         children: [
@@ -401,36 +407,42 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                   ),
                 ],
               ),
-              child: Row(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: TextField(
-                        controller: _controller,
-                        textCapitalization: TextCapitalization.sentences,
-                        decoration: const InputDecoration(
-                          hintText: "Type your plans...",
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: TextField(
+                            controller: _controller,
+                            textCapitalization: TextCapitalization.sentences,
+                            decoration: const InputDecoration(
+                              hintText: "Type your plans...",
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                            ),
+                            onSubmitted: _sendMessage,
+                          ),
                         ),
-                        onSubmitted: _sendMessage,
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.black,
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_upward_rounded, color: Colors.white), // Icons.send replacement
-                      onPressed: () => _sendMessage(_controller.text),
-                    ),
+                      const SizedBox(width: 8),
+                      Container(
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.black,
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.arrow_upward_rounded, color: Colors.white), // Icons.send replacement
+                          onPressed: () => _sendMessage(_controller.text),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -440,6 +452,8 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
       ),
     );
   }
+
+
 
   Widget _buildChatImageThumbnail(Map<String, dynamic> item) {
     final imageBase64 = item['image_base64'] as String?;

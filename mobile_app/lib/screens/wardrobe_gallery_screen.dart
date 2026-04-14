@@ -6,6 +6,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mobile_app/services/firebase_service.dart';
 import 'package:mobile_app/screens/add_clothing_screen.dart';
 import 'package:mobile_app/screens/clothing_detail_screen.dart';
+import 'package:mobile_app/services/wardrobe_state_service.dart';
+import '../widgets/global_wardrobe_selector.dart';
 
 class WardrobeGalleryScreen extends StatefulWidget {
   const WardrobeGalleryScreen({super.key});
@@ -25,12 +27,35 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
   @override
   void initState() {
     super.initState();
+    wardrobeStateService.addListener(_onWardrobeChanged);
+    _updateStream();
+  }
+
+  @override
+  void dispose() {
+    wardrobeStateService.removeListener(_onWardrobeChanged);
+    super.dispose();
+  }
+
+  void _onWardrobeChanged() {
+    setState(() {
+      _updateStream();
+    });
+  }
+
+  void _updateStream() {
     final currentUserId = FirebaseService().currentUser?.uid;
-    _clothingStream = _firestore
+    var query = _firestore
         .collection('clothing')
         .where('userId', isEqualTo: currentUserId)
-        .orderBy('createdAt', descending: true)
-        .snapshots();
+        .orderBy('createdAt', descending: true);
+        
+    final activeId = wardrobeStateService.activeWardrobeId;
+    if (activeId != null) {
+      query = query.where('wardrobe_id', isEqualTo: activeId);
+    }
+    
+    _clothingStream = query.snapshots();
   }
 
   @override
@@ -38,10 +63,7 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text(
-          'My Wardrobe', 
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)
-        ),
+        title: const GlobalWardrobeSelector(),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
@@ -163,6 +185,8 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
       ),
     );
   }
+
+
 
   Widget _buildFilterRow(List<String> items, String selectedItem, Function(String) onSelected, {bool isSecondary = false}) {
     return SizedBox(

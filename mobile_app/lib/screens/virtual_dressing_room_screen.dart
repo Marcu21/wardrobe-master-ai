@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../widgets/save_outfit_dialog.dart';
+import '../widgets/global_wardrobe_selector.dart';
+import '../services/wardrobe_state_service.dart';
 
 class VirtualDressingRoomScreen extends StatefulWidget {
   final List<String>? initialItemIds;
@@ -39,15 +41,31 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
   @override
   void initState() {
     super.initState();
+    wardrobeStateService.addListener(_onWardrobeChanged);
+    _fetchClothingItems();
+  }
+
+  @override
+  void dispose() {
+    wardrobeStateService.removeListener(_onWardrobeChanged);
+    super.dispose();
+  }
+
+  void _onWardrobeChanged() {
     _fetchClothingItems();
   }
 
   Future<void> _fetchClothingItems() async {
     try {
-      final snapshot = await FirebaseFirestore.instance
+      var query = FirebaseFirestore.instance
           .collection('clothing')
-          .where('userId', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
-          .get();
+          .where('userId', isEqualTo: FirebaseAuth.instance.currentUser?.uid);
+
+      if (wardrobeStateService.activeWardrobeId != null) {
+        query = query.where('wardrobe_id', isEqualTo: wardrobeStateService.activeWardrobeId);
+      }
+
+      final snapshot = await query.get();
 
       // Temporary lists
       final List<Map<String, dynamic>> newOuterwear = [];
@@ -277,9 +295,10 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Dressing Room", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+        title: const GlobalWardrobeSelector(),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        centerTitle: false,
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           IconButton(
@@ -289,7 +308,7 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
           IconButton(
             icon: const Icon(Icons.check, color: Colors.black),
             onPressed: _saveOutfit,
-          )
+          ),
         ],
       ),
       body: SafeArea(

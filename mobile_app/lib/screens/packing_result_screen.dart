@@ -7,6 +7,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import '../services/packing_service.dart';
 import '../services/weather_service.dart';
+import '../services/wardrobe_state_service.dart';
 
 class PackingResultScreen extends StatefulWidget {
   final String destination;
@@ -54,12 +55,18 @@ class _PackingResultScreenState extends State<PackingResultScreen> {
         days: widget.days,
         vibe: widget.vibe,
         weatherForecast: weatherSummary,
+        wardrobeId: wardrobeStateService.activeWardrobeId,
       );
 
-      final snapshot = await _firestore
+      var query = _firestore
           .collection('clothing')
-          .where('userId', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
-          .get();
+          .where('userId', isEqualTo: FirebaseAuth.instance.currentUser?.uid);
+
+      if (wardrobeStateService.activeWardrobeId != null) {
+        query = query.where('wardrobe_id', isEqualTo: wardrobeStateService.activeWardrobeId);
+      }
+
+      final snapshot = await query.get();
       // Filter locally to avoid 10-item limit of 'whereIn'
       final items = snapshot.docs
           .where((doc) => wardrobe.selectedItemIds.contains(doc.id))

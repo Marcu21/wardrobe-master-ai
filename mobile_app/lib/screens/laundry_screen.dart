@@ -5,6 +5,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mobile_app/services/laundry_service.dart';
+import 'package:mobile_app/services/laundry_service.dart';
+import 'package:mobile_app/services/wardrobe_state_service.dart';
+import '../widgets/global_wardrobe_selector.dart';
 
 class LaundryScreen extends StatefulWidget {
   const LaundryScreen({super.key});
@@ -31,6 +34,11 @@ class _LaundryScreenState extends State<LaundryScreen> {
   @override
   void initState() {
     super.initState();
+    wardrobeStateService.addListener(_onWardrobeChanged);
+    _listenToWardrobe();
+  }
+
+  void _onWardrobeChanged() {
     _listenToWardrobe();
   }
 
@@ -46,9 +54,18 @@ class _LaundryScreenState extends State<LaundryScreen> {
       return;
     }
 
-    _wardrobeSubscription = _firestore
+    _wardrobeSubscription?.cancel(); // Cancel any existing subscription
+
+    var query = _firestore
         .collection('clothing')
-        .where('userId', isEqualTo: currentUser.uid)
+        .where('userId', isEqualTo: currentUser.uid);
+
+    final activeId = wardrobeStateService.activeWardrobeId;
+    if (activeId != null) {
+      query = query.where('wardrobe_id', isEqualTo: activeId);
+    }
+
+    _wardrobeSubscription = query
         .snapshots()
         .listen((snapshot) {
       
@@ -111,6 +128,7 @@ class _LaundryScreenState extends State<LaundryScreen> {
 
   @override
   void dispose() {
+    wardrobeStateService.removeListener(_onWardrobeChanged);
     _wardrobeSubscription?.cancel();
     super.dispose();
   }
@@ -371,8 +389,11 @@ class _LaundryScreenState extends State<LaundryScreen> {
               backgroundColor: Colors.transparent,
               elevation: 0,
               centerTitle: true,
-              iconTheme: IconThemeData(color: Colors.black),
-              title: Text('Smart Laundry', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+              iconTheme: const IconThemeData(color: Colors.black),
+              title: const Text('Smart Laundry', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+              actions: const [
+                GlobalWardrobeSelector(isActionItem: true),
+              ],
             ),
 
             // 2. Sticky Status Header

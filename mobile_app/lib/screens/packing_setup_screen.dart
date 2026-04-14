@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../services/weather_service.dart';
 import '../services/packing_service.dart';
+import '../widgets/global_wardrobe_selector.dart';
 import 'packing_result_screen.dart';
 
 class PackingSetupScreen extends StatefulWidget {
@@ -97,6 +98,9 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
           ),
         ),
         iconTheme: const IconThemeData(color: Colors.black87),
+        actions: const [
+          GlobalWardrobeSelector(isActionItem: true),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(

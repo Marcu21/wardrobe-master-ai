@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mobile_app/services/firebase_service.dart';
+import 'package:mobile_app/services/wardrobe_state_service.dart';
 
 class ClothingDetailScreen extends StatefulWidget {
   final Map<String, dynamic> itemData;
@@ -44,6 +45,7 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
 
   bool _isUpdating = false;
   bool _isDeleting = false;
+  String? _currentWardrobeId;
 
   @override
   void initState() {
@@ -56,6 +58,7 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
     final laundry = data['laundry_info'] as Map<String, dynamic>? ?? {};
 
     // --- Initialize Controllers ---
+    _currentWardrobeId = data['wardrobe_id'];
     
     // Basic
     _categoryController = TextEditingController(text: basic['category'] ?? '');
@@ -159,6 +162,43 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
         setState(() {
           _isDeleting = false;
         });
+      }
+    }
+  }
+
+  Future<void> _updateItemWardrobe(String? newWardrobeId) async {
+    final oldWardrobeId = _currentWardrobeId;
+    if (newWardrobeId == oldWardrobeId) return;
+
+    setState(() {
+      _currentWardrobeId = newWardrobeId;
+    });
+
+    try {
+      await FirebaseService().updateItem(widget.itemData['id'], {'wardrobe_id': newWardrobeId});
+      
+      String wardrobeName = "All Wardrobes";
+      if (newWardrobeId != null) {
+        final matches = wardrobeStateService.wardrobes.where((w) => w['id'] == newWardrobeId);
+        if (matches.isNotEmpty) {
+          wardrobeName = matches.first['name'];
+        }
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Item moved to $wardrobeName")),
+        );
+      }
+    } catch (e) {
+      // Revert on failure
+      setState(() {
+        _currentWardrobeId = oldWardrobeId;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error moving item: $e"), backgroundColor: Colors.red),
+        );
       }
     }
   }
@@ -324,6 +364,8 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
                   children: [
                      _buildSectionHeader("Basic Info", Icons.info_outline),
                      _buildCard([
+                       _buildWardrobeDropdown(),
+                       const SizedBox(height: 16),
                        _buildTextField("Category", _categoryController),
                        _buildTextField("Sub Category", _subCategoryController),
                        _buildTextField("Material", _materialController),
@@ -474,6 +516,47 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
        color: Colors.grey[100], 
        child: Center(child: Icon(icon, size: 48, color: Colors.grey[400]))
      );
+  }
+
+  Widget _buildWardrobeDropdown() {
+    return AnimatedBuilder(
+      animation: wardrobeStateService,
+      builder: (context, _) {
+        final wardrobes = wardrobeStateService.wardrobes;
+        
+        bool isCurrentIdValid = _currentWardrobeId == null || wardrobes.any((w) => w['id'] == _currentWardrobeId);
+        final dropdownValue = isCurrentIdValid ? _currentWardrobeId : null;
+
+        return DropdownButtonFormField<String?>(
+          value: dropdownValue,
+          decoration: InputDecoration(
+            labelText: "Location",
+            labelStyle: TextStyle(color: Colors.grey[600], fontSize: 13, fontWeight: FontWeight.w500),
+            floatingLabelBehavior: FloatingLabelBehavior.always,
+            prefixIcon: const Icon(Icons.location_on, color: Colors.black87),
+            border: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
+            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey.shade300)),
+            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 1.5)),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+          ),
+          items: [
+            const DropdownMenuItem<String?>(
+              value: null,
+              child: Text("All Wardrobes"),
+            ),
+            ...wardrobes.map((w) {
+              return DropdownMenuItem<String?>(
+                value: w['id'],
+                child: Text(w['name']),
+              );
+            }).toList(),
+          ],
+          onChanged: (newValue) {
+            _updateItemWardrobe(newValue);
+          },
+        );
+      },
+    );
   }
 
   Widget _buildTextField(String label, TextEditingController controller, {int maxLines = 1, TextInputType? keyboardType, String? hint}) {

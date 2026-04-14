@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:mobile_app/services/api_service.dart';
 import 'package:mobile_app/services/firebase_service.dart';
+import 'package:mobile_app/services/wardrobe_state_service.dart';
 import 'dart:convert';
 
 class AddClothingScreen extends StatefulWidget {
@@ -23,6 +24,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
   File? _tagImage;
   bool _isLoading = false;
   Map<String, dynamic>? _analysisResult;
+  String? _selectedWardrobeId;
 
   // Basic Info Controllers
   final TextEditingController _categoryController = TextEditingController();
@@ -74,6 +76,12 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     _colorGroupController.dispose();
     _maxTempController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedWardrobeId = wardrobeStateService.activeWardrobeId;
   }
 
   // Helpers for list-based fields
@@ -517,6 +525,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
 
         _buildSectionHeader("Basic Info", Icons.info_outline),
         _buildCard([
+          _buildWardrobeDropdown(),
           _buildTextField("Category", _categoryController),
           _buildTextField("Sub Category", _subCategoryController),
           _buildTextField("Material", _materialController),
@@ -627,6 +636,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                 await FirebaseService().saveItem(
                   imageUrl: downloadUrl,
                   metadata: finalMetadata,
+                  wardrobeId: _selectedWardrobeId,
                 );
 
                 // Hide loading
@@ -737,6 +747,52 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         ),
+      ),
+    );
+  }
+
+  Widget _buildWardrobeDropdown() {
+    final wardrobes = wardrobeStateService.wardrobes;
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15.0),
+      child: DropdownButtonFormField<String?>(
+        value: _selectedWardrobeId,
+        decoration: InputDecoration(
+          labelText: 'Wardrobe',
+          filled: true,
+          fillColor: Colors.grey[50], // Match styling from details
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.black, width: 1.5),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        ),
+        items: [
+          const DropdownMenuItem<String?>(
+            value: null,
+            child: Text('All Wardrobes'),
+          ),
+          ...wardrobes.map((w) {
+            return DropdownMenuItem<String?>(
+              value: w['id'],
+              child: Text(w['name']),
+            );
+          }),
+        ],
+        onChanged: (val) {
+          setState(() {
+             _selectedWardrobeId = val;
+          });
+        },
       ),
     );
   }

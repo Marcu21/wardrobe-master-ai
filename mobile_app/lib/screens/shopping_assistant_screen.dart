@@ -92,7 +92,10 @@ class _ShoppingAssistantScreenState extends State<ShoppingAssistantScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Shopping Assistant'),
+        title: const Text(
+          'Shopping Assistant',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: Colors.black, // Depending on overall theme

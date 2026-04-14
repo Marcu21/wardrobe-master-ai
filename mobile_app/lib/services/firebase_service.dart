@@ -114,15 +114,96 @@ class FirebaseService {
     }
   }
 
+  Future<void> createWardrobe(String name) async {
+    try {
+      await _firestore.collection('wardrobes').add({
+        'name': name,
+        'userId': _auth.currentUser?.uid,
+        'is_default': false,
+        'created_at': FieldValue.serverTimestamp(),
+      });
+      debugPrint("Wardrobe created: $name");
+    } catch (e) {
+      debugPrint("Failed to create wardrobe: $e");
+      throw Exception("Failed to create wardrobe: $e");
+    }
+  }
+
+  Future<void> updateWardrobe(String wardrobeId, String newName) async {
+    try {
+      await _firestore.collection('wardrobes').doc(wardrobeId).update({
+        'name': newName,
+      });
+      debugPrint("Wardrobe updated: $wardrobeId");
+    } catch (e) {
+      debugPrint("Failed to update wardrobe: $e");
+      throw Exception("Failed to update wardrobe: $e");
+    }
+  }
+
+  Future<void> deleteWardrobe(String wardrobeId) async {
+    try {
+      // Create a batch
+      final batch = _firestore.batch();
+
+      // Find all clothing items that have this wardrobe_id
+      final clothingSnapshot = await _firestore
+          .collection('clothing')
+          .where('wardrobe_id', isEqualTo: wardrobeId)
+          .get();
+
+      // Update them to have wardrobe_id = null
+      for (var doc in clothingSnapshot.docs) {
+        batch.update(doc.reference, {'wardrobe_id': null});
+      }
+
+      // Delete the wardrobe document itself
+      final wardrobeRef = _firestore.collection('wardrobes').doc(wardrobeId);
+      batch.delete(wardrobeRef);
+
+      // Commit the batch
+      await batch.commit();
+
+      debugPrint("Wardrobe deleted: $wardrobeId");
+    } catch (e) {
+      debugPrint("Failed to delete wardrobe: $e");
+      throw Exception("Failed to delete wardrobe: $e");
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getWardrobes() async {
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) return [];
+
+    try {
+      final querySnapshot = await _firestore
+          .collection('wardrobes')
+          .where('userId', isEqualTo: userId)
+          .orderBy('created_at')
+          .get();
+      
+      return querySnapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    } catch (e) {
+      debugPrint("Failed to get wardrobes: $e");
+      return [];
+    }
+  }
+
   Future<void> saveItem({
     required String imageUrl,
     required Map<String, dynamic> metadata,
+    String? wardrobeId,
   }) async {
     // Prepare data for Firestore
     Map<String, dynamic> itemData = {
       'imageUrl': imageUrl,
       'createdAt': FieldValue.serverTimestamp(),
       'userId': _auth.currentUser?.uid,
+      'wardrobe_id': wardrobeId,
       ...metadata,
     };
 
@@ -136,14 +217,19 @@ class FirebaseService {
     }
   }
 
-  Future<void> updateItem(String docId, Map<String, dynamic> newMetadata) async {
+  Future<void> updateItem(String docId, Map<String, dynamic> newMetadata, {String? wardrobeId}) async {
     try {
       // Create a map to update specific fields without wiping the whole document
       // We assume newMetadata contains the structure for basic_info, styling_info, etc.
       // We might want to flatten it or just merge.
       // Since we are passing the whole structure from the details screen, standard merge is fine.
       
-      await _firestore.collection('clothing').doc(docId).update(newMetadata);
+      Map<String, dynamic> dataToUpdate = Map<String, dynamic>.from(newMetadata);
+      if (wardrobeId != null) {
+        dataToUpdate['wardrobe_id'] = wardrobeId;
+      }
+
+      await _firestore.collection('clothing').doc(docId).update(dataToUpdate);
       debugPrint("Item updated in Firestore: $docId");
     } catch (e) {
       debugPrint("Firestore update failed: $e");

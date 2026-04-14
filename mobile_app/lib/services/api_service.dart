@@ -61,6 +61,7 @@ class ApiService {
     required String currentWeather,
     required String hourlyForecast,
     String? userId,
+    String? wardrobeId,
   }) async {
     final uri = Uri.parse('$baseUrl/generate-outfit/');
     
@@ -73,6 +74,7 @@ class ApiService {
           'current_weather': currentWeather,
           'hourly_forecast': hourlyForecast,
           'user_id': userId ?? FirebaseService().currentUser?.uid ?? 'unknown_user',
+          if (wardrobeId != null) 'wardrobe_id': wardrobeId,
         }),
       );
 

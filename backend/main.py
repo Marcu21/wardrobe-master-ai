@@ -58,6 +58,7 @@ class OutfitRequest(BaseModel):
     current_weather: str
     hourly_forecast: str
     user_id: str
+    wardrobe_id: Optional[str] = None
 
 class OutfitResponse(BaseModel):
     selected_item_ids: List[str]
@@ -81,6 +82,7 @@ class PackingRequest(BaseModel):
     vibe: str
     weather_forecast: str
     user_id: str
+    wardrobe_id: Optional[str] = None
 
 @app.post("/remove-bg/")
 async def remove_background(file: UploadFile = File(...)):
@@ -256,6 +258,8 @@ async def generate_outfit(request: OutfitRequest):
     try:
         # 1. Fetch Clothing Items from Firestore
         clothing_ref = db.collection('clothing').where('userId', '==', request.user_id)
+        if request.wardrobe_id:
+            clothing_ref = clothing_ref.where('wardrobe_id', '==', request.wardrobe_id)
         docs = clothing_ref.stream()
         
         clothing_items = []
@@ -431,6 +435,8 @@ async def generate_packing(request: PackingRequest):
     try:
         # 1. Fetch Clothing Items from Firestore
         clothing_ref = db.collection('clothing').where('userId', '==', request.user_id)
+        if request.wardrobe_id:
+            clothing_ref = clothing_ref.where('wardrobe_id', '==', request.wardrobe_id)
         docs = clothing_ref.stream()
         
         clothing_items = []

@@ -59,6 +59,7 @@ class PackingService {
     required int days,
     required String vibe,
     required String weatherForecast,
+    String? wardrobeId,
   }) async {
     final uri = Uri.parse('$baseUrl/generate-packing/');
     
@@ -72,6 +73,7 @@ class PackingService {
           'vibe': vibe,
           'weather_forecast': weatherForecast,
           'user_id': FirebaseService().currentUser?.uid ?? 'unknown_user',
+          if (wardrobeId != null) 'wardrobe_id': wardrobeId,
         }),
       );
 

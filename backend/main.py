@@ -1,5 +1,5 @@
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI, File, UploadFile, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
@@ -83,6 +83,7 @@ class PackingRequest(BaseModel):
     weather_forecast: str
     user_id: str
     wardrobe_id: Optional[str] = None
+    item_ids_override: Optional[List[str]] = None
 
 @app.post("/remove-bg/")
 async def remove_background(file: UploadFile = File(...)):
@@ -256,6 +257,9 @@ async def generate_outfit(request: OutfitRequest):
        raise HTTPException(status_code=500, detail="Firestore not initialized")
 
     try:
+        now = datetime.now(timezone.utc)
+        seven_days_ago = now - timedelta(days=7)
+
         # 1. Fetch Clothing Items from Firestore
         clothing_ref = db.collection('clothing').where('userId', '==', request.user_id)
         if request.wardrobe_id:
@@ -265,16 +269,41 @@ async def generate_outfit(request: OutfitRequest):
         clothing_items = []
         for doc in docs:
             data = doc.to_dict()
+            
+            category = data.get('basic_info', {}).get('category')
+            sub_category = data.get('basic_info', {}).get('sub_category')
+            
+            days_since = 0
+            last_worn = data.get('last_worn')
+            if isinstance(last_worn, datetime):
+                lw = last_worn if last_worn.tzinfo else last_worn.replace(tzinfo=timezone.utc)
+                days_since = (now - lw).days
+            else:
+                purchase_date_str = data.get('sustainability_info', {}).get('purchase_date')
+                if purchase_date_str:
+                    try:
+                        purchase_date = datetime.strptime(purchase_date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+                        days_since = (now - purchase_date).days
+                    except ValueError:
+                        pass
+            
+            rotation_status = "Recently worn"
+            if category in ['Shoes', 'Footwear', 'Outerwear'] or (sub_category and ('jacket' in sub_category.lower() or 'coat' in sub_category.lower())):
+                rotation_status = "Exempt from rotation"
+            elif days_since > 45:
+                rotation_status = "Neglected - prioritize if weather permits"
+            
             item_summary = {
                 "id": doc.id,
-                "category": data.get('basic_info', {}).get('category'),
-                "sub_category": data.get('basic_info', {}).get('sub_category'),
+                "category": category,
+                "sub_category": sub_category,
                 "primary_colors": data.get('basic_info', {}).get('primary_colors'),
                 "brand": data.get('sustainability_info', {}).get('brand', 'Unknown brand'),
                 "material": data.get('basic_info', {}).get('material'),
                 "fit": data.get('styling_info', {}).get('fit'),
                 "style_occasions": data.get('styling_info', {}).get('style_occasions'),
                 "seasonality": data.get('styling_info', {}).get('seasonality'),
+                "rotation_status": rotation_status,
             }
             clothing_items.append(item_summary)
 
@@ -285,6 +314,38 @@ async def generate_outfit(request: OutfitRequest):
             }
 
         clothing_json = json.dumps(clothing_items)
+        
+        # 2. Fetch Recent Outfits
+        recent_outfits_stream = db.collection('outfits').where('user_id', '==', request.user_id).stream()
+        recent_outfit_ids = []
+        for outfit_doc in recent_outfits_stream:
+            outfit_data = outfit_doc.to_dict()
+            wear_dates = outfit_data.get('wear_dates', [])
+            item_ids = outfit_data.get('item_ids', [])
+            
+            if not item_ids:
+                continue
+                
+            is_recent = False
+            for wear_date in wear_dates:
+                if isinstance(wear_date, datetime):
+                    wd = wear_date if wear_date.tzinfo else wear_date.replace(tzinfo=timezone.utc)
+                    if wd >= seven_days_ago:
+                        is_recent = True
+                        break
+                elif isinstance(wear_date, str):
+                    try:
+                        wd = datetime.fromisoformat(wear_date.replace('Z', '+00:00'))
+                        wd = wd if wd.tzinfo else wd.replace(tzinfo=timezone.utc)
+                        if wd >= seven_days_ago:
+                            is_recent = True
+                            break
+                    except ValueError:
+                        pass
+            if is_recent:
+                recent_outfit_ids.append(item_ids)
+        
+        recent_outfits_json = json.dumps(recent_outfit_ids)
         
         prompt = f"""
         You are an elite personal stylist and wardrobe manager.
@@ -304,6 +365,15 @@ async def generate_outfit(request: OutfitRequest):
         6. COLOR THEORY: Ensure the selected items match aesthetically. Avoid clashing colors. Favor neutral bases (black, white, grey, navy, beige) with maximum one or two accent colors.
         7. VISIBLE VS. HIDDEN LAYERING: If you want to showcase a T-shirt as a key visual part of the outfit, you MUST pair it with an open-front layer (e.g., "Zip-up Hoodie", "Cardigan", "Jacket", "Overshirt"). If you pair a T-shirt with a closed top (e.g., "Pullover Hoodie", "Sweater"), you must treat the T-shirt purely as a hidden thermal base layer in your explanation, not as a visual centerpiece.
 
+        8. CRITICAL AI INSTRUCTION: Be a critical fashion judge. Do not award 100/100 easily. Provide realistic scores. Ensure no tags or jargon arrays are requested or generated.
+
+        ### RECENT HISTORY
+        Recent Outfit IDs: {recent_outfits_json}
+        This is a list of item IDs the user wore together recently. CRITICAL RULE: Do NOT recommend these exact combinations of IDs again. It is PERFECTLY FINE to reuse an individual piece (e.g., you can reuse a Top OR a Bottom from a few days ago), but the WHOLE outfit must not be the same. Specifically, the core combination (Top + Bottom) MUST be different from recent history. EXCEPTION: It is 100% acceptable to reuse the exact same Shoes and Outerwear IDs, just ensure the core outfit (Top + Bottom) underneath is fresh.
+
+        ### WARDROBE ROTATION
+        Look at the 'CLOTHING ITEMS' list. Some items have a 'rotation_status' of 'Neglected'. You MUST prioritize including at least ONE neglected item in your generated outfit, BUT ONLY IF it perfectly matches the weather forecast, the color theory, and the user's plan. Do not force a neglected item if it ruins the outfit.
+
         ### CLOTHING ITEMS
         {clothing_json}
         
@@ -311,6 +381,13 @@ async def generate_outfit(request: OutfitRequest):
         Return ONLY a valid JSON object matching this schema:
         {{
           "selected_item_ids": ["id1", "id2", "id3"],
+          "overall_score": 85,
+          "scores": {{
+            "style_match": 80,
+            "weather_match": 90,
+            "context_match": 85,
+            "color_harmony": 85
+          }},
           "explanation": "Why this outfit works..."
         }}
         """
@@ -441,6 +518,9 @@ async def generate_packing(request: PackingRequest):
         
         clothing_items = []
         for doc in docs:
+            if request.item_ids_override is not None and doc.id not in request.item_ids_override:
+                continue
+
             data = doc.to_dict()
             item_summary = {
                 "id": doc.id,
@@ -470,9 +550,17 @@ async def generate_packing(request: PackingRequest):
         ### WEATHER FORECAST:
         {request.weather_forecast}
         
-        ### USER WARDROBE:
+        ### USER WARDROBE {"(LOCKED TO SPECIFIC ITEMS)" if request.item_ids_override else ""}:
         {clothing_json}
+        """
         
+        if request.item_ids_override:
+            prompt += """
+        CRITICAL: You are provided with a specific list of items that are already in the user's suitcase. You MUST generate the daily outfits using ONLY these items. Do not suggest adding anything else. 
+        If the provided items are insufficient to create complete outfits (e.g., the user removed all pants or shoes), you must include a 'warning_message' field explaining what is missing. Otherwise, leave it as null or omit it.
+        """
+
+        prompt += f"""
         ### INSTRUCTIONS:
         1. Create a "Capsule Wardrobe" from the user's wardrobe. Select a minimal number of highly versatile items that mix and match well.
         2. Ensure the colors coordinate and the materials fit the destination/vibe.
@@ -485,6 +573,7 @@ async def generate_packing(request: PackingRequest):
         {{
           "selected_item_ids": ["id1", "id2", "id3", "id4", "id5"],
           "reasoning": "Explain concisely why you chose this capsule wardrobe for the destination and vibe.",
+          "warning_message": "String warning if essential items are missing, else null.",
           "outfits": [
             {{
               "title": "Day 1: Arrival & Exploring",

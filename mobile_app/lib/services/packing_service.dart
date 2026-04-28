@@ -21,16 +21,26 @@ class TripOutfit {
       itemIds: List<String>.from(json['item_ids'] ?? []),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'description': description,
+      'item_ids': itemIds,
+    };
+  }
 }
 
 class CapsuleWardrobe {
   final List<String> selectedItemIds;
   final String reasoning;
+  final String? warningMessage;
   final List<TripOutfit> outfits;
 
   CapsuleWardrobe({
     required this.selectedItemIds,
     required this.reasoning,
+    this.warningMessage,
     required this.outfits,
   });
 
@@ -43,6 +53,7 @@ class CapsuleWardrobe {
     return CapsuleWardrobe(
       selectedItemIds: List<String>.from(json['selected_item_ids'] ?? []),
       reasoning: json['reasoning'] as String? ?? '',
+      warningMessage: json['warning_message'] as String?,
       outfits: parsedOutfits,
     );
   }
@@ -60,6 +71,7 @@ class PackingService {
     required String vibe,
     required String weatherForecast,
     String? wardrobeId,
+    List<String>? itemIdsOverride,
   }) async {
     final uri = Uri.parse('$baseUrl/generate-packing/');
     
@@ -74,6 +86,7 @@ class PackingService {
           'weather_forecast': weatherForecast,
           'user_id': FirebaseService().currentUser?.uid ?? 'unknown_user',
           if (wardrobeId != null) 'wardrobe_id': wardrobeId,
+          if (itemIdsOverride != null) 'item_ids_override': itemIdsOverride,
         }),
       );
 

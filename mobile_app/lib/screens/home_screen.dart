@@ -4,12 +4,10 @@ import '../services/weather_service.dart';
 import '../services/firebase_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'ai_stylist_chat_screen.dart';
-import 'virtual_dressing_room_screen.dart';
-import 'lookbook_screen.dart';
 import 'calendar_screen.dart';
 import 'sustainability_screen.dart';
 import 'shopping_assistant_screen.dart';
-import 'packing_setup_screen.dart';
+import 'my_trips_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -169,10 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _buildAIStylistCard(),
             const SizedBox(height: 16),
             _buildShoppingAssistantCard(),
-            const SizedBox(height: 24),
-            _buildVirtualDressingRoomCard(),
-            const SizedBox(height: 24),
-            _buildSmartPackingCard(),
+            _buildMyTripsCard(),
             const SizedBox(height: 24),
           ],
         ),
@@ -426,187 +421,120 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSmartPackingCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Smart Packing",
-                      style: TextStyle(
-                        color: Colors.black87,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      "Build a capsule wardrobe for your next trip.",
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.blueAccent.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.card_travel, // Also consider Icons.luggage
-                  color: Colors.blueAccent,
-                  size: 28,
-                ),
+
+  Widget _buildMyTripsCard() {
+  final uid = FirebaseService().currentUser?.uid;
+  
+  return Padding(
+    padding: const EdgeInsets.only(top: 20), 
+    child: StreamBuilder<QuerySnapshot>(
+      stream: uid != null
+          ? FirebaseFirestore.instance
+              .collection('trips')
+              .where('user_id', isEqualTo: uid)
+              .snapshots()
+          : const Stream.empty(),
+      builder: (context, snapshot) {
+        final hasTrips = snapshot.hasData && snapshot.data!.docs.isNotEmpty;
+
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blue.shade50, Colors.white],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.blueAccent.withValues(alpha: 0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
               ),
             ],
+            border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.2)),
           ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () {
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const PackingSetupScreen()),
+                  MaterialPageRoute(builder: (_) => const MyTripsScreen()),
                 );
               },
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.blueAccent),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text(
-                "Plan a Trip",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.blueAccent,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVirtualDressingRoomCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Stack(
                 children: [
-                  Text(
-                    "Dressing Room",
-                    style: TextStyle(
-                      color: Colors.black87,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                  Positioned(
+                    right: -10,
+                    bottom: -10,
+                    child: Icon(
+                      Icons.luggage,
+                      size: 100,
+                      color: Colors.blueAccent.withValues(alpha: 0.03),
                     ),
                   ),
-                  SizedBox(height: 4),
-                  Text(
-                    "Mix & match your own outfit",
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14,
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Smart Packing",
+                                style: TextStyle(
+                                  color: Colors.blueAccent,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                "Plan your travel outfits with AI-powered capsule wardrobes.",
+                                style: TextStyle(
+                                  color: Colors.blueAccent.shade700.withValues(alpha: 0.8),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.blueAccent.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: const Icon(
+                            Icons.luggage_rounded,
+                            color: Colors.blueAccent,
+                            size: 28,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.deepPurple.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.checkroom,
-                  color: Colors.deepPurple,
-                  size: 28,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const VirtualDressingRoomScreen()),
-                );
-              },
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.deepPurple),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text(
-                "Enter Dressing Room",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.deepPurple,
-                ),
-              ),
             ),
           ),
-        ],
-      ),
-    );
-  }
+        );
+      },
+    ),
+  );
+}
+
 
 
 }
+
+
 
 class DynamicWeatherCard extends StatelessWidget {
   final WeatherModel? weather;

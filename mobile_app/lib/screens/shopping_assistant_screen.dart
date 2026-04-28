@@ -98,7 +98,7 @@ class _ShoppingAssistantScreenState extends State<ShoppingAssistantScreen> {
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: Colors.black, // Depending on overall theme
+        foregroundColor: Colors.black,
       ),
       backgroundColor: Colors.grey[50],
       body: SafeArea(

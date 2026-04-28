@@ -292,7 +292,7 @@ class FirebaseService {
       return [];
     }
   }
-  Future<void> saveOutfit(Map<String, dynamic> outfitData) async {
+  Future<String> saveOutfit(Map<String, dynamic> outfitData) async {
     try {
       // Ensure required fields are present
       final data = {
@@ -301,11 +301,86 @@ class FirebaseService {
         'user_id': _auth.currentUser?.uid ?? 'unknown_user',
       };
 
-      await _firestore.collection('outfits').add(data);
-      debugPrint("Outfit saved to Firestore");
+      final docRef = await _firestore.collection('outfits').add(data);
+      debugPrint("Outfit saved to Firestore: ${docRef.id}");
+      return docRef.id;
     } catch (e) {
       debugPrint("Failed to save outfit: $e");
       throw Exception("Failed to save outfit: $e");
+    }
+  }
+
+  Future<void> logWearExistingOutfit(String outfitId, List<String> itemIds) async {
+    try {
+      final batch = _firestore.batch();
+      
+      // Update outfit document
+      final outfitRef = _firestore.collection('outfits').doc(outfitId);
+      batch.update(outfitRef, {
+        'wear_count': FieldValue.increment(1),
+        'wear_dates': FieldValue.arrayUnion([Timestamp.now()]),
+      });
+
+      // Update each item in the clothing collection
+      for (final itemId in itemIds) {
+        final itemRef = _firestore.collection('clothing').doc(itemId);
+        batch.update(itemRef, {
+          'last_worn': FieldValue.serverTimestamp(),
+        });
+      }
+
+      await batch.commit();
+      debugPrint("Outfit wear logged for: $outfitId");
+    } catch (e) {
+      debugPrint("Failed to log wear for outfit: $e");
+      throw Exception("Failed to log wear for outfit: $e");
+    }
+  }
+
+  Future<String> saveTrip({
+    required String name,
+    required String destination,
+    required List<String> itemIds,
+    required List<Map<String, dynamic>> outfits,
+    required String reasoning,
+    required String vibe,
+  }) async {
+    try {
+      final data = {
+        'name': name,
+        'destination': destination,
+        'item_ids': itemIds,
+        'outfits': outfits,
+        'reasoning': reasoning,
+        'vibe': vibe,
+        'created_at': FieldValue.serverTimestamp(),
+        'user_id': _auth.currentUser?.uid ?? 'unknown_user',
+      };
+
+      final docRef = await _firestore.collection('trips').add(data);
+      debugPrint("Trip saved to Firestore: ${docRef.id}");
+      return docRef.id;
+    } catch (e) {
+      debugPrint("Failed to save trip: $e");
+      throw Exception("Failed to save trip: $e");
+    }
+  }
+
+  Future<void> updateTrip(String tripId, List<String> itemIds, List<Map<String, dynamic>> outfits, String reasoning, {String? vibe}) async {
+    try {
+      final updates = <String, dynamic>{
+        'item_ids': itemIds,
+        'outfits': outfits,
+        'reasoning': reasoning,
+      };
+      if (vibe != null) {
+        updates['vibe'] = vibe;
+      }
+      await _firestore.collection('trips').doc(tripId).update(updates);
+      debugPrint("Trip updated: $tripId");
+    } catch (e) {
+      debugPrint("Failed to update trip: $e");
+      throw Exception("Failed to update trip: $e");
     }
   }
 }

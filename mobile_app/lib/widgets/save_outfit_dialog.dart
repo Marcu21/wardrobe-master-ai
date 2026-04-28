@@ -1,21 +1,27 @@
 
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/firebase_service.dart';
+import '../services/calendar_service.dart';
 
 class SaveOutfitDialog extends StatefulWidget {
   final List<String> itemIds;
   final bool isAiGenerated;
+  final bool isWearAction;
+  final String? existingOutfitId;
 
   const SaveOutfitDialog({
     Key? key,
     required this.itemIds,
     required this.isAiGenerated,
+    this.isWearAction = false,
+    this.existingOutfitId,
   }) : super(key: key);
 
-  static Future<void> show(BuildContext context, {required List<String> itemIds, required bool isAiGenerated}) {
-    return showDialog(
+  static Future<String?> show(BuildContext context, {required List<String> itemIds, required bool isAiGenerated, bool isWearAction = false, String? existingOutfitId}) {
+    return showDialog<String>(
       context: context,
-      builder: (context) => SaveOutfitDialog(itemIds: itemIds, isAiGenerated: isAiGenerated),
+      builder: (context) => SaveOutfitDialog(itemIds: itemIds, isAiGenerated: isAiGenerated, isWearAction: isWearAction, existingOutfitId: existingOutfitId),
     );
   }
 
@@ -47,17 +53,51 @@ class _SaveOutfitDialogState extends State<SaveOutfitDialog> {
     });
 
     try {
-      await FirebaseService().saveOutfit({
-        'name': _nameController.text.trim(),
+      final name = _nameController.text.trim();
+      final outfitData = {
+        'name': name,
         'item_ids': widget.itemIds,
         'rating': _rating.toDouble(),
         'is_ai_generated': widget.isAiGenerated,
-      });
+        'created_by': widget.isAiGenerated ? 'AI Stylist' : 'User',
+      };
+
+      if (widget.isWearAction) {
+        outfitData['wear_count'] = 1;
+        outfitData['wear_dates'] = [Timestamp.now()];
+      }
+
+      String outfitId;
+      if (widget.existingOutfitId != null && widget.isWearAction) {
+         // If already saved and now we just want to wear it, we could just log wear. 
+         // But the user's prompt explicitly asks to "save the outfit to Firestore" with the dialog fields.
+         // We will just do a save/update. Actually, let's just save it. Wait, if it exists, maybe we update?
+         // Let's just follow the prompt perfectly: "save the outfit to Firestore".
+         // For safety and to avoid duplicate creation from the dialog if existingOutfitId is provided,
+         // we update the existing doc.
+         outfitId = widget.existingOutfitId!;
+         await FirebaseFirestore.instance.collection('outfits').doc(outfitId).update(outfitData);
+      } else {
+         outfitId = await FirebaseService().saveOutfit(outfitData);
+      }
+
+      if (widget.isWearAction) {
+        // Update clothing collection items' last_worn
+        final batch = FirebaseFirestore.instance.batch();
+        for (final itemId in widget.itemIds) {
+          final itemRef = FirebaseFirestore.instance.collection('clothing').doc(itemId);
+          batch.update(itemRef, {'last_worn': FieldValue.serverTimestamp()});
+        }
+        await batch.commit();
+
+        // Calendar Service
+        await CalendarService().addOutfitEvent(name, DateTime.now());
+      }
 
       if (mounted) {
-        Navigator.of(context).pop(); // Close dialog
+        Navigator.of(context).pop(outfitId); // Close dialog and return ID
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Outfit saved successfully!')),
+          SnackBar(content: Text(widget.isWearAction ? 'Outfit logged as worn and saved to your collection!' : 'Outfit saved successfully!')),
         );
       }
     } catch (e) {
@@ -78,7 +118,7 @@ class _SaveOutfitDialogState extends State<SaveOutfitDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Save this Look'),
+      title: Text(widget.isWearAction ? 'Wear this Look' : 'Save this Look'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -139,7 +179,7 @@ class _SaveOutfitDialogState extends State<SaveOutfitDialog> {
                   height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Save'),
+              : Text(widget.isWearAction ? 'Wear' : 'Save'),
         ),
       ],
     );

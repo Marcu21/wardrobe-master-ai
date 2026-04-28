@@ -1,24 +1,35 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/api_service.dart';
 import '../services/firebase_service.dart';
 import '../services/weather_service.dart';
 import '../widgets/save_outfit_dialog.dart';
 import '../services/wardrobe_state_service.dart';
 import '../widgets/global_wardrobe_selector.dart';
+import '../services/calendar_service.dart';
 
 class ChatMessage {
   final String role; // 'user' or 'ai'
   final String text;
   final bool isOutfit;
   final List<Map<String, dynamic>>? outfitItems; // Loaded clothing items
+  String? savedOutfitId; // Track if this specific message's outfit was saved
+  bool isLoggingWear; // Track loading state for this message
+
+  final int? overallScore;
+  final Map<String, dynamic>? scores;
 
   ChatMessage({
     required this.role,
     required this.text,
     this.isOutfit = false,
     this.outfitItems,
+    this.savedOutfitId,
+    this.isLoggingWear = false,
+    this.overallScore,
+    this.scores,
   });
 }
 
@@ -51,6 +62,114 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
       }
     });
   }
+  Color _getScoreColor(num score) {
+    if (score >= 80) return Colors.green;
+    if (score >= 60) return Colors.orange;
+    return Colors.red;
+  }
+
+  void _showScoreDetails(BuildContext context, Map<String, dynamic> scores) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          bottom: true,
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Drag handle
+                Container(
+                  width: 40,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "Score Details",
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ...scores.entries.map((entry) {
+                  final key = entry.key;
+                  final num value = entry.value as num;
+                  
+                  String title = "";
+                  IconData iconData = Icons.star_outline;
+                  
+                  if (key == 'style_match') {
+                    title = "Style Match";
+                    iconData = Icons.checkroom;
+                  } else if (key == 'weather_match') {
+                    title = "Weather Match";
+                    iconData = Icons.wb_sunny_outlined;
+                  } else if (key == 'context_match') {
+                    title = "Context Match";
+                    iconData = Icons.place_outlined;
+                  } else if (key == 'color_harmony') {
+                    title = "Color Harmony";
+                    iconData = Icons.palette_outlined;
+                  } else {
+                    title = key.split('_').map((word) => word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1)}' : '').join(' ');
+                  }
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 20.0),
+                    child: Row(
+                      children: [
+                        Icon(iconData, size: 20, color: Colors.grey.shade700),
+                        const SizedBox(width: 12),
+                        SizedBox(
+                          width: 110,
+                          child: Text(
+                            title,
+                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: LinearProgressIndicator(
+                              value: value / 100,
+                              backgroundColor: Colors.grey.withOpacity(0.2),
+                              color: _getScoreColor(value),
+                              minHeight: 10,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        SizedBox(
+                          width: 45,
+                          child: Text(
+                            '${value.toInt()}%',
+                            textAlign: TextAlign.right,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
 
   Future<void> _sendMessage(String text) async {
     if (text.trim().isEmpty) return;
@@ -89,6 +208,8 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
 
       final explanation = response['explanation'] as String;
       final selectedIds = List<String>.from(response['selected_item_ids'] ?? []);
+      final overallScore = response['overall_score'] as int?;
+      final scores = response['scores'] as Map<String, dynamic>?;
 
       // 3. Fetch Outfit Details (Images)
       List<Map<String, dynamic>> outfitItems = [];
@@ -107,6 +228,8 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
               text: explanation, 
               isOutfit: true,
               outfitItems: outfitItems,
+              overallScore: overallScore,
+              scores: scores,
             ));
           } else {
              // Fallback if no items found but we have an explanation
@@ -227,10 +350,52 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Score Header
+              if (message.overallScore != null)
+                Padding(
+                  padding: const EdgeInsets.only(left: 12, right: 4, top: 12),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            CircularProgressIndicator(
+                              value: message.overallScore! / 100,
+                              backgroundColor: Colors.grey.shade200,
+                              color: _getScoreColor(message.overallScore!),
+                              strokeWidth: 4,
+                            ),
+                            Center(
+                              child: Text(
+                                '${message.overallScore}%',
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        "Outfit Score",
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      const Spacer(),
+                      if (message.scores != null)
+                        IconButton(
+                          icon: const Icon(Icons.info_outline, color: Colors.grey),
+                          onPressed: () => _showScoreDetails(context, message.scores!),
+                        ),
+                    ],
+                  ),
+                ),
+
               // Explanation Text
               if (message.text.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.only(left: 12, right: 12, top: 8, bottom: 12),
                   child: Text(
                     message.text,
                     style: const TextStyle(fontSize: 14, color: Colors.black87),
@@ -276,7 +441,13 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                         onPressed: () {
                           List<String> ids = items.map((e) => e['id'].toString()).toList();
                           if (ids.isNotEmpty) {
-                            SaveOutfitDialog.show(context, itemIds: ids, isAiGenerated: true);
+                            SaveOutfitDialog.show(context, itemIds: ids, isAiGenerated: true).then((outfitId) {
+                               if (outfitId != null && mounted) {
+                                 setState(() {
+                                   message.savedOutfitId = outfitId;
+                                 });
+                               }
+                            });
                           } else {
                              ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text("No items to save.")),
@@ -294,13 +465,31 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () {
-                           // TODO: Implement Log Wear
-                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Outfit logged as worn! (Coming Soon)")),
-                          );
+                        onPressed: message.isLoggingWear ? null : () {
+                           List<String> ids = items.map((e) => e['id'].toString()).toList();
+                           if (ids.isNotEmpty) {
+                             SaveOutfitDialog.show(
+                               context, 
+                               itemIds: ids, 
+                               isAiGenerated: true,
+                               isWearAction: true,
+                               existingOutfitId: message.savedOutfitId,
+                             ).then((outfitId) {
+                               if (outfitId != null && mounted) {
+                                 setState(() {
+                                   message.savedOutfitId = outfitId;
+                                 });
+                               }
+                             });
+                           } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                 const SnackBar(content: Text("No items to wear.")),
+                              );
+                           }
                         },
-                        icon: const Icon(Icons.checkroom, size: 18),
+                        icon: message.isLoggingWear 
+                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                            : const Icon(Icons.checkroom, size: 18),
                         label: const Text("Wear"),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.green,

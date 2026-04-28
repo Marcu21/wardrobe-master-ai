@@ -1,0 +1,409 @@
+import 'dart:convert';
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../services/wardrobe_state_service.dart';
+
+class ItemSelectionScreen extends StatefulWidget {
+  final List<String> initialSelectedIds;
+
+  const ItemSelectionScreen({
+    super.key,
+    required this.initialSelectedIds,
+  });
+
+  @override
+  State<ItemSelectionScreen> createState() => _ItemSelectionScreenState();
+}
+
+class _ItemSelectionScreenState extends State<ItemSelectionScreen> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  StreamSubscription<QuerySnapshot>? _wardrobeSubscription;
+
+  List<Map<String, dynamic>> _allWardrobeItems = [];
+  Set<String> _selectedIds = {};
+
+  String _selectedCategory = 'All';
+  String _selectedSubCategory = 'All';
+
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIds = Set.from(widget.initialSelectedIds);
+    wardrobeStateService.addListener(_onWardrobeChanged);
+    _listenToWardrobe();
+  }
+
+  void _onWardrobeChanged() {
+    _listenToWardrobe();
+  }
+
+  void _listenToWardrobe() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'User not logged in.';
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
+    _wardrobeSubscription?.cancel();
+
+    var query = _firestore
+        .collection('clothing')
+        .where('userId', isEqualTo: currentUser.uid);
+
+    final activeId = wardrobeStateService.activeWardrobeId;
+    if (activeId != null) {
+      query = query.where('wardrobe_id', isEqualTo: activeId);
+    }
+
+    _wardrobeSubscription = query.snapshots().listen((snapshot) {
+      final items = snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+
+      if (mounted) {
+        setState(() {
+          _allWardrobeItems = items;
+          _isLoading = false;
+        });
+      }
+    }, onError: (error) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Failed to load wardrobe. ${error.toString()}';
+          _isLoading = false;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    wardrobeStateService.removeListener(_onWardrobeChanged);
+    _wardrobeSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _toggleSelection(String id) {
+    setState(() {
+      if (_selectedIds.contains(id)) {
+        _selectedIds.remove(id);
+      } else {
+        _selectedIds.add(id);
+      }
+    });
+  }
+
+  Widget _buildImageWidget(String? imageUrl) {
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      if (imageUrl.startsWith('http')) {
+        return CachedNetworkImage(
+          imageUrl: imageUrl,
+          fit: BoxFit.contain,
+          placeholder: (context, url) => Container(
+            color: Colors.grey[100],
+            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          ),
+          errorWidget: (context, url, error) => Container(
+            color: Colors.grey[200],
+            child: const Icon(Icons.broken_image),
+          ),
+        );
+      } else if (imageUrl.startsWith('data:image')) {
+        final base64String = imageUrl.split(',').last;
+        try {
+          return Image.memory(
+            base64Decode(base64String),
+            fit: BoxFit.contain,
+          );
+        } catch (e) {
+          return Container(color: Colors.grey[200], child: const Icon(Icons.broken_image));
+        }
+      } else {
+        try {
+          return Image.memory(
+            base64Decode(imageUrl),
+            fit: BoxFit.contain,
+          );
+        } catch (e) {
+          return Container(color: Colors.grey[200], child: const Icon(Icons.image));
+        }
+      }
+    }
+    return Container(color: Colors.grey[200], child: const Icon(Icons.checkroom));
+  }
+
+  Widget _buildFiltersWidget() {
+    final Set<String> categories = {'All'};
+    for (var doc in _allWardrobeItems) {
+      final cat = doc['basic_info']?['category'] as String?;
+      if (cat != null && cat.isNotEmpty) {
+        categories.add(cat);
+      }
+    }
+    final categoryList = categories.toList()..sort();
+    categoryList.remove('All');
+    categoryList.insert(0, 'All');
+
+    if (!categories.contains(_selectedCategory)) {
+      _selectedCategory = 'All';
+    }
+
+    final Set<String> subCategories = {'All'};
+    if (_selectedCategory != 'All') {
+      for (var doc in _allWardrobeItems) {
+        final cat = doc['basic_info']?['category'] as String?;
+        if (cat == _selectedCategory) {
+          final sub = doc['basic_info']?['sub_category'] as String?;
+          if (sub != null && sub.isNotEmpty) {
+            subCategories.add(sub);
+          }
+        }
+      }
+    }
+    final subCategoryList = subCategories.toList()..sort();
+    subCategoryList.remove('All');
+    subCategoryList.insert(0, 'All');
+
+    if (!subCategories.contains(_selectedSubCategory)) {
+      _selectedSubCategory = 'All';
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: 12),
+        _buildChoiceChipRow(categoryList, _selectedCategory, (val) {
+          setState(() {
+            _selectedCategory = val;
+            _selectedSubCategory = 'All';
+          });
+        }),
+        if (_selectedCategory != 'All')
+          _buildChoiceChipRow(subCategoryList, _selectedSubCategory, (val) {
+            setState(() {
+              _selectedSubCategory = val;
+            });
+          }, isSecondary: true),
+      ],
+    );
+  }
+
+  Widget _buildChoiceChipRow(List<String> items, String selectedItem, Function(String) onSelected, {bool isSecondary = false}) {
+    return SizedBox(
+      height: 40,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          final item = items[index];
+          final isSelected = selectedItem == item;
+          
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Text(
+                item,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : Colors.black87,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                  fontSize: isSecondary ? 12 : 13,
+                ),
+              ),
+              selected: isSelected,
+              showCheckmark: false,
+              selectedColor: isSecondary ? Colors.blueGrey.shade700 : Colors.black,
+              backgroundColor: isSecondary ? Colors.grey.shade100 : Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(
+                  color: isSelected ? Colors.transparent : Colors.grey.shade300,
+                  width: 1.0,
+                ),
+              ),
+              onSelected: (bool selected) {
+                if (selected) {
+                  onSelected(item);
+                }
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          title: const Text('Select Items', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          iconTheme: const IconThemeData(color: Colors.black),
+        ),
+        body: const Center(child: CircularProgressIndicator(color: Colors.blueGrey)),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          title: const Text('Select Items', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          iconTheme: const IconThemeData(color: Colors.black),
+        ),
+        body: Center(child: Text(_errorMessage!, style: const TextStyle(color: Colors.red))),
+      );
+    }
+
+    final filteredDocs = _allWardrobeItems.where((doc) {
+      final cat = doc['basic_info']?['category'] as String?;
+      final sub = doc['basic_info']?['sub_category'] as String?;
+      bool matchCategory = (_selectedCategory == 'All') || (cat == _selectedCategory);
+      bool matchSubCategory = (_selectedSubCategory == 'All') || (sub == _selectedSubCategory);
+      return matchCategory && matchSubCategory;
+    }).toList();
+
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      body: SafeArea(
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            SliverAppBar(
+              pinned: true,
+              floating: false,
+              backgroundColor: Colors.grey[50],
+              elevation: 0,
+              centerTitle: true,
+              iconTheme: const IconThemeData(color: Colors.black),
+              title: const Text('Select Items', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context, _selectedIds.toList());
+                  },
+                  child: const Text(
+                    "Done",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueAccent),
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+            ),
+            
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildFiltersWidget(),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+
+            filteredDocs.isEmpty
+                ? SliverToBoxAdapter(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 40.0),
+                        child: Text(
+                          'No available items match the criteria.',
+                          style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                        ),
+                      ),
+                    ),
+                  )
+                : SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    sliver: SliverGrid(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 4.0,
+                        mainAxisSpacing: 6.0,
+                        childAspectRatio: 0.75,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final item = filteredDocs[index];
+                          final id = item['id'];
+                          final isSelected = _selectedIds.contains(id);
+
+                          return GestureDetector(
+                            onTap: () => _toggleSelection(id),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: isSelected ? Colors.blueAccent : Colors.transparent,
+                                  width: 2.0,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.06),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(14), // slightly less to fit inside border
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(2.0),
+                                      child: _buildImageWidget(item['imageUrl']?.toString()),
+                                    ),
+                                  ),
+                                  if (isSelected)
+                                    Positioned(
+                                      top: 6,
+                                      right: 6,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: Colors.blueAccent,
+                                          border: Border.all(color: Colors.white, width: 1.5),
+                                        ),
+                                        child: const Icon(Icons.check, color: Colors.white, size: 16),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                        childCount: filteredDocs.length,
+                      ),
+                    ),
+                  ),
+            const SliverToBoxAdapter(child: SizedBox(height: 40)),
+          ],
+        ),
+      ),
+    );
+  }
+}

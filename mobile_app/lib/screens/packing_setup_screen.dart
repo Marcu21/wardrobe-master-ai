@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import '../services/weather_service.dart';
 import '../services/packing_service.dart';
 import '../widgets/global_wardrobe_selector.dart';
-import 'packing_result_screen.dart';
+import 'trip_view_screen.dart';
 
 class PackingSetupScreen extends StatefulWidget {
   const PackingSetupScreen({super.key});
@@ -72,7 +72,7 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PackingResultScreen(
+        builder: (_) => TripViewScreen(
           destination: _destinationController.text.trim(),
           days: days,
           vibe: _selectedVibe!,

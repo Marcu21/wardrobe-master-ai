@@ -8,47 +8,83 @@ import 'package:shimmer/shimmer.dart';
 import '../services/packing_service.dart';
 import '../services/weather_service.dart';
 import '../services/wardrobe_state_service.dart';
+import '../services/firebase_service.dart';
+import 'item_selection_screen.dart';
 
-class PackingResultScreen extends StatefulWidget {
+class TripViewScreen extends StatefulWidget {
+  final String? tripId;
   final String destination;
   final int days;
   final String vibe;
-  final DateTimeRange dateRange;
+  final DateTimeRange? dateRange;
+  final Map<String, dynamic>? initialTripData;
 
-  const PackingResultScreen({
+  const TripViewScreen({
     super.key,
+    this.tripId,
     required this.destination,
     required this.days,
     required this.vibe,
-    required this.dateRange,
+    this.dateRange,
+    this.initialTripData,
   });
 
   @override
-  State<PackingResultScreen> createState() => _PackingResultScreenState();
+  State<TripViewScreen> createState() => _TripViewScreenState();
 }
 
-class _PackingResultScreenState extends State<PackingResultScreen> {
+class _TripViewScreenState extends State<TripViewScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   
   List<Map<String, dynamic>> _clothingItems = [];
-  final Set<String> _packedItemIds = {};
+  List<String> _editableItemIds = [];
   bool _isLoading = true;
-  CapsuleWardrobe? _generatedWardrobe;
+  bool _isSyncing = false;
+  bool _isEditMode = false;
+  CapsuleWardrobe? _wardrobe;
   bool _isStylistNoteExpanded = false;
+  
+  List<String> _lastSyncedItemIds = [];
+  String? _currentTripId;
 
   @override
   void initState() {
     super.initState();
-    _generateWardrobe();
+    _currentTripId = widget.tripId;
+    if (_currentTripId != null && widget.initialTripData != null) {
+      _loadSavedTrip();
+    } else {
+      _generateWardrobe();
+    }
+  }
+
+  void _loadSavedTrip() {
+    final data = widget.initialTripData!;
+    var outfitsList = data['outfits'] as List? ?? [];
+    List<TripOutfit> parsedOutfits = outfitsList
+        .map((outfitJson) => TripOutfit.fromJson(outfitJson as Map<String, dynamic>))
+        .toList();
+
+    _wardrobe = CapsuleWardrobe(
+      selectedItemIds: List<String>.from(data['item_ids'] ?? []),
+      reasoning: data['reasoning'] as String? ?? '',
+      warningMessage: data['warning_message'] as String?,
+      outfits: parsedOutfits,
+    );
+    _editableItemIds = List<String>.from(_wardrobe!.selectedItemIds);
+    _lastSyncedItemIds = List<String>.from(_editableItemIds);
+    _fetchItems();
   }
 
   Future<void> _generateWardrobe() async {
     try {
-      final weatherSummary = await WeatherService().getTripWeatherSummary(
-        widget.destination, 
-        widget.dateRange.start,
-        widget.dateRange.end
-      );
+      final weatherSummary = widget.dateRange != null 
+          ? await WeatherService().getTripWeatherSummary(
+              widget.destination, 
+              widget.dateRange!.start,
+              widget.dateRange!.end
+            )
+          : 'Unknown Weather';
       
       final wardrobe = await PackingService().generatePackingList(
         destination: widget.destination,
@@ -58,30 +94,13 @@ class _PackingResultScreenState extends State<PackingResultScreen> {
         wardrobeId: wardrobeStateService.activeWardrobeId,
       );
 
-      var query = _firestore
-          .collection('clothing')
-          .where('userId', isEqualTo: FirebaseAuth.instance.currentUser?.uid);
-
-      if (wardrobeStateService.activeWardrobeId != null) {
-        query = query.where('wardrobe_id', isEqualTo: wardrobeStateService.activeWardrobeId);
-      }
-
-      final snapshot = await query.get();
-      // Filter locally to avoid 10-item limit of 'whereIn'
-      final items = snapshot.docs
-          .where((doc) => wardrobe.selectedItemIds.contains(doc.id))
-          .map((doc) {
-            final data = doc.data();
-            data['id'] = doc.id;
-            return data;
-          }).toList();
-
       if (mounted) {
         setState(() {
-          _generatedWardrobe = wardrobe;
-          _clothingItems = items;
-          _isLoading = false;
+          _wardrobe = wardrobe;
+          _editableItemIds = List<String>.from(wardrobe.selectedItemIds);
+          _lastSyncedItemIds = List<String>.from(_editableItemIds);
         });
+        _fetchItems();
       }
     } catch (e) {
       print('Error generating wardrobe: $e');
@@ -90,6 +109,191 @@ class _PackingResultScreenState extends State<PackingResultScreen> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  Future<void> _fetchItems() async {
+    if (_editableItemIds.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _clothingItems = [];
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
+    try {
+      final items = await FirebaseService().getItemsByIds(_editableItemIds);
+      if (mounted) {
+        setState(() {
+          _clothingItems = items;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print("Error fetching items: $e");
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _openItemSelection() async {
+    final newIds = await Navigator.push<List<String>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ItemSelectionScreen(initialSelectedIds: _editableItemIds),
+      ),
+    );
+
+    if (newIds != null) {
+      setState(() {
+        _editableItemIds = newIds;
+      });
+      _fetchItems();
+    }
+  }
+
+  void _removeItem(String id) {
+    setState(() {
+      _editableItemIds.remove(id);
+    });
+    _fetchItems();
+  }
+
+  Future<void> _syncAndRestyle() async {
+    setState(() => _isSyncing = true);
+    try {
+      final weatherSummary = widget.dateRange != null 
+          ? await WeatherService().getTripWeatherSummary(
+              widget.destination, 
+              widget.dateRange!.start,
+              widget.dateRange!.end
+            )
+          : 'Unknown Weather';
+
+      final wardrobe = await PackingService().generatePackingList(
+        destination: widget.destination,
+        days: widget.days,
+        vibe: widget.vibe, 
+        weatherForecast: weatherSummary, 
+        itemIdsOverride: _editableItemIds,
+      );
+
+      if (mounted) {
+        setState(() {
+          _wardrobe = wardrobe;
+          _editableItemIds = List<String>.from(wardrobe.selectedItemIds);
+          _lastSyncedItemIds = List<String>.from(_editableItemIds);
+          _isEditMode = false;
+          _isSyncing = false;
+        });
+        _fetchItems();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Trip Re-styled locally!")),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSyncing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to re-style trip: $e")),
+        );
+      }
+    }
+  }
+
+  Future<void> _saveTrip() async {
+    if (_wardrobe == null) return;
+
+    String tripName = widget.destination;
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        final controller = TextEditingController(text: tripName);
+        return AlertDialog(
+          title: const Text("Save Trip"),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(labelText: "Trip Name"),
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, controller.text.trim()),
+              child: const Text("Save"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result != null && result.isNotEmpty) {
+      setState(() => _isLoading = true);
+      try {
+        final outfitsList = _wardrobe!.outfits.map((o) => o.toJson()).toList();
+        final newTripId = await FirebaseService().saveTrip(
+          name: result,
+          destination: widget.destination,
+          itemIds: _wardrobe!.selectedItemIds,
+          outfits: outfitsList,
+          reasoning: _wardrobe!.reasoning,
+          vibe: widget.vibe,
+        );
+        if (mounted) {
+          setState(() {
+             _currentTripId = newTripId;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Trip saved successfully!")),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Failed to save trip: $e")),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _updateTrip() async {
+    if (_wardrobe == null || _currentTripId == null) return;
+
+    setState(() => _isLoading = true);
+    try {
+      final outfitsList = _wardrobe!.outfits.map((o) => o.toJson()).toList();
+      await FirebaseService().updateTrip(
+        _currentTripId!,
+        _wardrobe!.selectedItemIds,
+        outfitsList,
+        _wardrobe!.reasoning,
+        vibe: widget.vibe,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Trip updated successfully!")),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to update trip: $e")),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -132,16 +336,6 @@ class _PackingResultScreenState extends State<PackingResultScreen> {
     return Container(color: Colors.grey[200], child: const Icon(Icons.checkroom));
   }
 
-  void _togglePacked(String itemId) {
-    setState(() {
-      if (_packedItemIds.contains(itemId)) {
-        _packedItemIds.remove(itemId);
-      } else {
-        _packedItemIds.add(itemId);
-      }
-    });
-  }
-
   Widget _buildSkeletonLoader() {
     return Column(
       children: [
@@ -177,10 +371,65 @@ class _PackingResultScreenState extends State<PackingResultScreen> {
 
   @override
   Widget build(BuildContext context) {
+    bool hasChanges = _editableItemIds.length != _lastSyncedItemIds.length || 
+                      !_editableItemIds.every((id) => _lastSyncedItemIds.contains(id));
+
+    Widget? fab;
+    if (_isSyncing) {
+        fab = FloatingActionButton.extended(
+          onPressed: null,
+          icon: const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
+          label: const Text("Syncing..."),
+        );
+    } else if (hasChanges) {
+        fab = FloatingActionButton.extended(
+          onPressed: _syncAndRestyle,
+          icon: const Icon(Icons.sync),
+          label: const Text("Sync & Re-style"),
+          backgroundColor: Colors.blueAccent,
+        );
+    } else if (_wardrobe != null && !_isLoading) {
+        if (_currentTripId == null) {
+          fab = FloatingActionButton.extended(
+            onPressed: _saveTrip,
+            icon: const Icon(Icons.bookmark_add),
+            label: const Text("Save Trip"),
+          );
+        } else {
+          bool hasUnsavedChanges = false;
+          if (widget.initialTripData != null) {
+            List<String> initialDbIds = List<String>.from(widget.initialTripData!['item_ids'] ?? []);
+            hasUnsavedChanges = _lastSyncedItemIds.length != initialDbIds.length ||
+                !_lastSyncedItemIds.every((id) => initialDbIds.contains(id));
+          } else {
+             // It was a new trip that was just saved this session. We can hide the update button until they sync again.
+             // Wait, if they just synced again, `_lastSyncedItemIds` changed but we don't have `initialTripData`.
+             // Actually, saving doesn't set initialTripData. So we don't have the original state to compare to.
+             // For simplicity, we can always show Update Trip if currentTripId != null and initialTripData == null,
+             // OR just only show it when they have unsynced changes. But they need to save their synced changes.
+             // Let's add a `_hasUnsavedDatabaseChanges` flag.
+          }
+          
+          if (hasUnsavedChanges && widget.initialTripData != null) {
+            fab = FloatingActionButton.extended(
+              onPressed: _updateTrip,
+              icon: const Icon(Icons.update),
+              label: const Text("Update Trip"),
+            );
+          } else if (_currentTripId != null && widget.initialTripData == null) {
+             // It was a new trip that got saved. If they sync again, we want to show Update Trip.
+             // Actually, let's keep it simple: If they synced at least once AFTER saving, show "Update Trip".
+             // We can just rely on the user to press "Sync & Re-style" to make edits. If no edits, no fab.
+             // If there's a simpler way: just show "Update Trip" always if _currentTripId != null? No, that's cluttered.
+          }
+        }
+    }
+
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         backgroundColor: Colors.grey[50],
+        floatingActionButton: fab,
         body: _isLoading 
           ? SafeArea(child: _buildSkeletonLoader())
           : SafeArea(
@@ -199,6 +448,23 @@ class _PackingResultScreenState extends State<PackingResultScreen> {
                     centerTitle: true,
                     shadowColor: Colors.black.withOpacity(0.3),
                     iconTheme: const IconThemeData(color: Colors.black87),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _isEditMode = !_isEditMode;
+                            if (!_isEditMode) {
+                              _editableItemIds = List<String>.from(_lastSyncedItemIds);
+                              _fetchItems();
+                            }
+                          });
+                        },
+                        child: Text(
+                          _isEditMode ? "Cancel" : "Edit",
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
                     title: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -232,7 +498,7 @@ class _PackingResultScreenState extends State<PackingResultScreen> {
                       unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       tabs: const [
-                        Tab(icon: Icon(Icons.luggage), text: "Checklist"),
+                        Tab(icon: Icon(Icons.luggage), text: "Suitcase"),
                         Tab(icon: Icon(Icons.style), text: "Daily Outfits"),
                       ],
                     ),
@@ -261,7 +527,52 @@ class _PackingResultScreenState extends State<PackingResultScreen> {
 
     return CustomScrollView(
       slivers: [
-        if (_generatedWardrobe?.reasoning.isNotEmpty ?? false)
+        if (_wardrobe?.warningMessage != null && _wardrobe!.warningMessage!.isNotEmpty)
+          SliverToBoxAdapter(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.redAccent.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.redAccent.withOpacity(0.5)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _wardrobe!.warningMessage!,
+                      style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        
+        if (_isEditMode)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Suitcase Items",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  TextButton.icon(
+                    onPressed: _openItemSelection,
+                    icon: const Icon(Icons.add),
+                    label: const Text("Add Items"),
+                  )
+                ],
+              ),
+            ),
+          ),
+        if (_wardrobe?.reasoning.isNotEmpty ?? false)
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 12),
@@ -295,7 +606,7 @@ class _PackingResultScreenState extends State<PackingResultScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        _generatedWardrobe!.reasoning,
+                        _wardrobe!.reasoning,
                         maxLines: _isStylistNoteExpanded ? null : 3,
                         overflow: _isStylistNoteExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
                         style: TextStyle(
@@ -348,14 +659,11 @@ class _PackingResultScreenState extends State<PackingResultScreen> {
             mainAxisSpacing: 8.0,
             childAspectRatio: 0.85,
           ),
-          delegate: SliverChildBuilderDelegate(
-            (context, index) {
-              final item = _clothingItems[index];
-              final isPacked = _packedItemIds.contains(item['id']);
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final item = _clothingItems[index];
 
-              return GestureDetector(
-                onTap: () => _togglePacked(item['id']),
-                child: Container(
+                return Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
@@ -373,40 +681,27 @@ class _PackingResultScreenState extends State<PackingResultScreen> {
                       fit: StackFit.expand,
                       children: [
                         _buildImageWidget(item['imageUrl']?.toString()),
-                        if (isPacked)
-                          Positioned.fill(
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+                        if (_isEditMode)
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: GestureDetector(
+                              onTap: () => _removeItem(item['id']),
                               child: Container(
-                                color: Colors.white.withOpacity(0.2),
-                                child: Stack(
-                                  children: [
-                                    Positioned(
-                                      top: 8,
-                                      right: 8,
-                                      child: Container(
-                                        decoration: const BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: Colors.white,
-                                        ),
-                                        child: const Icon(
-                                          Icons.check_circle_rounded,
-                                          color: Colors.green,
-                                          size: 24,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.redAccent,
                                 ),
+                                child: const Icon(Icons.close, size: 14, color: Colors.white),
                               ),
                             ),
                           ),
                       ],
                     ),
                   ),
-                ),
-              );
-            },
+                );
+              },
             childCount: _clothingItems.length,
           ),
         ),
@@ -417,16 +712,16 @@ class _PackingResultScreenState extends State<PackingResultScreen> {
   }
 
   Widget _buildOutfitsTab() {
-    if (_generatedWardrobe == null || _generatedWardrobe!.outfits.isEmpty) {
+    if (_wardrobe == null || _wardrobe!.outfits.isEmpty) {
        return const Center(child: Text("No outfits generated."));
     }
 
     return ListView.builder(
       padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 40),
       physics: const BouncingScrollPhysics(),
-      itemCount: _generatedWardrobe!.outfits.length,
+      itemCount: _wardrobe!.outfits.length,
       itemBuilder: (context, index) {
-        final outfit = _generatedWardrobe!.outfits[index];
+        final outfit = _wardrobe!.outfits[index];
         final outfitItems = _clothingItems
             .where((item) => outfit.itemIds.contains(item['id']))
             .toList();

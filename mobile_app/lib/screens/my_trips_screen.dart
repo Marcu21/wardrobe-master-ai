@@ -81,58 +81,8 @@ class MyTripsScreen extends StatelessWidget {
                 elevation: 2,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 margin: const EdgeInsets.only(bottom: 16),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  leading: CircleAvatar(
-                    backgroundColor: Colors.blueAccent.withValues(alpha: 0.1),
-                    child: const Icon(Icons.flight_takeoff, color: Colors.blueAccent),
-                  ),
-                  title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                  subtitle: Padding(
-                    padding: const EdgeInsets.only(top: 6.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.location_on_outlined, size: 13, color: Colors.grey),
-                            const SizedBox(width: 3),
-                            Text(destination, style: const TextStyle(color: Colors.grey, fontSize: 13)),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.blueAccent.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                vibe,
-                                style: const TextStyle(
-                                  color: Colors.blueAccent,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            const Spacer(),
-                            Text(
-                              "${itemIds.length} items • ${outfits.length} outfits",
-                              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
-                            ),
-                          ],
-                        ),
-                        if (dateString.isNotEmpty) ...[
-                          const SizedBox(height: 2),
-                          Text(dateString, style: const TextStyle(color: Colors.grey, fontSize: 11)),
-                        ],
-                      ],
-                    ),
-                  ),
-                  trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -147,6 +97,121 @@ class MyTripsScreen extends StatelessWidget {
                       ),
                     );
                   },
+                  child: Stack(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 20, top: 16, bottom: 16, right: 16),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: Colors.blueAccent.withValues(alpha: 0.1),
+                              child: const Icon(Icons.flight_takeoff, color: Colors.blueAccent),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 32.0),
+                                    child: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.location_on_outlined, size: 13, color: Colors.grey),
+                                      const SizedBox(width: 3),
+                                      Text(destination, style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.blueAccent.withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      vibe,
+                                      style: const TextStyle(color: Colors.blueAccent, fontSize: 12, fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        dateString.isNotEmpty ? dateString : '',
+                                        style: const TextStyle(color: Colors.grey, fontSize: 11),
+                                      ),
+                                      Text(
+                                        "${itemIds.length} items • ${outfits.length} outfits",
+                                        style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12, color: Color(0xFF757575)),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      const Positioned(
+                        right: 12,
+                        top: 0,
+                        bottom: 0,
+                        child: Icon(Icons.chevron_right, color: Colors.grey),
+                      ),
+
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: IconButton(
+                          icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                          tooltip: "Delete Trip",
+                          onPressed: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text("Delete Trip"),
+                                content: const Text("Are you sure you want to delete this trip? This action cannot be undone."),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, false),
+                                    child: const Text("Cancel"),
+                                  ),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                                    onPressed: () => Navigator.pop(context, true),
+                                    child: const Text("Delete"),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (confirm == true) {
+                              try {
+                                await FirebaseService().deleteTrip(doc.id);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Trip deleted successfully.")),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text("Failed to delete trip: $e")),
+                                  );
+                                }
+                              }
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },

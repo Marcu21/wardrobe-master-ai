@@ -401,4 +401,14 @@ class FirebaseService {
       throw Exception("Failed to update trip: $e");
     }
   }
+
+  Future<void> deleteTrip(String tripId) async {
+    try {
+      await _firestore.collection('trips').doc(tripId).delete();
+      debugPrint("Trip deleted: $tripId");
+    } catch (e) {
+      debugPrint("Failed to delete trip: $e");
+      throw Exception("Failed to delete trip: $e");
+    }
+  }
 }

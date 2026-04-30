@@ -346,6 +346,8 @@ class FirebaseService {
     required String vibe,
     String? tripPlans,
     String? luggageSize,
+    DateTime? startDate,
+    DateTime? endDate,
   }) async {
     try {
       final data = {
@@ -357,6 +359,8 @@ class FirebaseService {
         'vibe': vibe,
         if (tripPlans != null) 'trip_plans': tripPlans,
         if (luggageSize != null) 'luggage_size': luggageSize,
+        if (startDate != null) 'start_date': Timestamp.fromDate(startDate),
+        if (endDate != null) 'end_date': Timestamp.fromDate(endDate),
         'created_at': FieldValue.serverTimestamp(),
         'user_id': _auth.currentUser?.uid ?? 'unknown_user',
       };
@@ -378,6 +382,8 @@ class FirebaseService {
     String? vibe,
     String? tripPlans,
     String? luggageSize,
+    DateTime? startDate,
+    DateTime? endDate,
   }) async {
     try {
       final updates = <String, dynamic>{
@@ -393,6 +399,12 @@ class FirebaseService {
       }
       if (luggageSize != null) {
         updates['luggage_size'] = luggageSize;
+      }
+      if (startDate != null) {
+        updates['start_date'] = Timestamp.fromDate(startDate);
+      }
+      if (endDate != null) {
+        updates['end_date'] = Timestamp.fromDate(endDate);
       }
       await _firestore.collection('trips').doc(tripId).update(updates);
       debugPrint("Trip updated: $tripId");

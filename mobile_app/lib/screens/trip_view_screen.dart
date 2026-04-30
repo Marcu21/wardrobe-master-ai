@@ -18,6 +18,8 @@ class TripViewScreen extends StatefulWidget {
   final String vibe;
   final DateTimeRange? dateRange;
   final Map<String, dynamic>? initialTripData;
+  final String? tripPlans;
+  final String? luggageSize;
 
   const TripViewScreen({
     super.key,
@@ -27,6 +29,8 @@ class TripViewScreen extends StatefulWidget {
     required this.vibe,
     this.dateRange,
     this.initialTripData,
+    this.tripPlans,
+    this.luggageSize,
   });
 
   @override
@@ -43,6 +47,10 @@ class _TripViewScreenState extends State<TripViewScreen> {
   bool _isEditMode = false;
   CapsuleWardrobe? _wardrobe;
   bool _isStylistNoteExpanded = false;
+  bool _hasUnsavedChanges = false;
+  Set<int> _loadingOutfitIndices = {};
+  bool _isAddingAdHocOutfit = false;
+  final TextEditingController _adHocOutfitController = TextEditingController();
   
   List<String> _lastSyncedItemIds = [];
   String? _currentTripId;
@@ -54,8 +62,15 @@ class _TripViewScreenState extends State<TripViewScreen> {
     if (_currentTripId != null && widget.initialTripData != null) {
       _loadSavedTrip();
     } else {
+      _hasUnsavedChanges = true;
       _generateWardrobe();
     }
+  }
+
+  @override
+  void dispose() {
+    _adHocOutfitController.dispose();
+    super.dispose();
   }
 
   void _loadSavedTrip() {
@@ -92,6 +107,8 @@ class _TripViewScreenState extends State<TripViewScreen> {
         vibe: widget.vibe,
         weatherForecast: weatherSummary,
         wardrobeId: wardrobeStateService.activeWardrobeId,
+        tripPlans: widget.tripPlans,
+        luggageSize: widget.luggageSize,
       );
 
       if (mounted) {
@@ -181,6 +198,8 @@ class _TripViewScreenState extends State<TripViewScreen> {
         vibe: widget.vibe, 
         weatherForecast: weatherSummary, 
         itemIdsOverride: _editableItemIds,
+        tripPlans: widget.tripPlans ?? widget.initialTripData?['trip_plans'],
+        luggageSize: widget.luggageSize ?? widget.initialTripData?['luggage_size'],
       );
 
       if (mounted) {
@@ -190,6 +209,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
           _lastSyncedItemIds = List<String>.from(_editableItemIds);
           _isEditMode = false;
           _isSyncing = false;
+          _hasUnsavedChanges = true;
         });
         _fetchItems();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -247,10 +267,13 @@ class _TripViewScreenState extends State<TripViewScreen> {
           outfits: outfitsList,
           reasoning: _wardrobe!.reasoning,
           vibe: widget.vibe,
+          tripPlans: widget.tripPlans,
+          luggageSize: widget.luggageSize,
         );
         if (mounted) {
           setState(() {
              _currentTripId = newTripId;
+             _hasUnsavedChanges = false;
           });
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Trip saved successfully!")),
@@ -280,8 +303,13 @@ class _TripViewScreenState extends State<TripViewScreen> {
         outfitsList,
         _wardrobe!.reasoning,
         vibe: widget.vibe,
+        tripPlans: widget.tripPlans ?? widget.initialTripData?['trip_plans'],
+        luggageSize: widget.luggageSize ?? widget.initialTripData?['luggage_size'],
       );
       if (mounted) {
+        setState(() {
+          _hasUnsavedChanges = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Trip updated successfully!")),
         );
@@ -396,31 +424,21 @@ class _TripViewScreenState extends State<TripViewScreen> {
             label: const Text("Save Trip"),
           );
         } else {
-          bool hasUnsavedChanges = false;
+          bool hasUnsavedDatabaseChanges = false;
           if (widget.initialTripData != null) {
             List<String> initialDbIds = List<String>.from(widget.initialTripData!['item_ids'] ?? []);
-            hasUnsavedChanges = _lastSyncedItemIds.length != initialDbIds.length ||
-                !_lastSyncedItemIds.every((id) => initialDbIds.contains(id));
+            hasUnsavedDatabaseChanges = _lastSyncedItemIds.length != initialDbIds.length ||
+                !_lastSyncedItemIds.every((id) => initialDbIds.contains(id)) || _hasUnsavedChanges;
           } else {
-             // It was a new trip that was just saved this session. We can hide the update button until they sync again.
-             // Wait, if they just synced again, `_lastSyncedItemIds` changed but we don't have `initialTripData`.
-             // Actually, saving doesn't set initialTripData. So we don't have the original state to compare to.
-             // For simplicity, we can always show Update Trip if currentTripId != null and initialTripData == null,
-             // OR just only show it when they have unsynced changes. But they need to save their synced changes.
-             // Let's add a `_hasUnsavedDatabaseChanges` flag.
+             hasUnsavedDatabaseChanges = _hasUnsavedChanges;
           }
           
-          if (hasUnsavedChanges && widget.initialTripData != null) {
+          if (hasUnsavedDatabaseChanges) {
             fab = FloatingActionButton.extended(
               onPressed: _updateTrip,
               icon: const Icon(Icons.update),
               label: const Text("Update Trip"),
             );
-          } else if (_currentTripId != null && widget.initialTripData == null) {
-             // It was a new trip that got saved. If they sync again, we want to show Update Trip.
-             // Actually, let's keep it simple: If they synced at least once AFTER saving, show "Update Trip".
-             // We can just rely on the user to press "Sync & Re-style" to make edits. If no edits, no fab.
-             // If there's a simpler way: just show "Update Trip" always if _currentTripId != null? No, that's cluttered.
           }
         }
     }
@@ -711,20 +729,243 @@ class _TripViewScreenState extends State<TripViewScreen> {
     );
   }
 
+  Future<void> _editDayOutfit(int index) async {
+    final outfit = _wardrobe!.outfits[index];
+    final controller = TextEditingController();
+
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Edit Outfit ${index + 1}",
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              const Text("What are your plans for this day?"),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: "e.g., Fancy dinner party, Hiking in the rain...",
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2),
+                  ),
+                ),
+                maxLines: 2,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context, controller.text.trim()),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text("Generate New Outfit", style: TextStyle(fontSize: 16)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (result != null && result.isNotEmpty) {
+      setState(() => _loadingOutfitIndices.add(index));
+      try {
+        final weatherSummary = widget.dateRange != null 
+            ? await WeatherService().getTripWeatherSummary(
+                widget.destination, 
+                widget.dateRange!.start,
+                widget.dateRange!.end
+              )
+            : 'Unknown Weather';
+
+        final existingOutfits = <Map<String, dynamic>>[];
+        for (int i = 0; i < _wardrobe!.outfits.length; i++) {
+          if (i != index) {
+            existingOutfits.add({
+              'context': _wardrobe!.outfits[i].title,
+              'used_item_ids': _wardrobe!.outfits[i].itemIds,
+            });
+          }
+        }
+
+        final newOutfit = await PackingService().generateSpecificTripOutfit(
+          destination: widget.destination,
+          vibe: widget.vibe,
+          weatherForecast: weatherSummary,
+          suitcaseItemIds: _editableItemIds,
+          userContext: result,
+          existingOutfits: existingOutfits,
+        );
+
+        if (mounted) {
+          setState(() {
+            _wardrobe!.outfits[index] = newOutfit;
+            _hasUnsavedChanges = true;
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to update outfit: $e")));
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _loadingOutfitIndices.remove(index));
+        }
+      }
+    }
+  }
+
+  Future<void> _addAdHocOutfit(String contextPlan) async {
+    if (contextPlan.isEmpty) return;
+    
+    setState(() => _isAddingAdHocOutfit = true);
+    try {
+      final weatherSummary = widget.dateRange != null 
+          ? await WeatherService().getTripWeatherSummary(
+              widget.destination, 
+              widget.dateRange!.start,
+              widget.dateRange!.end
+            )
+          : 'Unknown Weather';
+
+      final existingOutfits = _wardrobe!.outfits.map((o) => {
+        'context': o.title,
+        'used_item_ids': o.itemIds,
+      }).toList();
+
+      final newOutfit = await PackingService().generateSpecificTripOutfit(
+        destination: widget.destination,
+        vibe: widget.vibe,
+        weatherForecast: weatherSummary,
+        suitcaseItemIds: _editableItemIds,
+        userContext: contextPlan,
+        existingOutfits: existingOutfits,
+      );
+
+      if (mounted) {
+        setState(() {
+          _wardrobe!.outfits.add(newOutfit);
+          _hasUnsavedChanges = true;
+          _adHocOutfitController.clear();
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to add outfit: $e")));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isAddingAdHocOutfit = false);
+      }
+    }
+  }
+
   Widget _buildOutfitsTab() {
     if (_wardrobe == null || _wardrobe!.outfits.isEmpty) {
        return const Center(child: Text("No outfits generated."));
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 40),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 80),
       physics: const BouncingScrollPhysics(),
-      itemCount: _wardrobe!.outfits.length,
+      itemCount: _wardrobe!.outfits.length + 1,
       itemBuilder: (context, index) {
+        if (index == _wardrobe!.outfits.length) {
+          return Container(
+            margin: const EdgeInsets.only(top: 8, bottom: 24),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.grey[200]!),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.auto_awesome, color: Theme.of(context).primaryColor, size: 20),
+                    const SizedBox(width: 8),
+                    const Text(
+                      "Add another outfit",
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _adHocOutfitController,
+                          enabled: !_isAddingAdHocOutfit,
+                          decoration: const InputDecoration(
+                            hintText: "Need an outfit for a specific occasion?",
+                            hintStyle: TextStyle(fontSize: 14),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          ),
+                          onSubmitted: (val) => _addAdHocOutfit(val),
+                        ),
+                      ),
+                      _isAddingAdHocOutfit
+                        ? const Padding(
+                            padding: EdgeInsets.all(14.0),
+                            child: SizedBox(
+                              width: 20, height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : IconButton(
+                            icon: Icon(Icons.send_rounded, color: Theme.of(context).primaryColor),
+                            onPressed: () => _addAdHocOutfit(_adHocOutfitController.text.trim()),
+                          ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
         final outfit = _wardrobe!.outfits[index];
         final outfitItems = _clothingItems
             .where((item) => outfit.itemIds.contains(item['id']))
             .toList();
+        final isLoading = _loadingOutfitIndices.contains(index);
 
         return Container(
           margin: const EdgeInsets.only(bottom: 24),
@@ -739,41 +980,55 @@ class _TripViewScreenState extends State<TripViewScreen> {
               ),
             ],
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Stack(
             children: [
-              Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.black87,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        "Day ${index + 1}",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.black87,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  "Outfit ${index + 1}",
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                outfit.title,
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey[900],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
+                        IconButton(
+                          icon: const Icon(Icons.edit_note),
+                          color: Colors.grey[600],
+                          onPressed: () => _editDayOutfit(index),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      outfit.title,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[900],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+                  ),
               if (outfitItems.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(left: 20.0, bottom: 20.0, right: 20.0),
@@ -842,6 +1097,20 @@ class _TripViewScreenState extends State<TripViewScreen> {
               ),
             ],
           ),
+          if (isLoading)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+            ),
+          ],
+          )
         );
       },
     );

@@ -344,6 +344,8 @@ class FirebaseService {
     required List<Map<String, dynamic>> outfits,
     required String reasoning,
     required String vibe,
+    String? tripPlans,
+    String? luggageSize,
   }) async {
     try {
       final data = {
@@ -353,6 +355,8 @@ class FirebaseService {
         'outfits': outfits,
         'reasoning': reasoning,
         'vibe': vibe,
+        if (tripPlans != null) 'trip_plans': tripPlans,
+        if (luggageSize != null) 'luggage_size': luggageSize,
         'created_at': FieldValue.serverTimestamp(),
         'user_id': _auth.currentUser?.uid ?? 'unknown_user',
       };
@@ -366,7 +370,15 @@ class FirebaseService {
     }
   }
 
-  Future<void> updateTrip(String tripId, List<String> itemIds, List<Map<String, dynamic>> outfits, String reasoning, {String? vibe}) async {
+  Future<void> updateTrip(
+    String tripId, 
+    List<String> itemIds, 
+    List<Map<String, dynamic>> outfits, 
+    String reasoning, {
+    String? vibe,
+    String? tripPlans,
+    String? luggageSize,
+  }) async {
     try {
       final updates = <String, dynamic>{
         'item_ids': itemIds,
@@ -375,6 +387,12 @@ class FirebaseService {
       };
       if (vibe != null) {
         updates['vibe'] = vibe;
+      }
+      if (tripPlans != null) {
+        updates['trip_plans'] = tripPlans;
+      }
+      if (luggageSize != null) {
+        updates['luggage_size'] = luggageSize;
       }
       await _firestore.collection('trips').doc(tripId).update(updates);
       debugPrint("Trip updated: $tripId");

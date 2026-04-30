@@ -16,8 +16,10 @@ class PackingSetupScreen extends StatefulWidget {
 
 class _PackingSetupScreenState extends State<PackingSetupScreen> {
   final _destinationController = TextEditingController();
+  final _tripPlansController = TextEditingController();
   DateTimeRange? _selectedDateRange;
   String? _selectedVibe;
+  String _selectedLuggage = 'Carry-on';
 
   final List<String> _vibes = [
     'Business',
@@ -31,6 +33,7 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
   @override
   void dispose() {
     _destinationController.dispose();
+    _tripPlansController.dispose();
     super.dispose();
   }
 
@@ -77,6 +80,8 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
           days: days,
           vibe: _selectedVibe!,
           dateRange: _selectedDateRange!,
+          tripPlans: _tripPlansController.text.trim().isNotEmpty ? _tripPlansController.text.trim() : null,
+          luggageSize: _selectedLuggage,
         ),
       ),
     );
@@ -225,6 +230,56 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
                   ),
                 ],
               ),
+              const SizedBox(height: 32),
+
+              _buildSectionTitle('Luggage Size'),
+              const SizedBox(height: 12),
+              _buildLuggageOption(
+                'Backpack',
+                'Backpack',
+                'Minimalist (~6-8 items)',
+                Icons.backpack_outlined,
+              ),
+              const SizedBox(height: 8),
+              _buildLuggageOption(
+                'Carry-on',
+                'Carry-on',
+                'Standard Capsule (~10-14 items)',
+                Icons.luggage_outlined,
+              ),
+              const SizedBox(height: 8),
+              _buildLuggageOption(
+                'Checked Bag',
+                'Checked Bag',
+                'Comfort & Variety (No strict limit)',
+                Icons.cases_outlined,
+              ),
+              const SizedBox(height: 32),
+
+              _buildSectionTitle('Trip Plans & Itinerary (Optional)'),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _tripPlansController,
+                textInputAction: TextInputAction.done,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: 'e.g., Visiting museums, hiking on Tuesday, fancy dinner...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: Colors.blueAccent, width: 2),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                ),
+              ),
               const SizedBox(height: 48),
 
               SizedBox(
@@ -304,6 +359,60 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
       ),
       showCheckmark: false,
       padding: const EdgeInsets.symmetric(vertical: 12.0),
+    );
+  }
+
+  Widget _buildLuggageOption(String value, String title, String subtitle, IconData icon) {
+    final isSelected = _selectedLuggage == value;
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedLuggage = value;
+        });
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: isSelected ? Colors.blueAccent : Colors.grey.shade300,
+            width: isSelected ? 2 : 1.5,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          color: isSelected ? Colors.blue.withOpacity(0.05) : Colors.white,
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: isSelected ? Colors.blueAccent : Colors.grey.shade600, size: 28),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              const Icon(Icons.check_circle, color: Colors.blueAccent),
+          ],
+        ),
+      ),
     );
   }
 }

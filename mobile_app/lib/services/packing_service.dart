@@ -72,6 +72,8 @@ class PackingService {
     required String weatherForecast,
     String? wardrobeId,
     List<String>? itemIdsOverride,
+    String? tripPlans,
+    String? luggageSize,
   }) async {
     final uri = Uri.parse('$baseUrl/generate-packing/');
     
@@ -87,6 +89,8 @@ class PackingService {
           'user_id': FirebaseService().currentUser?.uid ?? 'unknown_user',
           if (wardrobeId != null) 'wardrobe_id': wardrobeId,
           if (itemIdsOverride != null) 'item_ids_override': itemIdsOverride,
+          if (tripPlans != null) 'trip_plans': tripPlans,
+          if (luggageSize != null) 'luggage_size': luggageSize,
         }),
       );
 
@@ -98,6 +102,43 @@ class PackingService {
       }
     } catch (e) {
       print('Network error generating packing list: $e');
+      throw Exception('Failed to connect to backend: $e');
+    }
+  }
+
+  Future<TripOutfit> generateSpecificTripOutfit({
+    required String destination,
+    required String vibe,
+    required String weatherForecast,
+    required List<String> suitcaseItemIds,
+    required String userContext,
+    List<Map<String, dynamic>>? existingOutfits,
+  }) async {
+    final uri = Uri.parse('$baseUrl/generate-trip-outfit/');
+    
+    try {
+      final response = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'destination': destination,
+          'vibe': vibe,
+          'weather_forecast': weatherForecast,
+          'suitcase_item_ids': suitcaseItemIds,
+          'user_context': userContext,
+          'user_id': FirebaseService().currentUser?.uid ?? 'unknown_user',
+          if (existingOutfits != null) 'existing_outfits': existingOutfits,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+        return TripOutfit.fromJson(decoded);
+      } else {
+        throw Exception('Failed to generate trip outfit: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      print('Network error generating trip outfit: $e');
       throw Exception('Failed to connect to backend: $e');
     }
   }

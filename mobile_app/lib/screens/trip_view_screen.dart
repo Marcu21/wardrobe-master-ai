@@ -269,6 +269,8 @@ class _TripViewScreenState extends State<TripViewScreen> {
           vibe: widget.vibe,
           tripPlans: widget.tripPlans,
           luggageSize: widget.luggageSize,
+          startDate: widget.dateRange?.start,
+          endDate: widget.dateRange?.end,
         );
         if (mounted) {
           setState(() {
@@ -305,6 +307,8 @@ class _TripViewScreenState extends State<TripViewScreen> {
         vibe: widget.vibe,
         tripPlans: widget.tripPlans ?? widget.initialTripData?['trip_plans'],
         luggageSize: widget.luggageSize ?? widget.initialTripData?['luggage_size'],
+        startDate: widget.dateRange?.start,
+        endDate: widget.dateRange?.end,
       );
       if (mounted) {
         setState(() {

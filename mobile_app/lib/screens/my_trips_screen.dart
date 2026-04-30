@@ -71,10 +71,30 @@ class MyTripsScreen extends StatelessWidget {
               final itemIds = List<String>.from(data['item_ids'] ?? []);
               final outfits = data['outfits'] as List? ?? [];
               final createdAt = data['created_at'] as Timestamp?;
+              final startDate = data['start_date'] as Timestamp?;
+              final endDate = data['end_date'] as Timestamp?;
 
-              String dateString = '';
-              if (createdAt != null) {
-                dateString = DateFormat('MMM d, yyyy').format(createdAt.toDate());
+              String periodString = '';
+              if (startDate != null && endDate != null) {
+                final start = startDate.toDate();
+                final end = endDate.toDate();
+                if (start.year != end.year) {
+                  periodString = "${DateFormat('MMM d, yyyy').format(start)} - ${DateFormat('MMM d, yyyy').format(end)}";
+                } else if (start.month != end.month) {
+                  periodString = "${DateFormat('MMM d').format(start)} - ${DateFormat('MMM d, yyyy').format(end)}";
+                } else {
+                  periodString = "${DateFormat('MMM d').format(start)} - ${DateFormat('d, yyyy').format(end)}";
+                }
+              } else if (createdAt != null) {
+                periodString = DateFormat('MMM d, yyyy').format(createdAt.toDate());
+              }
+
+              int calculatedDays = 3;
+              if (startDate != null && endDate != null) {
+                calculatedDays = endDate.toDate().difference(startDate.toDate()).inDays + 1;
+                if (calculatedDays < 1) calculatedDays = 1;
+              } else if (outfits.isNotEmpty) {
+                calculatedDays = outfits.length;
               }
 
               return Card(
@@ -90,7 +110,7 @@ class MyTripsScreen extends StatelessWidget {
                         builder: (_) => TripViewScreen(
                           tripId: doc.id,
                           destination: destination,
-                          days: outfits.isNotEmpty ? outfits.length : 3,
+                          days: calculatedDays,
                           vibe: vibe,
                           initialTripData: data,
                         ),
@@ -142,7 +162,7 @@ class MyTripsScreen extends StatelessWidget {
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
-                                        dateString.isNotEmpty ? dateString : '',
+                                        periodString,
                                         style: const TextStyle(color: Colors.grey, fontSize: 11),
                                       ),
                                       Text(

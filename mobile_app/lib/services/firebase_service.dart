@@ -423,4 +423,30 @@ class FirebaseService {
       throw Exception("Failed to delete trip: $e");
     }
   }
+
+  Future<void> saveOutfitFeedback({
+    required List<String> itemIds,
+    required String userPrompt,
+    required String weatherContext,
+    required bool isLike,
+    String? dislikeReason,
+  }) async {
+    try {
+      final data = {
+        'item_ids': itemIds,
+        'user_prompt': userPrompt,
+        'weather_context': weatherContext,
+        'is_like': isLike,
+        if (dislikeReason != null) 'dislike_reason': dislikeReason,
+        'user_id': _auth.currentUser?.uid ?? 'unknown_user',
+        'created_at': FieldValue.serverTimestamp(),
+      };
+
+      await _firestore.collection('outfit_feedback').add(data);
+      debugPrint("Outfit feedback saved to Firestore");
+    } catch (e) {
+      debugPrint("Failed to save outfit feedback: $e");
+      throw Exception("Failed to save outfit feedback: $e");
+    }
+  }
 }

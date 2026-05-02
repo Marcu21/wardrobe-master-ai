@@ -360,6 +360,33 @@ async def generate_outfit(request: OutfitRequest):
         
         recent_outfits_json = json.dumps(recent_outfit_ids)
         
+        # 3. Fetch Outfit Feedback
+        try:
+            feedback_ref = db.collection('outfit_feedback').where(
+                filter=FieldFilter('user_id', '==', request.user_id)
+            ).order_by('created_at', direction=firestore.Query.DESCENDING).limit(15)
+            
+            feedback_docs = feedback_ref.stream()
+            feedback_history_strs = []
+            for doc in feedback_docs:
+                data = doc.to_dict()
+                is_like = data.get('is_like')
+                item_ids = data.get('item_ids', [])
+                user_prompt_fb = data.get('user_prompt', '')
+                weather_fb = data.get('weather_context', '')
+                dislike_reason = data.get('dislike_reason', '')
+                
+                if is_like:
+                    feedback_history_strs.append(f"User LIKED combining items {item_ids} for plan '{user_prompt_fb}' and weather '{weather_fb}'.")
+                else:
+                    feedback_history_strs.append(f"User DISLIKED combining items {item_ids} for plan '{user_prompt_fb}' and weather '{weather_fb}'. Reason: {dislike_reason}.")
+            
+            feedback_history_text = "\n".join(feedback_history_strs) if feedback_history_strs else "No feedback history available yet."
+        except Exception as e:
+            # Fallback in case of missing index or other error
+            print(f"Warning: Failed to fetch outfit feedback: {e}")
+            feedback_history_text = "No feedback history available yet."
+        
         prompt = f"""
         You are an elite personal stylist and wardrobe manager.
         
@@ -386,6 +413,10 @@ async def generate_outfit(request: OutfitRequest):
 
         ### WARDROBE ROTATION
         Look at the 'CLOTHING ITEMS' list. Some items have a 'rotation_status' of 'Neglected'. You MUST prioritize including at least ONE neglected item in your generated outfit, BUT ONLY IF it perfectly matches the weather forecast, the color theory, and the user's plan. Do not force a neglected item if it ruins the outfit.
+
+        ### USER PREFERENCES & RESTRICTIONS
+        {feedback_history_text}
+        CRITICAL: Carefully analyze the USER PREFERENCES & RESTRICTIONS. If the user previously DISLIKED a combination for a specific context or weather, DO NOT recommend that exact combination again for similar conditions, keeping their 'Reason' in mind. If they LIKED a combination, use that as strong inspiration for their personal style.
 
         ### CLOTHING ITEMS
         {clothing_json}

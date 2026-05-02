@@ -21,6 +21,10 @@ class ChatMessage {
   final int? overallScore;
   final Map<String, dynamic>? scores;
 
+  String? feedbackStatus; // 'liked', 'disliked', null
+  String? userPrompt;
+  String? weatherContext;
+
   ChatMessage({
     required this.role,
     required this.text,
@@ -30,7 +34,221 @@ class ChatMessage {
     this.isLoggingWear = false,
     this.overallScore,
     this.scores,
+    this.feedbackStatus,
+    this.userPrompt,
+    this.weatherContext,
   });
+}
+
+class _FeedbackButtons extends StatefulWidget {
+  final ChatMessage message;
+  final List<Map<String, dynamic>> items;
+  final FirebaseService firebaseService;
+  final void Function(VoidCallback) setParentState;
+  final BuildContext parentContext;
+
+  const _FeedbackButtons({
+    required this.message,
+    required this.items,
+    required this.firebaseService,
+    required this.setParentState,
+    required this.parentContext,
+  });
+
+  @override
+  State<_FeedbackButtons> createState() => _FeedbackButtonsState();
+}
+
+class _FeedbackButtonsState extends State<_FeedbackButtons> {
+  double _likeScale = 1.0;
+  double _dislikeScale = 1.0;
+
+  void _animatePop(bool isLike) async {
+    setState(() {
+      if (isLike) _likeScale = 1.35;
+      else _dislikeScale = 1.35;
+    });
+    await Future.delayed(const Duration(milliseconds: 150));
+    if (mounted) {
+      setState(() {
+        if (isLike) _likeScale = 1.0;
+        else _dislikeScale = 1.0;
+      });
+    }
+  }
+
+  void _handleLike() {
+    if (widget.message.feedbackStatus != null) return;
+    final ids = widget.items.map((e) => e['id'].toString()).toList();
+    setState(() {
+      widget.message.feedbackStatus = 'liked';
+      _likeScale = 1.3;
+    });
+    widget.setParentState(() {});
+    Future.delayed(const Duration(milliseconds: 120), () {
+      if (mounted) setState(() => _likeScale = 1.0);
+    });
+    if (ids.isNotEmpty && widget.message.userPrompt != null && widget.message.weatherContext != null) {
+      widget.firebaseService.saveOutfitFeedback(
+        itemIds: ids,
+        userPrompt: widget.message.userPrompt!,
+        weatherContext: widget.message.weatherContext!,
+        isLike: true,
+      ).catchError((e) {
+        if (mounted) {
+          ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+            SnackBar(content: Text('Failed to save feedback: $e')),
+          );
+        }
+      });
+    }
+  }
+
+  void _handleDislikeTap() {
+    if (widget.message.feedbackStatus != null) return;
+    _animatePop(false);
+    showModalBottomSheet(
+      context: widget.parentContext,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext ctx) {
+        return SafeArea(
+          top: false,
+          bottom: true,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text("Why didn't you like this?",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                ListTile(
+                  leading: const Icon(Icons.style_outlined),
+                  title: const Text("Style mismatch"),
+                  onTap: () => _onDislikeSelected(ctx, "Style mismatch"),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.wb_sunny_outlined),
+                  title: const Text("Weather mismatch"),
+                  onTap: () => _onDislikeSelected(ctx, "Weather mismatch"),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.event_outlined),
+                  title: const Text("Context mismatch"),
+                  onTap: () => _onDislikeSelected(ctx, "Context mismatch"),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _onDislikeSelected(BuildContext ctx, String reason) {
+    Navigator.pop(ctx);
+    final ids = widget.items.map((e) => e['id'].toString()).toList();
+    setState(() {
+      widget.message.feedbackStatus = 'disliked';
+      _dislikeScale = 1.3;
+    });
+    widget.setParentState(() {});
+    Future.delayed(const Duration(milliseconds: 120), () {
+      if (mounted) setState(() => _dislikeScale = 1.0);
+    });
+    if (ids.isNotEmpty && widget.message.userPrompt != null && widget.message.weatherContext != null) {
+      widget.firebaseService.saveOutfitFeedback(
+        itemIds: ids,
+        userPrompt: widget.message.userPrompt!,
+        weatherContext: widget.message.weatherContext!,
+        isLike: false,
+        dislikeReason: reason,
+      ).catchError((e) {
+        if (mounted) {
+          ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+            SnackBar(content: Text('Failed to save feedback: $e')),
+          );
+        }
+      });
+    }
+  }
+
+  Widget _buildAnimatedButton({
+    required bool isLike,
+    required double scale,
+    required VoidCallback onTap,
+  }) {
+    final status = widget.message.feedbackStatus;
+    final isSelected = isLike ? status == 'liked' : status == 'disliked';
+    final isDisabled = status != null && !isSelected;
+
+    final activeColor = isLike ? const Color(0xFF22C55E) : const Color(0xFFEF4444);
+    final bgColor = isSelected
+        ? activeColor.withOpacity(0.12)
+        : isDisabled
+            ? Colors.grey.shade100
+            : Colors.grey.shade100;
+    final iconColor = isSelected
+        ? activeColor
+        : isDisabled
+            ? Colors.grey.shade300
+            : Colors.grey.shade500;
+    final borderColor = isSelected ? activeColor : Colors.transparent;
+
+    final icon = isLike
+        ? (isSelected ? Icons.thumb_up_rounded : Icons.thumb_up_outlined)
+        : (isSelected ? Icons.thumb_down_rounded : Icons.thumb_down_outlined);
+
+    return GestureDetector(
+      onTap: isDisabled ? null : onTap,
+      child: AnimatedScale(
+        scale: scale,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOutBack,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: bgColor,
+            shape: BoxShape.circle,
+            border: Border.all(color: borderColor, width: 1.5),
+          ),
+          child: Center(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              transitionBuilder: (child, animation) =>
+                  ScaleTransition(scale: animation, child: child),
+              child: Icon(icon, key: ValueKey(isSelected), color: iconColor, size: 18),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildAnimatedButton(
+          isLike: true,
+          scale: _likeScale,
+          onTap: _handleLike,
+        ),
+        const SizedBox(width: 6),
+        _buildAnimatedButton(
+          isLike: false,
+          scale: _dislikeScale,
+          onTap: _handleDislikeTap,
+        ),
+      ],
+    );
+  }
 }
 
 class AiStylistChatScreen extends StatefulWidget {
@@ -62,6 +280,32 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
       }
     });
   }
+
+  Future<void> _handleDislike(ChatMessage message, List<Map<String, dynamic>> items, String reason, BuildContext sheetContext) async {
+    Navigator.pop(sheetContext);
+    List<String> ids = items.map((e) => e['id'].toString()).toList();
+    if (ids.isNotEmpty && message.userPrompt != null && message.weatherContext != null) {
+      try {
+        await _firebaseService.saveOutfitFeedback(
+          itemIds: ids,
+          userPrompt: message.userPrompt!,
+          weatherContext: message.weatherContext!,
+          isLike: false,
+          dislikeReason: reason,
+        );
+        if (mounted) {
+          setState(() {
+            message.feedbackStatus = 'disliked';
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save feedback: $e')));
+        }
+      }
+    }
+  }
+
   Color _getScoreColor(num score) {
     if (score >= 80) return Colors.green;
     if (score >= 60) return Colors.orange;
@@ -83,7 +327,6 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Drag handle
                 Container(
                   width: 40,
                   height: 5,
@@ -230,6 +473,8 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
               outfitItems: outfitItems,
               overallScore: overallScore,
               scores: scores,
+              userPrompt: text,
+              weatherContext: '$currentWeatherStr | Forecast: $hourlyForecastStr',
             ));
           } else {
              // Fallback if no items found but we have an explanation
@@ -405,12 +650,12 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
               // Scrollable Horizontal List of Items or Grid
               Container(
                 height: 180,
-                color: Colors.transparent, // Fără fundal gri, fundal curat
+                color: Colors.transparent,
                 child: items.isEmpty 
                   ? const Center(child: Text("No items found", style: TextStyle(color: Colors.grey)))
                   : ListView.builder(
                       scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), // Padding potrivit pentru bulă
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       itemCount: items.length,
                       itemBuilder: (context, index) {
                         final item = items[index];
@@ -418,10 +663,8 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                         return Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            // Folosim funcția nouă, fără chenar!
                             _buildChatImageThumbnail(item),
                             
-                            // Adăugăm '+' între haine
                             if (index < items.length - 1)
                               Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 8), 
@@ -436,6 +679,14 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                 padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
+                    _FeedbackButtons(
+                      message: message,
+                      items: items,
+                      firebaseService: _firebaseService,
+                      setParentState: setState,
+                      parentContext: context,
+                    ),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () {
@@ -455,14 +706,18 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                           }
                         },
                         icon: const Icon(Icons.favorite_border, size: 18),
-                        label: const Text("Save"),
+                        label: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text("Save", maxLines: 1),
+                        ),
                         style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
                           foregroundColor: Colors.redAccent,
                           side: const BorderSide(color: Colors.redAccent),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 4),
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: message.isLoggingWear ? null : () {
@@ -490,8 +745,12 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                         icon: message.isLoggingWear 
                             ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                             : const Icon(Icons.checkroom, size: 18),
-                        label: const Text("Wear"),
+                        label: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text("Wear", maxLines: 1),
+                        ),
                         style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
                           foregroundColor: Colors.green,
                           side: const BorderSide(color: Colors.green),
                         ),
@@ -544,7 +803,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: const Color(0xFFFAFAFA), // Colors.grey[50] replacement
+      backgroundColor: const Color(0xFFFAFAFA),
       appBar: AppBar(
         title: const Text(
           "AI Stylist", 

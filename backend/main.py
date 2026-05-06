@@ -631,7 +631,11 @@ async def generate_packing(request: PackingRequest):
         3. Using ONLY the items you selected for the capsule wardrobe, generate roughly {request.days} distinct outfits.
         4. CRITICAL INSTRUCTION: Do NOT label outfits as 'Day 1', 'Day 2', etc. The user wants a flexible capsule wardrobe. Instead, generate descriptive titles based on the provided `trip_plans` or vibe (e.g., 'Museum Explorer', 'Elegant Dinner Outfit'). Keep the focus on the occasion, not the calendar day.
         5. NEVER include the raw database IDs in the text descriptions. IDs must only be in the arrays.
-        6. Each outfit must be a complete look (must have a top, a bottom, and shoes).
+        6. IF you have sufficient items, each generated outfit must be a complete look (top, bottom, shoes) using ONLY the provided items.
+        7. CRITICAL RULE ON HALLUCINATIONS: You are strictly forbidden from 'supplementing' or inventing items that are not in the provided WARDROBE list. If the user's wardrobe does not contain the minimum required items to form at least one complete outfit (e.g., they have no bottoms or no shoes), you MUST do the following:
+           - Set the `warning_message` field to explicitly state which essential clothing categories are missing from their wardrobe to pack for this trip.
+           - Return an empty array `[]` for the `outfits` list. Do NOT generate incomplete outfits and do NOT hallucinate fake items in descriptions.
+           - You may still select the items they DO have (e.g., their only T-shirt) in `selected_item_ids` and write the `reasoning` based on what little they own.
         
         ### RESPONSE FORMAT:
         Return ONLY a valid JSON object matching this schema:

@@ -8,6 +8,7 @@ import 'calendar_screen.dart';
 import 'sustainability_screen.dart';
 import 'shopping_assistant_screen.dart';
 import 'my_trips_screen.dart';
+import 'virtual_dressing_room_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -104,7 +105,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Icon(Icons.settings, color: Colors.black87, size: 20),
                     SizedBox(width: 12),
-                    Text('Settings', style: TextStyle(fontWeight: FontWeight.w500)),
+                    Text(
+                      'Settings',
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                    ),
                   ],
                 ),
               ),
@@ -114,7 +118,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Icon(Icons.logout, color: Colors.red, size: 20),
                     SizedBox(width: 12),
-                    Text('Logout', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w500)),
+                    Text(
+                      'Logout',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -156,10 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 4),
             Text(
               "Let's see what we are wearing today.",
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
             ),
             const SizedBox(height: 24),
             _buildWeatherCard(),
@@ -167,6 +174,8 @@ class _HomeScreenState extends State<HomeScreen> {
             _buildAIStylistCard(),
             const SizedBox(height: 16),
             _buildShoppingAssistantCard(),
+            const SizedBox(height: 16),
+            _buildVirtualDressingRoomCard(),
             _buildMyTripsCard(),
             const SizedBox(height: 24),
           ],
@@ -187,10 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final photoUrl = user.photoURL;
     if (photoUrl != null && photoUrl.isNotEmpty) {
-      return CircleAvatar(
-        radius: 16,
-        backgroundImage: NetworkImage(photoUrl),
-      );
+      return CircleAvatar(radius: 16, backgroundImage: NetworkImage(photoUrl));
     }
 
     return StreamBuilder<DocumentSnapshot>(
@@ -203,15 +209,29 @@ class _HomeScreenState extends State<HomeScreen> {
 
         if (snapshot.hasData && snapshot.data!.exists) {
           final data = snapshot.data!.data() as Map<String, dynamic>?;
-          if (data != null && data['name'] != null && data['name'].toString().trim().isNotEmpty) {
-            fallbackLetter = data['name'].toString().trim().substring(0, 1).toUpperCase();
-          } else if (user.displayName != null && user.displayName!.trim().isNotEmpty) {
-            fallbackLetter = user.displayName!.trim().substring(0, 1).toUpperCase();
+          if (data != null &&
+              data['name'] != null &&
+              data['name'].toString().trim().isNotEmpty) {
+            fallbackLetter = data['name']
+                .toString()
+                .trim()
+                .substring(0, 1)
+                .toUpperCase();
+          } else if (user.displayName != null &&
+              user.displayName!.trim().isNotEmpty) {
+            fallbackLetter = user.displayName!
+                .trim()
+                .substring(0, 1)
+                .toUpperCase();
           } else if (user.email != null && user.email!.trim().isNotEmpty) {
             fallbackLetter = user.email!.trim().substring(0, 1).toUpperCase();
           }
-        } else if (user.displayName != null && user.displayName!.trim().isNotEmpty) {
-          fallbackLetter = user.displayName!.trim().substring(0, 1).toUpperCase();
+        } else if (user.displayName != null &&
+            user.displayName!.trim().isNotEmpty) {
+          fallbackLetter = user.displayName!
+              .trim()
+              .substring(0, 1)
+              .toUpperCase();
         } else if (user.email != null && user.email!.trim().isNotEmpty) {
           fallbackLetter = user.email!.trim().substring(0, 1).toUpperCase();
         }
@@ -285,10 +305,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   SizedBox(height: 4),
                   Text(
                     "Ready to pick your outfit?",
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                 ],
               ),
@@ -309,10 +326,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 20),
           const Text(
             "Based on the weather and your style, I recommend a layered look today.",
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Colors.white70, fontSize: 14),
           ),
           const SizedBox(height: 20),
           SizedBox(
@@ -321,7 +335,9 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const AiStylistChatScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => const AiStylistChatScreen(),
+                  ),
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -335,10 +351,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               child: const Text(
                 "Generate Outfit",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ),
           ),
@@ -421,120 +434,195 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-
   Widget _buildMyTripsCard() {
-  final uid = FirebaseService().currentUser?.uid;
-  
-  return Padding(
-    padding: const EdgeInsets.only(top: 20), 
-    child: StreamBuilder<QuerySnapshot>(
-      stream: uid != null
-          ? FirebaseFirestore.instance
-              .collection('trips')
-              .where('user_id', isEqualTo: uid)
-              .snapshots()
-          : const Stream.empty(),
-      builder: (context, snapshot) {
-        final hasTrips = snapshot.hasData && snapshot.data!.docs.isNotEmpty;
+    final uid = FirebaseService().currentUser?.uid;
 
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.blue.shade50, Colors.white],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+    return Padding(
+      padding: const EdgeInsets.only(top: 20),
+      child: StreamBuilder<QuerySnapshot>(
+        stream: uid != null
+            ? FirebaseFirestore.instance
+                  .collection('trips')
+                  .where('user_id', isEqualTo: uid)
+                  .snapshots()
+            : const Stream.empty(),
+        builder: (context, snapshot) {
+          final hasTrips = snapshot.hasData && snapshot.data!.docs.isNotEmpty;
+
+          return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.blue.shade50, Colors.white],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.blueAccent.withValues(alpha: 0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+              border: Border.all(
+                color: Colors.blueAccent.withValues(alpha: 0.2),
+              ),
             ),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.blueAccent.withValues(alpha: 0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MyTripsScreen()),
+                  );
+                },
+                child: Stack(
+                  children: [
+                    Positioned(
+                      right: -10,
+                      bottom: -10,
+                      child: Icon(
+                        Icons.luggage,
+                        size: 100,
+                        color: Colors.blueAccent.withValues(alpha: 0.03),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Smart Packing",
+                                  style: TextStyle(
+                                    color: Colors.blueAccent,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  "Plan your travel outfits with AI-powered capsule wardrobes.",
+                                  style: TextStyle(
+                                    color: Colors.blueAccent.shade700
+                                        .withValues(alpha: 0.8),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.blueAccent.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: const Icon(
+                              Icons.luggage_rounded,
+                              color: Colors.blueAccent,
+                              size: 28,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildVirtualDressingRoomCard() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.purple.shade50, Colors.white],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.purple.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+        border: Border.all(color: Colors.purple.withValues(alpha: 0.2)),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const VirtualDressingRoomScreen(),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Virtual Dressing Room",
+                      style: TextStyle(
+                        color: Colors.purple,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      "Mix, match, and visualize your outfits on a digital canvas.",
+                      style: TextStyle(
+                        color: Colors.purple.shade700.withValues(alpha: 0.8),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.purple.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: const Icon(
+                  Icons.checkroom,
+                  color: Colors.purple,
+                  size: 28,
+                ),
               ),
             ],
-            border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.2)),
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(20),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const MyTripsScreen()),
-                );
-              },
-              child: Stack(
-                children: [
-                  Positioned(
-                    right: -10,
-                    bottom: -10,
-                    child: Icon(
-                      Icons.luggage,
-                      size: 100,
-                      color: Colors.blueAccent.withValues(alpha: 0.03),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "Smart Packing",
-                                style: TextStyle(
-                                  color: Colors.blueAccent,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: -0.5,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                "Plan your travel outfits with AI-powered capsule wardrobes.",
-                                style: TextStyle(
-                                  color: Colors.blueAccent.shade700.withValues(alpha: 0.8),
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.blueAccent.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: const Icon(
-                            Icons.luggage_rounded,
-                            color: Colors.blueAccent,
-                            size: 28,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    ),
-  );
+        ),
+      ),
+    );
+  }
 }
-
-
-
-}
-
-
 
 class DynamicWeatherCard extends StatelessWidget {
   final WeatherModel? weather;
@@ -602,10 +690,7 @@ class DynamicWeatherCard extends StatelessWidget {
                 "Weather unavailable.",
                 style: TextStyle(color: Colors.red[800], fontSize: 13),
               ),
-              TextButton(
-                onPressed: onRetry,
-                child: const Text("Retry"),
-              ),
+              TextButton(onPressed: onRetry, child: const Text("Retry")),
             ],
           ),
         ),
@@ -617,7 +702,8 @@ class DynamicWeatherCard extends StatelessWidget {
     final gradient = _getGradient(weather!.condition, weather!.iconCode);
     final icon = _getIconForCondition(weather!.condition, weather!.iconCode);
     final now = DateTime.now();
-    final dateString = "${_getWeekday(now.weekday)}, ${now.day} ${_getMonth(now.month)}";
+    final dateString =
+        "${_getWeekday(now.weekday)}, ${now.day} ${_getMonth(now.month)}";
 
     return Container(
       width: double.infinity,
@@ -671,7 +757,7 @@ class DynamicWeatherCard extends StatelessWidget {
                   ),
                 ],
               ),
-              
+
               // Right: Temp & Icon (Tight Row)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -694,7 +780,7 @@ class DynamicWeatherCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Icon(
-                    icon, 
+                    icon,
                     size: 38, // Matches text size
                     color: Colors.white,
                     shadows: const [
@@ -709,15 +795,16 @@ class DynamicWeatherCard extends StatelessWidget {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 16), // Breathing room
-          
           // 2. Hourly Forecast Glass Strip (Compact)
           Container(
             height: 80,
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15), // Slightly more transparent
+              color: Colors.white.withValues(
+                alpha: 0.15,
+              ), // Slightly more transparent
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: Colors.white.withValues(alpha: 0.25),
@@ -761,7 +848,6 @@ class DynamicWeatherCard extends StatelessWidget {
               },
             ),
           ),
-
         ],
       ),
     );
@@ -773,7 +859,20 @@ class DynamicWeatherCard extends StatelessWidget {
   }
 
   String _getMonth(int month) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     return months[month - 1];
   }
 
@@ -792,54 +891,63 @@ class DynamicWeatherCard extends StatelessWidget {
       }
       // cer senin de zi
       return const LinearGradient(
-        colors: [Color(0xFFFF9800), Color(0xFFFFEB3B)], 
+        colors: [Color(0xFFFF9800), Color(0xFFFFEB3B)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       );
     } else if (condition.contains('cloud')) {
       return const LinearGradient(
-        colors: [Color(0xFF607D8B), Color(0xFF90A4AE)], 
+        colors: [Color(0xFF607D8B), Color(0xFF90A4AE)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       );
     } else if (condition.contains('rain') || condition.contains('drizzle')) {
       return const LinearGradient(
-        colors: [Color(0xFF1A237E), Color(0xFF3949AB)], 
+        colors: [Color(0xFF1A237E), Color(0xFF3949AB)],
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
       );
     } else if (condition.contains('snow')) {
       return const LinearGradient(
-        colors: [Color(0xFF81D4FA), Color(0xFFE1F5FE)], 
+        colors: [Color(0xFF81D4FA), Color(0xFFE1F5FE)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       );
     }
-    
+
     // fallback
-    return isNight 
-      ? const LinearGradient(colors: [Color(0xFF311B92), Color(0xFF512DA8)], begin: Alignment.topLeft, end: Alignment.bottomRight)
-      : const LinearGradient(colors: [Color(0xFF5E35B1), Color(0xFF9575CD)], begin: Alignment.topLeft, end: Alignment.bottomRight);
+    return isNight
+        ? const LinearGradient(
+            colors: [Color(0xFF311B92), Color(0xFF512DA8)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          )
+        : const LinearGradient(
+            colors: [Color(0xFF5E35B1), Color(0xFF9575CD)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          );
   }
 
   IconData _getIconForCondition(String condition, String iconCode) {
     condition = condition.toLowerCase();
     bool isNight = iconCode.endsWith('n'); // verificam daca e noapte
-    
+
     if (condition.contains('rain') || condition.contains('drizzle')) {
-      return CupertinoIcons.drop_fill; 
+      return CupertinoIcons.drop_fill;
     } else if (condition.contains('cloud')) {
       return CupertinoIcons.cloud_fill;
     } else if (condition.contains('snow')) {
       return CupertinoIcons.snow;
     } else if (condition.contains('clear') || condition.contains('sun')) {
-      return isNight ? CupertinoIcons.moon_stars_fill : CupertinoIcons.sun_max_fill;
+      return isNight
+          ? CupertinoIcons.moon_stars_fill
+          : CupertinoIcons.sun_max_fill;
     }
-    
+
     // default
-    return isNight ? CupertinoIcons.moon_stars_fill : CupertinoIcons.sun_max_fill;
+    return isNight
+        ? CupertinoIcons.moon_stars_fill
+        : CupertinoIcons.sun_max_fill;
   }
-  
 }
-
-

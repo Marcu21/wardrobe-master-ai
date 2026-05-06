@@ -10,6 +10,7 @@ import '../services/wardrobe_state_service.dart';
 import '../widgets/global_wardrobe_selector.dart';
 import '../services/calendar_service.dart';
 import '../utils/outfit_sorting_utils.dart';
+import 'virtual_dressing_room_screen.dart';
 
 class ChatMessage {
   final String role; // 'user' or 'ai'
@@ -565,7 +566,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         alignment: Alignment.centerLeft,
         child: Container(
-          width: 300, // Slightly wider for the grid
+          width: 340, // Slightly wider for the grid and buttons
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
@@ -613,6 +614,13 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                       const Spacer(),
+                      _FeedbackButtons(
+                        message: message,
+                        items: items,
+                        firebaseService: _firebaseService,
+                        setParentState: setState,
+                        parentContext: context,
+                      ),
                       if (message.scores != null)
                         IconButton(
                           icon: const Icon(Icons.info_outline, color: Colors.grey),
@@ -638,40 +646,55 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                 color: Colors.transparent,
                 child: items.isEmpty 
                   ? const Center(child: Text("No items found", style: TextStyle(color: Colors.grey)))
-                  : ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      itemCount: items.length,
-                      itemBuilder: (context, index) {
-                        final item = items[index];
-                        
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            _buildChatImageThumbnail(item),
-                            
-                            if (index < items.length - 1)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8), 
-                                child: Icon(Icons.add, color: Colors.grey.shade400, size: 24),
-                              ),
-                          ],
-                        );
-                      },
+                  : GestureDetector(
+                      onTap: () => _showVerticalPreview(context, items),
+                      behavior: HitTestBehavior.opaque,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        itemCount: items.length,
+                        itemBuilder: (context, index) {
+                          final item = items[index];
+                          
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              _buildChatImageThumbnail(item),
+                              
+                              if (index < items.length - 1)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8), 
+                                  child: Icon(Icons.add, color: Colors.grey.shade400, size: 24),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
                     ),
               ),
               Padding(
                 padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
-                    _FeedbackButtons(
-                      message: message,
-                      items: items,
-                      firebaseService: _firebaseService,
-                      setParentState: setState,
-                      parentContext: context,
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          final List<String> itemIds = items.map((e) => e['id'].toString()).toList();
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => VirtualDressingRoomScreen(initialItemIds: itemIds)));
+                        },
+                        icon: const Icon(Icons.tune, size: 16),
+                        label: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text("Remix"),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
+                          foregroundColor: Colors.black,
+                          side: const BorderSide(color: Colors.black),
+                        ),
+                      ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () {
@@ -690,19 +713,19 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                              );
                           }
                         },
-                        icon: const Icon(Icons.favorite_border, size: 18),
+                        icon: const Icon(Icons.favorite_border, size: 16),
                         label: const FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text("Save", maxLines: 1),
                         ),
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
                           foregroundColor: Colors.redAccent,
                           side: const BorderSide(color: Colors.redAccent),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 6),
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: message.isLoggingWear ? null : () {
@@ -728,14 +751,14 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                            }
                         },
                         icon: message.isLoggingWear 
-                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                            : const Icon(Icons.checkroom, size: 18),
+                            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                            : const Icon(Icons.checkroom, size: 16),
                         label: const FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text("Wear", maxLines: 1),
                         ),
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
                           foregroundColor: Colors.green,
                           side: const BorderSide(color: Colors.green),
                         ),
@@ -888,7 +911,168 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
 
 
 
-  Widget _buildChatImageThumbnail(Map<String, dynamic> item) {
+  int _getItemFlex(Map<String, dynamic> item) {
+    final info = item['metadata']?['basic_info'] ?? item['basic_info'] ?? {};
+    String cat = '';
+    String sub = '';
+
+    if (item.containsKey('category')) {
+      cat = item['category'].toString().toLowerCase();
+    } else if (info is Map && info.containsKey('category')) {
+      cat = info['category'].toString().toLowerCase();
+    }
+
+    if (item.containsKey('sub_category')) {
+      sub = item['sub_category'].toString().toLowerCase();
+    } else if (info is Map && info.containsKey('sub_category')) {
+      sub = info['sub_category'].toString().toLowerCase();
+    }
+
+    if (cat.contains('head') || sub.contains('hat') || sub.contains('cap') || sub.contains('beanie')) return 1;
+    if (cat.contains('outerwear') || sub.contains('jacket') || sub.contains('coat') || sub.contains('blazer')) return 3;
+    if (cat.contains('midwear') || sub.contains('sweater') || sub.contains('hoodie') || sub.contains('cardigan') || sub.contains('sweatshirt')) return 3;
+    if (cat.contains('bottom') || cat.contains('pant') || sub.contains('jean') || sub.contains('skirt') || sub.contains('short') || sub.contains('legging')) return 4;
+    if (cat.contains('shoe') || cat.contains('footwear') || sub.contains('sneaker') || sub.contains('boot') || sub.contains('sandal')) return 2;
+    
+    return 3; // Tops / Default
+  }
+
+  void _showVerticalPreview(BuildContext context, List<Map<String, dynamic>> items) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 56.0, vertical: 32.0),
+          child: Container(
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.75),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.white, Colors.grey.shade50],
+              ),
+              border: Border.all(color: Colors.grey.shade200, width: 1),
+              borderRadius: BorderRadius.circular(32),
+            ),
+            child: Stack(
+              children: [
+                Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 24.0, bottom: 12.0, left: 24.0, right: 40.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: const [
+                          Icon(Icons.auto_awesome, color: Colors.black87, size: 16),
+                          SizedBox(width: 8),
+                          Text(
+                            "OUTFIT PREVIEW",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.5,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Column(
+                          children: items.asMap().entries.expand((entry) {
+                            final int index = entry.key;
+                            final Map<String, dynamic> item = entry.value;
+                            
+                            final widgets = <Widget>[
+                              Expanded(
+                                flex: _getItemFlex(item),
+                                child: _buildFullOutfitPreviewImage(item),
+                              ),
+                            ];
+                            
+                            if (index < items.length - 1) {
+                              widgets.add(const SizedBox(height: 4));
+                            }
+                            
+                            return widgets;
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                    Container(
+                      width: 100,
+                      height: 12,
+                      margin: const EdgeInsets.only(bottom: 24, top: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        borderRadius: const BorderRadius.all(Radius.elliptical(100, 12)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.02),
+                            blurRadius: 4,
+                          )
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      iconSize: 16,
+                      padding: const EdgeInsets.all(4),
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(Icons.close, color: Colors.black54),
+                      onPressed: () => Navigator.pop(dialogContext),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFullOutfitPreviewImage(Map<String, dynamic> item) {
+    final imageBase64 = item['image_base64'] as String?;
+    final imageUrl = item['imageUrl'] as String?;
+
+    if (imageBase64 != null && imageBase64.isNotEmpty) {
+      try {
+        final String cleanBase64 = imageBase64.contains(',') ? imageBase64.split(',').last : imageBase64;
+        return Image.memory(
+          base64Decode(cleanBase64), 
+          fit: BoxFit.contain,
+          width: double.infinity,
+        );
+      } catch (e) {
+        return const Center(child: Icon(Icons.broken_image, color: Colors.grey));
+      }
+    } else if (imageUrl != null && imageUrl.isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: imageUrl, 
+        fit: BoxFit.contain,
+        width: double.infinity,
+        placeholder: (context, url) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        errorWidget: (context, url, error) => const Center(child: Icon(Icons.error_outline, color: Colors.grey)),
+      );
+    } else {
+      return const Center(child: Icon(Icons.checkroom, color: Colors.grey, size: 40));
+    }
+  }
+
+  Widget _buildChatImageThumbnail(Map<String, dynamic> item, {double height = 160}) {
     final imageBase64 = item['image_base64'] as String?;
     final imageUrl = item['imageUrl'] as String?;
 
@@ -915,7 +1099,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
     }
 
     return SizedBox(
-      height: 160, 
+      height: height, 
       child: imageWidget,
     );
   }

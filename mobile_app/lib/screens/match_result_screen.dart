@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../services/api_service.dart';
 import 'package:http/http.dart' as http;
+import '../utils/outfit_sorting_utils.dart';
 
 class MatchResultScreen extends StatefulWidget {
   final Map<String, dynamic> scannedItemData;
@@ -396,23 +397,7 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
                                       final String notes = outfit['styling_notes'] ?? '';
                                       final List<Map<String, dynamic>> items = List<Map<String, dynamic>>.from(outfit['items'] ?? []);
 
-                                      items.sort((a, b) {
-                                        int getOrderScore(Map<String, dynamic> item) {
-                                          final info = item['metadata']?['basic_info'] ?? item['basic_info'] ?? {};
-                                          String cat = (info['category'] ?? '').toString().toLowerCase();
-                                          String sub = (info['sub_category'] ?? '').toString().toLowerCase();
-
-                                          if (cat.contains('head') || sub.contains('hat') || sub.contains('cap')) return 0;
-                                          if (cat.contains('outerwear') || sub.contains('jacket') || sub.contains('coat')) return 1;
-                                          if (cat.contains('midwear') || sub.contains('sweater') || sub.contains('hoodie')) return 2;
-                                          if (cat.contains('top') || sub.contains('shirt') || sub.contains('t-shirt')) return 3;
-                                          if (cat.contains('bottom') || cat.contains('pant') || sub.contains('jean')) return 4;
-                                          if (cat.contains('shoe') || cat.contains('footwear') || sub.contains('sneaker')) return 5;
-                                          
-                                          return 3;
-                                        }
-                                        return getOrderScore(a).compareTo(getOrderScore(b));
-                                      });
+                                      OutfitSortingUtils.sortOutfitItems(items);
                                       
                                       return Container(
                                         margin: const EdgeInsets.only(bottom: 24),

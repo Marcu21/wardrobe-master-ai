@@ -9,6 +9,7 @@ import '../widgets/save_outfit_dialog.dart';
 import '../services/wardrobe_state_service.dart';
 import '../widgets/global_wardrobe_selector.dart';
 import '../services/calendar_service.dart';
+import '../utils/outfit_sorting_utils.dart';
 
 class ChatMessage {
   final String role; // 'user' or 'ai'
@@ -558,23 +559,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
     if (message.isOutfit) {
       final items = message.outfitItems ?? [];
 
-      items.sort((a, b) {
-        int getOrderScore(Map<String, dynamic> item) {
-          final info = item['metadata']?['basic_info'] ?? item['basic_info'] ?? {};
-          String cat = (info['category'] ?? '').toString().toLowerCase();
-          String sub = (info['sub_category'] ?? '').toString().toLowerCase();
-
-          if (cat.contains('head') || sub.contains('hat') || sub.contains('cap')) return 0;
-          if (cat.contains('outerwear') || sub.contains('jacket') || sub.contains('coat')) return 1;
-          if (cat.contains('midwear') || sub.contains('sweater') || sub.contains('hoodie')) return 2;
-          if (cat.contains('top') || sub.contains('shirt') || sub.contains('t-shirt')) return 3;
-          if (cat.contains('bottom') || cat.contains('pant') || sub.contains('jean')) return 4;
-          if (cat.contains('shoe') || cat.contains('footwear') || sub.contains('sneaker')) return 5;
-          
-          return 3;
-        }
-        return getOrderScore(a).compareTo(getOrderScore(b));
-      });
+      OutfitSortingUtils.sortOutfitItems(items);
       
       return Container(
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),

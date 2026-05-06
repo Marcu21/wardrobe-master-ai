@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../services/firebase_service.dart';
 import 'outfit_detail_screen.dart';
+import '../utils/outfit_sorting_utils.dart';
 
 class LookbookScreen extends StatelessWidget {
   const LookbookScreen({super.key});
@@ -111,7 +112,7 @@ class _OutfitGridCardState extends State<OutfitGridCard> {
         final items = await _firebaseService.getItemsByIds(itemIds);
         if (mounted) {
           setState(() {
-            _items = _sortItems(items);
+            _items = OutfitSortingUtils.sortOutfitItems(items);
             _isLoading = false;
           });
         }
@@ -130,38 +131,6 @@ class _OutfitGridCardState extends State<OutfitGridCard> {
         });
       }
     }
-  }
-
-  List<Map<String, dynamic>> _sortItems(List<Map<String, dynamic>> items) {
-    // Helper to get score
-    int getScore(Map<String, dynamic> item) {
-      final info = item['basic_info'] ?? {};
-      String cat = (info['category'] ?? '').toString().toLowerCase();
-      String sub = (info['sub_category'] ?? '').toString().toLowerCase();
-
-      // 0. Head
-      if (cat.contains('head') || sub.contains('hat') || sub.contains('cap')) return 0; 
-      
-      // 1. Outerwear
-      if (cat.contains('outerwear') || sub.contains('jacket') || sub.contains('coat')) return 1; 
-      
-      // 2. Midwear
-      if (cat.contains('midwear') || sub.contains('sweater') || sub.contains('hoodie') || sub.contains('cardigan')) return 2; 
-      
-      // 3. Tops
-      if (cat.contains('top') || sub.contains('shirt') || sub.contains('blouse') || sub.contains('t-shirt')) return 3; 
-      
-      // 4. Bottoms
-      if (cat.contains('bottom') || cat.contains('pant') || sub.contains('jean') || sub.contains('skirt') || sub.contains('short')) return 4; 
-      
-      // 5. Shoes
-      if (cat.contains('shoe') || cat.contains('footwear') || sub.contains('sneaker') || sub.contains('boot')) return 5; 
-      
-      return 3; // Default to Tops if unknown
-    }
-
-    items.sort((a, b) => getScore(a).compareTo(getScore(b)));
-    return items;
   }
 
   Widget _buildThumbnail(Map<String, dynamic> item) {

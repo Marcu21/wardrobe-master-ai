@@ -10,6 +10,7 @@ import '../services/weather_service.dart';
 import '../services/wardrobe_state_service.dart';
 import '../services/firebase_service.dart';
 import 'item_selection_screen.dart';
+import '../utils/outfit_sorting_utils.dart';
 
 class TripViewScreen extends StatefulWidget {
   final String? tripId;
@@ -969,6 +970,9 @@ class _TripViewScreenState extends State<TripViewScreen> {
         final outfitItems = _clothingItems
             .where((item) => outfit.itemIds.contains(item['id']))
             .toList();
+        
+        OutfitSortingUtils.sortOutfitItems(outfitItems);
+        
         final isLoading = _loadingOutfitIndices.contains(index);
 
         return Container(

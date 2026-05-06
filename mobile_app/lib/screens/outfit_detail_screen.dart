@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../services/firebase_service.dart';
 import '../services/calendar_service.dart';
 import 'virtual_dressing_room_screen.dart';
+import '../utils/outfit_sorting_utils.dart';
 
 class OutfitDetailScreen extends StatefulWidget {
   final Map<String, dynamic> outfitData;
@@ -50,7 +51,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
         final items = await _firebaseService.getItemsByIds(itemIds);
         if (mounted) {
           setState(() {
-            _items = _sortItems(items);
+            _items = OutfitSortingUtils.sortOutfitItems(items);
             _isLoading = false;
           });
         }
@@ -69,37 +70,6 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
         });
       }
     }
-  }
-
-  List<Map<String, dynamic>> _sortItems(List<Map<String, dynamic>> items) {
-    int getScore(Map<String, dynamic> item) {
-      final info = item['basic_info'] ?? {};
-      String cat = (info['category'] ?? '').toString().toLowerCase();
-      String sub = (info['sub_category'] ?? '').toString().toLowerCase();
-
-      // 0. Head
-      if (cat.contains('head') || sub.contains('hat') || sub.contains('cap')) return 0; 
-      
-      // 1. Outerwear
-      if (cat.contains('outerwear') || sub.contains('jacket') || sub.contains('coat')) return 1; 
-      
-      // 2. Midwear
-      if (cat.contains('midwear') || sub.contains('sweater') || sub.contains('hoodie') || sub.contains('cardigan')) return 2; 
-      
-      // 3. Tops
-      if (cat.contains('top') || sub.contains('shirt') || sub.contains('blouse') || sub.contains('t-shirt')) return 3; 
-      
-      // 4. Bottoms
-      if (cat.contains('bottom') || cat.contains('pant') || sub.contains('jean') || sub.contains('skirt') || sub.contains('short')) return 4; 
-      
-      // 5. Shoes
-      if (cat.contains('shoe') || cat.contains('footwear') || sub.contains('sneaker') || sub.contains('boot')) return 5; 
-      
-      return 3; // Default Tops
-    }
-
-    items.sort((a, b) => getScore(a).compareTo(getScore(b)));
-    return items;
   }
 
   Future<void> _saveChanges() async {

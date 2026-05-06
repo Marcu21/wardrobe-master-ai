@@ -79,8 +79,9 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.black),
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: _clothingStream,
+      body: SafeArea(
+        child: StreamBuilder<QuerySnapshot>(
+          stream: _clothingStream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
@@ -586,7 +587,8 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
               ),
             ),
           );
-        },
+          },
+        ),
       ),
     );
   }

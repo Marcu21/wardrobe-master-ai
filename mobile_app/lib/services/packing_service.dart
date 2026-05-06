@@ -113,6 +113,8 @@ class PackingService {
     required List<String> suitcaseItemIds,
     required String userContext,
     List<Map<String, dynamic>>? existingOutfits,
+    String? feedback,
+    List<String>? currentOutfitItemIds,
   }) async {
     final uri = Uri.parse('$baseUrl/generate-trip-outfit/');
     
@@ -128,6 +130,8 @@ class PackingService {
           'user_context': userContext,
           'user_id': FirebaseService().currentUser?.uid ?? 'unknown_user',
           if (existingOutfits != null) 'existing_outfits': existingOutfits,
+          if (feedback != null) 'feedback': feedback,
+          if (currentOutfitItemIds != null) 'current_outfit_item_ids': currentOutfitItemIds,
         }),
       );
 

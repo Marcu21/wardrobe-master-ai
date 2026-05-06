@@ -96,6 +96,8 @@ class TripOutfitRequest(BaseModel):
     user_context: str
     user_id: str
     existing_outfits: Optional[List[Dict[str, Any]]] = None
+    feedback: Optional[str] = None
+    current_outfit_item_ids: Optional[List[str]] = None
 
 
 @app.post("/remove-bg/")
@@ -711,7 +713,18 @@ async def generate_trip_outfit(request: TripOutfitRequest):
 
         clothing_json = json.dumps(clothing_items)
         existing_outfits_json = json.dumps(request.existing_outfits) if request.existing_outfits else "[]"
-        
+
+        edit_context_block = ""
+        if request.feedback:
+            edit_context_block = f"""
+        ### EDIT FEEDBACK (CRITICAL INSTRUCTION)
+        The user wants to CHANGE their current outfit for this occasion.
+        CURRENT OUTFIT ITEM IDs: {request.current_outfit_item_ids}
+        USER'S COMPLAINT/FEEDBACK: "{request.feedback}"
+        INSTRUCTION: You MUST address this feedback directly. Swap or remove items from the CURRENT OUTFIT using ONLY the SUITCASE WARDROBE to fix the user's issue. Do not completely ignore the current items if some still work, but make sure the final result respects the feedback!
+        """
+        # -------------------------------------------------
+
         prompt = f"""
         You are an elite travel stylist.
         The user is currently packing or has packed for a trip to {request.destination}.
@@ -720,6 +733,8 @@ async def generate_trip_outfit(request: TripOutfitRequest):
         
         The user needs an outfit for a specific occasion or day plan:
         USER CONTEXT/PLAN: "{request.user_context}"
+        
+        {edit_context_block}
         
         ### SUITCASE WARDROBE (CRITICAL CONSTRAINT)
         {clothing_json}
@@ -740,7 +755,7 @@ async def generate_trip_outfit(request: TripOutfitRequest):
         Return ONLY a valid JSON object matching this schema:
         {{
           "title": "String - The catchy title you generated",
-          "description": "String - Explain why this outfit works perfectly for their specific plan.",
+          "description": "String - Explain why this outfit works perfectly for their specific plan and how it addresses their feedback if any.",
           "item_ids": ["id1", "id2"]
         }}
         """

@@ -297,10 +297,15 @@ class _TripViewScreenState extends State<TripViewScreen> {
     }
   }
 
-  Future<void> _updateTrip() async {
+  Future<void> _updateTrip({
+    String? successMessage,
+    bool showGlobalLoader = true,
+  }) async {
     if (_wardrobe == null || _currentTripId == null) return;
 
-    setState(() => _isLoading = true);
+    if (showGlobalLoader) {
+      setState(() => _isLoading = true);
+    }
     try {
       final outfitsList = _wardrobe!.outfits.map((o) => o.toJson()).toList();
       await FirebaseService().updateTrip(
@@ -320,7 +325,9 @@ class _TripViewScreenState extends State<TripViewScreen> {
           _hasUnsavedChanges = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Trip updated successfully!")),
+          SnackBar(
+            content: Text(successMessage ?? "Trip updated successfully!"),
+          ),
         );
       }
     } catch (e) {
@@ -330,7 +337,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
         ).showSnackBar(SnackBar(content: Text("Failed to update trip: $e")));
       }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted && showGlobalLoader) setState(() => _isLoading = false);
     }
   }
 
@@ -788,74 +795,41 @@ class _TripViewScreenState extends State<TripViewScreen> {
     final outfit = _wardrobe!.outfits[index];
     final controller = TextEditingController();
 
-    final result = await showModalBottomSheet<String>(
+    final result = await showDialog<String>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Tweak this outfit"),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText: "What would you like to change?",
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).primaryColor,
+                  width: 2,
+                ),
+              ),
+            ),
+            maxLines: 2,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Edit Outfit ${index + 1}",
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text("What are your plans for this day?"),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                autofocus: true,
-                decoration: InputDecoration(
-                  hintText: "e.g., Fancy dinner party, Hiking in the rain...",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: Theme.of(context).primaryColor,
-                      width: 2,
-                    ),
-                  ),
-                ),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () =>
-                      Navigator.pop(context, controller.text.trim()),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    "Generate New Outfit",
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, controller.text.trim()),
+              child: const Text("Update"),
+            ),
+          ],
+        );
+      },
     );
 
     if (result != null && result.isNotEmpty) {
@@ -884,8 +858,10 @@ class _TripViewScreenState extends State<TripViewScreen> {
           vibe: widget.vibe,
           weatherForecast: weatherSummary,
           suitcaseItemIds: _editableItemIds,
-          userContext: result,
+          userContext: outfit.title,
           existingOutfits: existingOutfits,
+          feedback: result,
+          currentOutfitItemIds: outfit.itemIds,
         );
 
         if (mounted) {
@@ -893,6 +869,17 @@ class _TripViewScreenState extends State<TripViewScreen> {
             _wardrobe!.outfits[index] = newOutfit;
             _hasUnsavedChanges = true;
           });
+
+          if (_currentTripId != null) {
+            await _updateTrip(
+              successMessage: "Outfit updated successfully!",
+              showGlobalLoader: false,
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Outfit updated successfully!")),
+            );
+          }
         }
       } catch (e) {
         if (mounted) {

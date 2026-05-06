@@ -8,6 +8,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../services/api_service.dart';
 import 'package:http/http.dart' as http;
 import '../utils/outfit_sorting_utils.dart';
+import 'add_clothing_screen.dart';
 
 class MatchResultScreen extends StatefulWidget {
   final Map<String, dynamic> scannedItemData;
@@ -487,8 +488,15 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
                     const SizedBox(height: 32),
                     ElevatedButton(
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Item added to Wardrobe!')));
-                        Navigator.pop(context); // Back to scanner
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AddClothingScreen(
+                              initialAnalysisResult: widget.scannedItemData,
+                              initialImageFile: widget.imageFile,
+                            ),
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.teal,

@@ -10,7 +10,14 @@ import 'package:mobile_app/services/wardrobe_state_service.dart';
 import 'dart:convert';
 
 class AddClothingScreen extends StatefulWidget {
-  const AddClothingScreen({super.key});
+  final Map<String, dynamic>? initialAnalysisResult;
+  final File? initialImageFile;
+
+  const AddClothingScreen({
+    super.key,
+    this.initialAnalysisResult,
+    this.initialImageFile,
+  });
 
   @override
   State<AddClothingScreen> createState() => _AddClothingScreenState();
@@ -82,6 +89,14 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
   void initState() {
     super.initState();
     _selectedWardrobeId = wardrobeStateService.activeWardrobeId;
+
+    if (widget.initialAnalysisResult != null && widget.initialImageFile != null) {
+      _analysisResult = widget.initialAnalysisResult;
+      _itemImage = widget.initialImageFile;
+      if (_analysisResult!['metadata'] != null) {
+        _populateForm(_analysisResult!['metadata']);
+      }
+    }
   }
 
   // Helpers for list-based fields

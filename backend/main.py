@@ -407,7 +407,11 @@ async def generate_outfit(request: OutfitRequest):
         6. COLOR THEORY: Ensure the selected items match aesthetically. Avoid clashing colors. Favor neutral bases (black, white, grey, navy, beige) with maximum one or two accent colors.
         7. VISIBLE VS. HIDDEN LAYERING: If you want to showcase a T-shirt as a key visual part of the outfit, you MUST pair it with an open-front layer (e.g., "Zip-up Hoodie", "Cardigan", "Jacket", "Overshirt"). If you pair a T-shirt with a closed top (e.g., "Pullover Hoodie", "Sweater"), you must treat the T-shirt purely as a hidden thermal base layer in your explanation, not as a visual centerpiece.
 
-        8. CRITICAL AI INSTRUCTION: Be a critical fashion judge. Do not award 100/100 easily. Provide realistic scores. Ensure no tags or jargon arrays are requested or generated.
+        8. TIME & DURATION AWARENESS: Pay strict attention to the current time and the likely duration of the user's requested activity.
+        9. IMMEDIATE WEATHER PRIORITY: If the user is doing a short activity NOW (e.g., jogging, a quick errand), base the outfit STRICTLY on the current/immediate weather conditions (next 1-2 hours). Do NOT incorporate heavy layers for drastic weather changes (like rain or temperature drops) that happen many hours after the activity would normally end.
+        10. FUTURE WEATHER WARNINGS (CRUCIAL RULE): If there is a significant weather change later in the day (e.g., temperature drop, rain), DO NOT change the immediate outfit to accommodate it if the activity is short. Instead, provide the light/immediate outfit and simply add a friendly warning in your explanation. Example: "Since you're going jogging now, this light outfit is perfect for the 27°C heat. However, if you plan to stay out until 20:00, be aware that the temperature will drop to 12°C with rain, so you might want to pack a zip-up hoodie just in case."
+
+        11. CRITICAL AI INSTRUCTION: Be a critical fashion judge. Do not award 100/100 easily. Provide realistic scores. Ensure no tags or jargon arrays are requested or generated.
 
         ### RECENT HISTORY
         Recent Outfit IDs: {recent_outfits_json}

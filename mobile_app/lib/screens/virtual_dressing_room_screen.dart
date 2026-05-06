@@ -13,7 +13,8 @@ class VirtualDressingRoomScreen extends StatefulWidget {
   const VirtualDressingRoomScreen({super.key, this.initialItemIds});
 
   @override
-  State<VirtualDressingRoomScreen> createState() => _VirtualDressingRoomScreenState();
+  State<VirtualDressingRoomScreen> createState() =>
+      _VirtualDressingRoomScreenState();
 }
 
 class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
@@ -62,7 +63,10 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
           .where('userId', isEqualTo: FirebaseAuth.instance.currentUser?.uid);
 
       if (wardrobeStateService.activeWardrobeId != null) {
-        query = query.where('wardrobe_id', isEqualTo: wardrobeStateService.activeWardrobeId);
+        query = query.where(
+          'wardrobe_id',
+          isEqualTo: wardrobeStateService.activeWardrobeId,
+        );
       }
 
       final snapshot = await query.get();
@@ -77,22 +81,36 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
       for (var doc in snapshot.docs) {
         Map<String, dynamic> data = doc.data();
         data['id'] = doc.id; // Keep the ID
-        
+
         // Safely extract category and sub_category
         Map<String, dynamic> basicInfo = data['basic_info'] ?? {};
-        String category = (basicInfo['category'] ?? '').toString().toLowerCase();
-        String subCategory = (basicInfo['sub_category'] ?? '').toString().toLowerCase();
+        String category = (basicInfo['category'] ?? '')
+            .toString()
+            .toLowerCase();
+        String subCategory = (basicInfo['sub_category'] ?? '')
+            .toString()
+            .toLowerCase();
 
         // Grouping logic (robust matching)
         if (category.contains('shoe') || category.contains('footwear')) {
           newShoes.add(data);
-        } else if (category.contains('bottom') || category.contains('pant') || subCategory.contains('jean') || subCategory.contains('short')) {
+        } else if (category.contains('bottom') ||
+            category.contains('pant') ||
+            subCategory.contains('jean') ||
+            subCategory.contains('short')) {
           newBottoms.add(data);
-        } else if (category.contains('outerwear') || subCategory.contains('jacket') || subCategory.contains('coat')) {
+        } else if (category.contains('outerwear') ||
+            subCategory.contains('jacket') ||
+            subCategory.contains('coat')) {
           newOuterwear.add(data);
-        } else if (category.contains('midwear') || subCategory.contains('sweater') || subCategory.contains('hoodie') || subCategory.contains('cardigan')) {
+        } else if (category.contains('midwear') ||
+            subCategory.contains('sweater') ||
+            subCategory.contains('hoodie') ||
+            subCategory.contains('cardigan')) {
           newMidwear.add(data);
-        } else if (category.contains('top') || subCategory.contains('shirt') || subCategory.contains('t-shirt')) {
+        } else if (category.contains('top') ||
+            subCategory.contains('shirt') ||
+            subCategory.contains('t-shirt')) {
           newTops.add(data);
         } else {
           // Fallback
@@ -108,30 +126,37 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
           _topsIndex = 0;
           _bottomsIndex = 0;
           _shoesIndex = 0;
-          
+
           // Check if we are in REMIX MODE
-          if (widget.initialItemIds != null && widget.initialItemIds!.isNotEmpty) {
+          if (widget.initialItemIds != null &&
+              widget.initialItemIds!.isNotEmpty) {
             // 1. Force ALL optional layers to FALSE initially
             _showOuterwear = false;
             _showMidwear = false;
-            _showTops = false; 
+            _showTops = false;
 
             // 2. ONLY set them to true if the item is physically found in the filtered lists
-            int foundOuter = newOuterwear.indexWhere((item) => widget.initialItemIds!.contains(item['id']));
+            int foundOuter = newOuterwear.indexWhere(
+              (item) => widget.initialItemIds!.contains(item['id']),
+            );
             if (foundOuter != -1) {
               final item = newOuterwear.removeAt(foundOuter);
               newOuterwear.insert(0, item);
               _showOuterwear = true;
             }
 
-            int foundMid = newMidwear.indexWhere((item) => widget.initialItemIds!.contains(item['id']));
+            int foundMid = newMidwear.indexWhere(
+              (item) => widget.initialItemIds!.contains(item['id']),
+            );
             if (foundMid != -1) {
               final item = newMidwear.removeAt(foundMid);
               newMidwear.insert(0, item);
               _showMidwear = true;
             }
 
-            int foundTop = newTops.indexWhere((item) => widget.initialItemIds!.contains(item['id']));
+            int foundTop = newTops.indexWhere(
+              (item) => widget.initialItemIds!.contains(item['id']),
+            );
             if (foundTop != -1) {
               final item = newTops.removeAt(foundTop);
               newTops.insert(0, item);
@@ -139,18 +164,21 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
             }
 
             // Do the same find-and-move for Bottoms and Shoes (they are usually always shown, but move them to index 0)
-            int foundBottom = newBottoms.indexWhere((item) => widget.initialItemIds!.contains(item['id']));
+            int foundBottom = newBottoms.indexWhere(
+              (item) => widget.initialItemIds!.contains(item['id']),
+            );
             if (foundBottom != -1) {
               final item = newBottoms.removeAt(foundBottom);
               newBottoms.insert(0, item);
             }
 
-            int foundShoe = newShoes.indexWhere((item) => widget.initialItemIds!.contains(item['id']));
+            int foundShoe = newShoes.indexWhere(
+              (item) => widget.initialItemIds!.contains(item['id']),
+            );
             if (foundShoe != -1) {
               final item = newShoes.removeAt(foundShoe);
               newShoes.insert(0, item);
             }
-
           } else {
             // NORMAL MODE (Not a Remix)
             _showTops = true; // Default behavior
@@ -185,7 +213,7 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
 
   void _saveOutfit() {
     final selectedIds = <String>[];
-    
+
     if (_showOuterwear && _outerwear.isNotEmpty) {
       selectedIds.add(_outerwear[_outerwearIndex]['id']);
     }
@@ -195,7 +223,7 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
     if (_showTops && _tops.isNotEmpty) {
       selectedIds.add(_tops[_topsIndex]['id']);
     }
-    
+
     if (_bottoms.isNotEmpty) {
       selectedIds.add(_bottoms[_bottomsIndex]['id']);
     }
@@ -204,7 +232,11 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
     }
 
     if (selectedIds.isNotEmpty) {
-      SaveOutfitDialog.show(context, itemIds: selectedIds, isAiGenerated: false);
+      SaveOutfitDialog.show(
+        context,
+        itemIds: selectedIds,
+        isAiGenerated: false,
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select at least one item')),
@@ -228,14 +260,17 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
-                      "Manage Outfit Layers", 
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
+                      "Manage Outfit Layers",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     SwitchListTile(
                       title: const Text('Outerwear (Jackets, Coats)'),
                       value: _showOuterwear,
-                      activeColor: Colors.black,
+                      activeThumbColor: Colors.black,
                       onChanged: (bool value) {
                         setModalState(() => _showOuterwear = value);
                         setState(() => _showOuterwear = value);
@@ -244,7 +279,7 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
                     SwitchListTile(
                       title: const Text('Midwear (Hoodies, Sweaters)'),
                       value: _showMidwear,
-                      activeColor: Colors.black,
+                      activeThumbColor: Colors.black,
                       onChanged: (bool value) {
                         setModalState(() => _showMidwear = value);
                         setState(() => _showMidwear = value);
@@ -253,7 +288,7 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
                     SwitchListTile(
                       title: const Text('Tops (T-Shirts, Shirts)'),
                       value: _showTops,
-                      activeColor: Colors.black,
+                      activeThumbColor: Colors.black,
                       onChanged: (bool value) {
                         setModalState(() => _showTops = value);
                         setState(() => _showTops = value);
@@ -283,11 +318,11 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
     if (_showTops) activeLayers++;
 
     double vpBottoms = activeLayers <= 3 ? 0.75 : 0.60;
-    
+
     double vpTops = activeLayers <= 3 ? 0.65 : 0.50;
-    
+
     double vpMidwear = activeLayers <= 3 ? 0.75 : 0.60;
-    
+
     double vpOuterwear = activeLayers <= 3 ? 0.85 : 0.70;
 
     double vpShoes = activeLayers <= 3 ? 0.5 : 0.5;
@@ -315,7 +350,7 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
         child: Column(
           children: [
             Expanded(
-              child: _isLoading 
+              child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : Stack(
                       children: [
@@ -329,7 +364,8 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
                               child: _ClothingCarouselRowInternal(
                                 key: ValueKey(vpBottoms),
                                 items: _bottoms,
-                                onIndexChanged: (index) => _bottomsIndex = index,
+                                onIndexChanged: (index) =>
+                                    _bottomsIndex = index,
                                 viewportFraction: vpBottoms,
                               ),
                             ),
@@ -343,7 +379,7 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
                             ),
                           ],
                         ),
-                        
+
                         // STRATUL 2: Tops
                         if (_showTops)
                           Column(
@@ -357,8 +393,7 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
                                 onIndexChanged: (index) => _topsIndex = index,
                                 viewportFraction: vpTops,
                               ),
-                              if (fBot + fShoe > 0)
-                                Spacer(flex: fBot + fShoe),
+                              if (fBot + fShoe > 0) Spacer(flex: fBot + fShoe),
                             ],
                           ),
 
@@ -366,13 +401,13 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
                         if (_showMidwear)
                           Column(
                             children: [
-                              if (fOuter > 0)
-                                Spacer(flex: fOuter),
+                              if (fOuter > 0) Spacer(flex: fOuter),
                               _ClothingCarouselRow(
                                 key: ValueKey(vpMidwear),
                                 items: _midwear,
                                 flex: fMid,
-                                onIndexChanged: (index) => _midwearIndex = index,
+                                onIndexChanged: (index) =>
+                                    _midwearIndex = index,
                                 viewportFraction: vpMidwear,
                               ),
                               if (fTop + fBot + fShoe > 0)
@@ -388,7 +423,8 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
                                 key: ValueKey(vpOuterwear),
                                 items: _outerwear,
                                 flex: fOuter,
-                                onIndexChanged: (index) => _outerwearIndex = index,
+                                onIndexChanged: (index) =>
+                                    _outerwearIndex = index,
                                 viewportFraction: vpOuterwear,
                               ),
                               if (fMid + fTop + fBot + fShoe > 0)
@@ -427,7 +463,7 @@ class _ClothingCarouselRow extends StatelessWidget {
     return Expanded(
       flex: flex,
       child: _ClothingCarouselRowInternal(
-        items: items, 
+        items: items,
         onIndexChanged: onIndexChanged,
         alignment: alignment,
         viewportFraction: viewportFraction,
@@ -452,10 +488,12 @@ class _ClothingCarouselRowInternal extends StatefulWidget {
   });
 
   @override
-  State<_ClothingCarouselRowInternal> createState() => _ClothingCarouselRowInternalState();
+  State<_ClothingCarouselRowInternal> createState() =>
+      _ClothingCarouselRowInternalState();
 }
 
-class _ClothingCarouselRowInternalState extends State<_ClothingCarouselRowInternal> {
+class _ClothingCarouselRowInternalState
+    extends State<_ClothingCarouselRowInternal> {
   late PageController _controller;
 
   @override
@@ -478,22 +516,25 @@ class _ClothingCarouselRowInternalState extends State<_ClothingCarouselRowIntern
       if (rawData.startsWith('data:image')) {
         final String base64String = rawData.split(',').last;
         imageWidget = Image.memory(
-          base64Decode(base64String), 
+          base64Decode(base64String),
           fit: BoxFit.contain, // Maximize size, no cropping
-          errorBuilder: (ctx, err, stack) => const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+          errorBuilder: (ctx, err, stack) =>
+              const Icon(Icons.broken_image, size: 50, color: Colors.grey),
         );
       } else if (rawData.startsWith('http')) {
         imageWidget = CachedNetworkImage(
-          imageUrl: rawData, 
+          imageUrl: rawData,
           fit: BoxFit.contain,
-          placeholder: (context, url) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          errorWidget: (context, url, error) => const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+          placeholder: (context, url) =>
+              const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          errorWidget: (context, url, error) =>
+              const Icon(Icons.broken_image, size: 50, color: Colors.grey),
         );
       } else {
         imageWidget = const Icon(Icons.checkroom, size: 50, color: Colors.grey);
       }
     } catch (e) {
-       imageWidget = const Icon(Icons.error, size: 50, color: Colors.red);
+      imageWidget = const Icon(Icons.error, size: 50, color: Colors.red);
     }
 
     // Centering or alignment passed from parent

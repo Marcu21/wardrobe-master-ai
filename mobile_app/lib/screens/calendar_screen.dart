@@ -48,9 +48,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
       final timestamp = dates.firstWhere((d) {
         if (d is Timestamp) {
           final dt = d.toDate();
-          return dt.year == targetDate.year && 
-                 dt.month == targetDate.month && 
-                 dt.day == targetDate.day;
+          return dt.year == targetDate.year &&
+              dt.month == targetDate.month &&
+              dt.day == targetDate.day;
         }
         return false;
       }, orElse: () => null);
@@ -68,8 +68,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Style Calendar",
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          "Style Calendar",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
       body: SafeArea(
         child: StreamBuilder<QuerySnapshot>(
@@ -83,7 +85,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   child: Text(
                     "Database Index Error.\nCheck your debug console for a direct link to create the required Firestore index.",
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: Colors.red.shade700,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               );
@@ -115,20 +120,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
             }
 
             // Get outfits for the currently selected day
-            List<Map<String, dynamic>> dayOutfits = _selectedDay != null 
-                ? groupedOutfits[_normalizeDate(_selectedDay!)] ?? [] 
+            List<Map<String, dynamic>> dayOutfits = _selectedDay != null
+                ? groupedOutfits[_normalizeDate(_selectedDay!)] ?? []
                 : [];
-            
+
             // 2. Sort outfits chronologically
             if (_selectedDay != null && dayOutfits.isNotEmpty) {
-               dayOutfits.sort((a, b) {
-                 final dtA = _getWearDateTime(a, _selectedDay!);
-                 final dtB = _getWearDateTime(b, _selectedDay!);
-                 if (dtA == null && dtB == null) return 0;
-                 if (dtA == null) return 1;
-                 if (dtB == null) return -1;
-                 return dtA.compareTo(dtB);
-               });
+              dayOutfits.sort((a, b) {
+                final dtA = _getWearDateTime(a, _selectedDay!);
+                final dtB = _getWearDateTime(b, _selectedDay!);
+                if (dtA == null && dtB == null) return 0;
+                if (dtA == null) return 1;
+                if (dtB == null) return -1;
+                return dtA.compareTo(dtB);
+              });
             }
 
             return Column(
@@ -139,11 +144,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   focusedDay: _focusedDay,
                   selectedDayPredicate: (day) => _isSameDay(_selectedDay, day),
                   calendarFormat: CalendarFormat.month,
-                  
+
                   eventLoader: (day) {
                     return groupedOutfits[_normalizeDate(day)] ?? [];
                   },
-                  
+
                   calendarBuilders: CalendarBuilders(
                     markerBuilder: (context, date, events) {
                       if (events.isNotEmpty) {
@@ -153,7 +158,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             width: 6,
                             height: 6,
                             decoration: const BoxDecoration(
-                              color: Colors.black, 
+                              color: Colors.black,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -169,14 +174,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       _focusedDay = focusedDay;
                     });
                   },
-                  
+
                   calendarStyle: CalendarStyle(
                     selectedDecoration: const BoxDecoration(
-                      color: Colors.black, 
+                      color: Colors.black,
                       shape: BoxShape.circle,
                     ),
                     todayDecoration: BoxDecoration(
-                      color: Colors.grey[400], 
+                      color: Colors.grey[400],
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -193,37 +198,41 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   child: Container(
                     color: Colors.grey[50],
                     width: double.infinity,
-                    child: dayOutfits.isEmpty 
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.checkroom_outlined, size: 48, color: Colors.grey[400]),
-                              const SizedBox(height: 12),
-                              Text(
-                                "No outfits logged for this day",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey[600],
-                                  fontWeight: FontWeight.w500,
+                    child: dayOutfits.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.checkroom_outlined,
+                                  size: 48,
+                                  color: Colors.grey[400],
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 12),
+                                Text(
+                                  "No outfits logged for this day",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey[600],
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.all(16),
+                            itemCount: dayOutfits.length,
+                            itemBuilder: (context, index) {
+                              final data = dayOutfits[index];
+                              return CalendarOutfitCard(
+                                key: ValueKey(data['id']),
+                                outfitData: data,
+                                wearDateTarget: _selectedDay,
+                              );
+                            },
                           ),
-                        )
-                      : ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.all(16),
-                          itemCount: dayOutfits.length,
-                          itemBuilder: (context, index) {
-                            final data = dayOutfits[index];
-                            return CalendarOutfitCard(
-                              key: ValueKey(data['id']),
-                              outfitData: data,
-                              wearDateTarget: _selectedDay,
-                            );
-                          },
-                        ),
                   ),
                 ),
               ],
@@ -263,7 +272,9 @@ class _CalendarOutfitCardState extends State<CalendarOutfitCard> {
   Future<void> _fetchItems() async {
     try {
       final List<dynamic> itemIdsDynamic = widget.outfitData['item_ids'] ?? [];
-      final List<String> itemIds = itemIdsDynamic.map((e) => e.toString()).toList();
+      final List<String> itemIds = itemIdsDynamic
+          .map((e) => e.toString())
+          .toList();
 
       if (itemIds.isNotEmpty) {
         final items = await _firebaseService.getItemsByIds(itemIds);
@@ -274,7 +285,7 @@ class _CalendarOutfitCardState extends State<CalendarOutfitCard> {
           });
         }
       } else {
-         if (mounted) {
+        if (mounted) {
           setState(() {
             _isLoading = false;
           });
@@ -292,9 +303,9 @@ class _CalendarOutfitCardState extends State<CalendarOutfitCard> {
 
   Widget _buildThumbnail(Map<String, dynamic> item) {
     final String rawData = item['imageUrl'] ?? '';
-    
-    if (rawData.isEmpty) { 
-      return const SizedBox.shrink(); 
+
+    if (rawData.isEmpty) {
+      return const SizedBox.shrink();
     }
 
     Widget imageWidget;
@@ -305,50 +316,51 @@ class _CalendarOutfitCardState extends State<CalendarOutfitCard> {
           base64Decode(base64String),
           fit: BoxFit.contain, // Contain to show full item
           alignment: Alignment.center,
-          errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.grey),
+          errorBuilder: (_, __, ___) =>
+              const Icon(Icons.broken_image, color: Colors.grey),
         );
       } else if (rawData.startsWith('http')) {
         imageWidget = CachedNetworkImage(
           imageUrl: rawData,
           fit: BoxFit.contain,
-           alignment: Alignment.center,
-          placeholder: (context, url) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          errorWidget: (context, url, error) => const Icon(Icons.broken_image, color: Colors.grey),
+          alignment: Alignment.center,
+          placeholder: (context, url) =>
+              const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          errorWidget: (context, url, error) =>
+              const Icon(Icons.broken_image, color: Colors.grey),
         );
       } else {
-         // Try raw base64 if no prefix
-          try {
-            imageWidget = Image.memory(
-              base64Decode(rawData),
-              fit: BoxFit.contain,
-              alignment: Alignment.center,
-              errorBuilder: (_, __, ___) => const Icon(Icons.checkroom, color: Colors.grey),
-            );
-          } catch (e) {
-             imageWidget = const Icon(Icons.checkroom, color: Colors.grey);
-          }
+        // Try raw base64 if no prefix
+        try {
+          imageWidget = Image.memory(
+            base64Decode(rawData),
+            fit: BoxFit.contain,
+            alignment: Alignment.center,
+            errorBuilder: (_, __, ___) =>
+                const Icon(Icons.checkroom, color: Colors.grey),
+          );
+        } catch (e) {
+          imageWidget = const Icon(Icons.checkroom, color: Colors.grey);
+        }
       }
     } catch (e) {
       imageWidget = const Icon(Icons.error, color: Colors.grey);
     }
-    
-    return Container(
-      width: double.infinity,
-      child: imageWidget,
-    );
+
+    return SizedBox(width: double.infinity, child: imageWidget);
   }
 
   String _getWearTime() {
     if (widget.wearDateTarget == null) return '';
     final List<dynamic> dates = widget.outfitData['wear_dates'] ?? [];
-    
+
     try {
       final timestamp = dates.firstWhere((d) {
         if (d is Timestamp) {
           final dt = d.toDate();
-          return dt.year == widget.wearDateTarget!.year && 
-                 dt.month == widget.wearDateTarget!.month && 
-                 dt.day == widget.wearDateTarget!.day;
+          return dt.year == widget.wearDateTarget!.year &&
+              dt.month == widget.wearDateTarget!.month &&
+              dt.day == widget.wearDateTarget!.day;
         }
         return false;
       }, orElse: () => null);
@@ -384,85 +396,108 @@ class _CalendarOutfitCardState extends State<CalendarOutfitCard> {
         },
         child: Card(
           elevation: 4,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           clipBehavior: Clip.antiAlias,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // 1. Vertical Item Stack (Expanded)
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Colors.white, Colors.grey.shade50],
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.white, Colors.grey.shade50],
+                    ),
                   ),
-                ),
-                child: _isLoading
-                    ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
-                    : _items.isEmpty
-                        ? Center(child: Icon(Icons.checkroom, size: 40, color: Colors.grey[300]))
-                        : Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: _items.map((item) {
-                              // Dynamic Flex
-                              int flex = 3;
-                              final info = item['basic_info'] ?? {};
-                              String cat = (info['category'] ?? '').toString().toLowerCase();
-                              if (cat.contains('bottom') || cat.contains('pant')) flex = 4;
-                              else if (cat.contains('shoe') || cat.contains('footwear')) flex = 2;
-                              
-                              return Expanded(
-                                flex: flex,
-                                child: _buildThumbnail(item),
-                              );
-                            }).toList(),
+                  child: _isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : _items.isEmpty
+                      ? Center(
+                          child: Icon(
+                            Icons.checkroom,
+                            size: 40,
+                            color: Colors.grey[300],
                           ),
-              ),
-            ),
-            
-            // 2. Info Section (Compact Footer)
-            Container(
-              // 4. Compact Padding
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: Colors.grey.shade200)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    name,
-                    // 5. Smaller Font Size
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.access_time, size: 10, color: Colors.grey[600]), // Smaller Icon
-                      const SizedBox(width: 4),
-                      Text(
-                        wearTime.isNotEmpty ? wearTime : "Logged",
-                        // 6. Smaller Font Size
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey[600],
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: _items.map((item) {
+                            // Dynamic Flex
+                            int flex = 3;
+                            final info = item['basic_info'] ?? {};
+                            String cat = (info['category'] ?? '')
+                                .toString()
+                                .toLowerCase();
+                            if (cat.contains('bottom') ||
+                                cat.contains('pant')) {
+                              flex = 4;
+                            } else if (cat.contains('shoe') ||
+                                cat.contains('footwear'))
+                              flex = 2;
+
+                            return Expanded(
+                              flex: flex,
+                              child: _buildThumbnail(item),
+                            );
+                          }).toList(),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
-            ),
-          ],
+
+              // 2. Info Section (Compact Footer)
+              Container(
+                // 4. Compact Padding
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(top: BorderSide(color: Colors.grey.shade200)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      name,
+                      // 5. Smaller Font Size
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.access_time,
+                          size: 10,
+                          color: Colors.grey[600],
+                        ), // Smaller Icon
+                        const SizedBox(width: 4),
+                        Text(
+                          wearTime.isNotEmpty ? wearTime : "Logged",
+                          // 6. Smaller Font Size
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 }

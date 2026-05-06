@@ -1,4 +1,3 @@
-
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -51,11 +50,13 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
   final TextEditingController _lengthController = TextEditingController();
   final TextEditingController _necklineController = TextEditingController();
   final TextEditingController _sleeveLengthController = TextEditingController();
-  final TextEditingController _styleOccasionsController = TextEditingController();
+  final TextEditingController _styleOccasionsController =
+      TextEditingController();
   final TextEditingController _seasonalityController = TextEditingController();
 
   // Laundry Info Controllers
-  final TextEditingController _careInstructionsController = TextEditingController();
+  final TextEditingController _careInstructionsController =
+      TextEditingController();
   final TextEditingController _colorGroupController = TextEditingController();
   final TextEditingController _maxTempController = TextEditingController();
 
@@ -66,7 +67,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     _materialController.dispose();
     _primaryColorController.dispose();
     _patternController.dispose();
-    
+
     _brandController.dispose();
     _priceController.dispose();
     _currencyController.dispose();
@@ -90,7 +91,8 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     super.initState();
     _selectedWardrobeId = wardrobeStateService.activeWardrobeId;
 
-    if (widget.initialAnalysisResult != null && widget.initialImageFile != null) {
+    if (widget.initialAnalysisResult != null &&
+        widget.initialImageFile != null) {
       _analysisResult = widget.initialAnalysisResult;
       _itemImage = widget.initialImageFile;
       if (_analysisResult!['metadata'] != null) {
@@ -100,38 +102,49 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
   }
 
   // Helpers for list-based fields
-  List<String> _controllerToList(TextEditingController controller, {String separator = ','}) {
+  List<String> _controllerToList(
+    TextEditingController controller, {
+    String separator = ',',
+  }) {
     if (controller.text.isEmpty) return [];
     if (separator == '\n') {
-       return controller.text.split('\n').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+      return controller.text
+          .split('\n')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
     }
-    return controller.text.split(separator).map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    return controller.text
+        .split(separator)
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
   }
 
   Future<void> _pickImage(bool isTag, ImageSource source) async {
-      try {
-        final XFile? pickedFile = await _picker.pickImage(
-          source: source,
-          maxWidth: 1920,
-          maxHeight: 1920,
-          imageQuality: 95,
-        );
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: source,
+        maxWidth: 1920,
+        maxHeight: 1920,
+        imageQuality: 95,
+      );
 
-        if (pickedFile != null) {
-          setState(() {
-            if (isTag) {
-              _tagImage = File(pickedFile.path);
-            } else {
-              _itemImage = File(pickedFile.path);
-            }
-          });
-        }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking image: $e')),
-        );
+      if (pickedFile != null) {
+        setState(() {
+          if (isTag) {
+            _tagImage = File(pickedFile.path);
+          } else {
+            _itemImage = File(pickedFile.path);
+          }
+        });
       }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
     }
+  }
 
   void _showImageSourceModal(bool isTag) {
     showModalBottomSheet(
@@ -223,7 +236,10 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     });
 
     try {
-      final result = await _apiService.processItem(_itemImage!, tagFile: _tagImage);
+      final result = await _apiService.processItem(
+        _itemImage!,
+        tagFile: _tagImage,
+      );
       if (result != null && result['metadata'] != null) {
         setState(() {
           _analysisResult = result;
@@ -231,9 +247,9 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Analysis failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Analysis failed: $e')));
     } finally {
       setState(() {
         _isLoading = false;
@@ -244,40 +260,51 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
   void _populateForm(Map<String, dynamic> metadata) {
     if (metadata['basic_info'] != null) {
       _categoryController.text = metadata['basic_info']['category'] ?? '';
-      _subCategoryController.text = metadata['basic_info']['sub_category'] ?? '';
+      _subCategoryController.text =
+          metadata['basic_info']['sub_category'] ?? '';
       _materialController.text = metadata['basic_info']['material'] ?? '';
       _patternController.text = metadata['basic_info']['pattern'] ?? '';
       if (metadata['basic_info']['primary_colors'] != null) {
-        _primaryColorController.text = (metadata['basic_info']['primary_colors'] as List).join(', ');
+        _primaryColorController.text =
+            (metadata['basic_info']['primary_colors'] as List).join(', ');
       }
     }
-    
+
     if (metadata['styling_info'] != null) {
       _fitController.text = metadata['styling_info']['fit'] ?? '';
       _lengthController.text = metadata['styling_info']['length'] ?? '';
       _necklineController.text = metadata['styling_info']['neckline'] ?? '';
-      _sleeveLengthController.text = metadata['styling_info']['sleeve_length'] ?? '';
+      _sleeveLengthController.text =
+          metadata['styling_info']['sleeve_length'] ?? '';
       if (metadata['styling_info']['style_occasions'] != null) {
-        _styleOccasionsController.text = (metadata['styling_info']['style_occasions'] as List).join(', ');
+        _styleOccasionsController.text =
+            (metadata['styling_info']['style_occasions'] as List).join(', ');
       }
       if (metadata['styling_info']['seasonality'] != null) {
-        _seasonalityController.text = (metadata['styling_info']['seasonality'] as List).join(', ');
+        _seasonalityController.text =
+            (metadata['styling_info']['seasonality'] as List).join(', ');
       }
     }
 
     if (metadata['laundry_info'] != null) {
       if (metadata['laundry_info']['care_instructions'] != null) {
-        _careInstructionsController.text = (metadata['laundry_info']['care_instructions'] as List).join('\n');
+        _careInstructionsController.text =
+            (metadata['laundry_info']['care_instructions'] as List).join('\n');
       }
-      _colorGroupController.text = metadata['laundry_info']['color_group'] ?? '';
-      _maxTempController.text = metadata['laundry_info']['max_temp_celsius']?.toString() ?? '';
+      _colorGroupController.text =
+          metadata['laundry_info']['color_group'] ?? '';
+      _maxTempController.text =
+          metadata['laundry_info']['max_temp_celsius']?.toString() ?? '';
     }
 
     if (metadata['sustainability_info'] != null) {
       _brandController.text = metadata['sustainability_info']['brand'] ?? '';
-      _priceController.text = metadata['sustainability_info']['price']?.toString() ?? '';
-      _currencyController.text = metadata['sustainability_info']['currency'] ?? '';
-      _purchaseDateController.text = metadata['sustainability_info']['purchase_date'] ?? '';
+      _priceController.text =
+          metadata['sustainability_info']['price']?.toString() ?? '';
+      _currencyController.text =
+          metadata['sustainability_info']['currency'] ?? '';
+      _purchaseDateController.text =
+          metadata['sustainability_info']['purchase_date'] ?? '';
     }
   }
 
@@ -286,7 +313,10 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50], // Light background
       appBar: AppBar(
-        title: const Text('Add New Item', style: TextStyle(color: Colors.black)),
+        title: const Text(
+          'Add New Item',
+          style: TextStyle(color: Colors.black),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
@@ -297,13 +327,13 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-             if (_analysisResult == null) ...[
+              if (_analysisResult == null) ...[
                 _buildImageUploadSection(),
                 const SizedBox(height: 30),
                 _buildAnalyzeButton(),
-             ] else ...[
-               _buildResultsView(),
-             ]
+              ] else ...[
+                _buildResultsView(),
+              ],
             ],
           ),
         ),
@@ -387,7 +417,11 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                               color: Colors.white,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.close, size: 20, color: Colors.black),
+                            child: const Icon(
+                              Icons.close,
+                              size: 20,
+                              color: Colors.black,
+                            ),
                           ),
                         ),
                       ),
@@ -404,7 +438,9 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            isMain ? Icons.add_a_photo_outlined : Icons.tag_outlined,
+                            isMain
+                                ? Icons.add_a_photo_outlined
+                                : Icons.tag_outlined,
                             size: 40,
                             color: Colors.grey.shade400,
                           ),
@@ -442,9 +478,12 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(
-                  width: 20, 
-                  height: 20, 
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.black,
+                  ),
                 ),
                 const SizedBox(width: 15),
                 Text(
@@ -507,7 +546,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
         displayImage = Image.file(_itemImage!, fit: BoxFit.contain);
       }
     } else {
-       displayImage = Image.file(_itemImage!, fit: BoxFit.contain);
+      displayImage = Image.file(_itemImage!, fit: BoxFit.contain);
     }
 
     return Column(
@@ -535,7 +574,10 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
           ),
         ),
         const SizedBox(height: 30),
-        const Text("AI Analysis Results", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+        const Text(
+          "AI Analysis Results",
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 20),
 
         _buildSectionHeader("Basic Info", Icons.info_outline),
@@ -551,12 +593,24 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
         _buildSectionHeader("Sustainability & Purchase", Icons.eco_outlined),
         _buildCard([
           _buildTextField("Brand", _brandController),
-          Row(children: [
-            Expanded(child: _buildTextField("Price", _priceController, keyboardType: TextInputType.number)),
-            const SizedBox(width: 12),
-            Expanded(child: _buildTextField("Currency", _currencyController)),
-          ]),
-          _buildTextField("Purchase Date", _purchaseDateController, hint: "YYYY-MM-DD"),
+          Row(
+            children: [
+              Expanded(
+                child: _buildTextField(
+                  "Price",
+                  _priceController,
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(child: _buildTextField("Currency", _currencyController)),
+            ],
+          ),
+          _buildTextField(
+            "Purchase Date",
+            _purchaseDateController,
+            hint: "YYYY-MM-DD",
+          ),
         ]),
 
         _buildSectionHeader("Styling", Icons.style_outlined),
@@ -565,15 +619,32 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
           _buildTextField("Length", _lengthController),
           _buildTextField("Neckline", _necklineController),
           _buildTextField("Sleeve Length", _sleeveLengthController),
-          _buildTextField("Occasions (comma separated)", _styleOccasionsController),
-          _buildTextField("Seasonality (comma separated)", _seasonalityController),
+          _buildTextField(
+            "Occasions (comma separated)",
+            _styleOccasionsController,
+          ),
+          _buildTextField(
+            "Seasonality (comma separated)",
+            _seasonalityController,
+          ),
         ]),
 
-        _buildSectionHeader("Laundry & Care", Icons.local_laundry_service_outlined),
+        _buildSectionHeader(
+          "Laundry & Care",
+          Icons.local_laundry_service_outlined,
+        ),
         _buildCard([
-          _buildTextField("Care Instructions (one per line)", _careInstructionsController, maxLines: 4),
+          _buildTextField(
+            "Care Instructions (one per line)",
+            _careInstructionsController,
+            maxLines: 4,
+          ),
           _buildTextField("Color Group", _colorGroupController),
-          _buildTextField("Max Temp (°C)", _maxTempController, keyboardType: TextInputType.number),
+          _buildTextField(
+            "Max Temp (°C)",
+            _maxTempController,
+            keyboardType: TextInputType.number,
+          ),
         ]),
         const SizedBox(height: 20),
         SizedBox(
@@ -584,9 +655,12 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
               // Show loading indicator
               showDialog(
                 context: context,
-                barrierDismissible: false, // Prevent dismissing by tapping outside
+                barrierDismissible:
+                    false, // Prevent dismissing by tapping outside
                 builder: (BuildContext context) {
-                    return const Center(child: CircularProgressIndicator(color: Colors.white));
+                  return const Center(
+                    child: CircularProgressIndicator(color: Colors.white),
+                  );
                 },
               );
 
@@ -594,57 +668,88 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                 // Prepare metadata from form
                 // Maintain any AI metadata not strictly mapped (though we map almost everything)
                 // We're essentially replacing the submaps with our constructed ones based on controllers
-                Map<String, dynamic> finalMetadata = jsonDecode(jsonEncode(_analysisResult!['metadata'] ?? {}));
+                Map<String, dynamic> finalMetadata = jsonDecode(
+                  jsonEncode(_analysisResult!['metadata'] ?? {}),
+                );
 
                 // Update basic info
                 finalMetadata['basic_info'] = finalMetadata['basic_info'] ?? {};
-                finalMetadata['basic_info']['category'] = _categoryController.text;
-                finalMetadata['basic_info']['sub_category'] = _subCategoryController.text;
-                finalMetadata['basic_info']['material'] = _materialController.text;
-                finalMetadata['basic_info']['pattern'] = _patternController.text;
-                finalMetadata['basic_info']['primary_colors'] = _controllerToList(_primaryColorController);
+                finalMetadata['basic_info']['category'] =
+                    _categoryController.text;
+                finalMetadata['basic_info']['sub_category'] =
+                    _subCategoryController.text;
+                finalMetadata['basic_info']['material'] =
+                    _materialController.text;
+                finalMetadata['basic_info']['pattern'] =
+                    _patternController.text;
+                finalMetadata['basic_info']['primary_colors'] =
+                    _controllerToList(_primaryColorController);
 
                 // Update sustainability info
-                finalMetadata['sustainability_info'] = finalMetadata['sustainability_info'] ?? {};
-                finalMetadata['sustainability_info']['brand'] = _brandController.text;
+                finalMetadata['sustainability_info'] =
+                    finalMetadata['sustainability_info'] ?? {};
+                finalMetadata['sustainability_info']['brand'] =
+                    _brandController.text;
                 if (_priceController.text.isNotEmpty) {
-                  final price = double.tryParse(_priceController.text.replaceAll(',', '.'));
-                  finalMetadata['sustainability_info']['price'] = price ?? _priceController.text; 
+                  final price = double.tryParse(
+                    _priceController.text.replaceAll(',', '.'),
+                  );
+                  finalMetadata['sustainability_info']['price'] =
+                      price ?? _priceController.text;
                 } else {
                   finalMetadata['sustainability_info']['price'] = null;
                 }
-                finalMetadata['sustainability_info']['currency'] = _currencyController.text;
-                finalMetadata['sustainability_info']['purchase_date'] = _purchaseDateController.text;
+                finalMetadata['sustainability_info']['currency'] =
+                    _currencyController.text;
+                finalMetadata['sustainability_info']['purchase_date'] =
+                    _purchaseDateController.text;
 
                 // Update styling info
-                finalMetadata['styling_info'] = finalMetadata['styling_info'] ?? {};
+                finalMetadata['styling_info'] =
+                    finalMetadata['styling_info'] ?? {};
                 finalMetadata['styling_info']['fit'] = _fitController.text;
-                finalMetadata['styling_info']['length'] = _lengthController.text;
-                finalMetadata['styling_info']['neckline'] = _necklineController.text;
-                finalMetadata['styling_info']['sleeve_length'] = _sleeveLengthController.text;
-                finalMetadata['styling_info']['style_occasions'] = _controllerToList(_styleOccasionsController);
-                finalMetadata['styling_info']['seasonality'] = _controllerToList(_seasonalityController);
+                finalMetadata['styling_info']['length'] =
+                    _lengthController.text;
+                finalMetadata['styling_info']['neckline'] =
+                    _necklineController.text;
+                finalMetadata['styling_info']['sleeve_length'] =
+                    _sleeveLengthController.text;
+                finalMetadata['styling_info']['style_occasions'] =
+                    _controllerToList(_styleOccasionsController);
+                finalMetadata['styling_info']['seasonality'] =
+                    _controllerToList(_seasonalityController);
 
                 // Update laundry info
-                finalMetadata['laundry_info'] = finalMetadata['laundry_info'] ?? {};
-                finalMetadata['laundry_info']['care_instructions'] = _controllerToList(_careInstructionsController, separator: '\n');
-                finalMetadata['laundry_info']['color_group'] = _colorGroupController.text;
+                finalMetadata['laundry_info'] =
+                    finalMetadata['laundry_info'] ?? {};
+                finalMetadata['laundry_info']['care_instructions'] =
+                    _controllerToList(
+                      _careInstructionsController,
+                      separator: '\n',
+                    );
+                finalMetadata['laundry_info']['color_group'] =
+                    _colorGroupController.text;
                 if (_maxTempController.text.isNotEmpty) {
                   final temp = int.tryParse(_maxTempController.text);
-                  finalMetadata['laundry_info']['max_temp_celsius'] = temp ?? _maxTempController.text;
+                  finalMetadata['laundry_info']['max_temp_celsius'] =
+                      temp ?? _maxTempController.text;
                 } else {
                   finalMetadata['laundry_info']['max_temp_celsius'] = null;
                 }
 
-
                 // Decode the base64 string directly to byte array
-                final Uint8List imageBytes = base64Decode(_analysisResult!['image_base64']);
-                
+                final Uint8List imageBytes = base64Decode(
+                  _analysisResult!['image_base64'],
+                );
+
                 // Upload to Firebase Storage
-                final String? downloadUrl = await FirebaseService().uploadImageToStorage(imageBytes, 'items');
-                
+                final String? downloadUrl = await FirebaseService()
+                    .uploadImageToStorage(imageBytes, 'items');
+
                 if (downloadUrl == null) {
-                  throw Exception('Failed to upload image to storage. Please try again.');
+                  throw Exception(
+                    'Failed to upload image to storage. Please try again.',
+                  );
                 }
 
                 // Call Firebase Service to save the document URL and metadata
@@ -657,7 +762,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                 // Hide loading
                 if (mounted) Navigator.pop(context);
 
-               // Show success
+                // Show success
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -667,11 +772,10 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                   );
                   Navigator.pop(context); // Close screen
                 }
-
               } catch (e) {
                 // Hide loading
                 if (mounted) Navigator.pop(context);
-                
+
                 // Show error
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -685,9 +789,14 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.black,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
             ),
-            child: const Text("Save to Wardrobe", style: TextStyle(color: Colors.white, fontSize: 16)),
+            child: const Text(
+              "Save to Wardrobe",
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
           ),
         ),
       ],
@@ -704,7 +813,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
           Text(
             title,
             style: TextStyle(
-              fontSize: 18, 
+              fontSize: 18,
               fontWeight: FontWeight.w600,
               color: Colors.blueGrey[800],
             ),
@@ -729,13 +838,17 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
         border: Border.all(color: Colors.grey.shade100),
       ),
       padding: const EdgeInsets.all(20),
-      child: Column(
-        children: children,
-      ),
+      child: Column(children: children),
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, {int maxLines = 1, TextInputType? keyboardType, String? hint}) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    int maxLines = 1,
+    TextInputType? keyboardType,
+    String? hint,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15.0),
       child: TextFormField(
@@ -760,7 +873,10 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Colors.black, width: 1.5),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 16,
+          ),
         ),
       ),
     );
@@ -768,11 +884,11 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
 
   Widget _buildWardrobeDropdown() {
     final wardrobes = wardrobeStateService.wardrobes;
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 15.0),
       child: DropdownButtonFormField<String?>(
-        value: _selectedWardrobeId,
+        initialValue: _selectedWardrobeId,
         decoration: InputDecoration(
           labelText: 'Wardrobe',
           filled: true,
@@ -789,7 +905,10 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Colors.black, width: 1.5),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 16,
+          ),
         ),
         items: [
           const DropdownMenuItem<String?>(
@@ -805,7 +924,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
         ],
         onChanged: (val) {
           setState(() {
-             _selectedWardrobeId = val;
+            _selectedWardrobeId = val;
           });
         },
       ),

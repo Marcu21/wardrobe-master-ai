@@ -1,13 +1,8 @@
-
-import 'dart:io';
-import 'dart:convert';
-import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-
 
 class FirebaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -22,7 +17,8 @@ class FirebaseService {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
 
       // Obtain the auth details from the request
-      final GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
+      final GoogleSignInAuthentication? googleAuth =
+          await googleUser?.authentication;
 
       if (googleAuth == null) {
         return null;
@@ -42,9 +38,16 @@ class FirebaseService {
     }
   }
 
-  Future<UserCredential?> signUpWithEmail({required String email, required String password, required String name}) async {
+  Future<UserCredential?> signUpWithEmail({
+    required String email,
+    required String password,
+    required String name,
+  }) async {
     try {
-      final userCredential = await _auth.createUserWithEmailAndPassword(email: email, password: password);
+      final userCredential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
       if (userCredential.user != null) {
         await _firestore.collection('users').doc(userCredential.user!.uid).set({
           'name': name,
@@ -68,9 +71,15 @@ class FirebaseService {
     }
   }
 
-  Future<UserCredential?> signInWithEmail({required String email, required String password}) async {
+  Future<UserCredential?> signInWithEmail({
+    required String email,
+    required String password,
+  }) async {
     try {
-      return await _auth.signInWithEmailAndPassword(email: email, password: password);
+      return await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
     } on FirebaseAuthException catch (e) {
       String errorMessage = 'An error occurred during sign in.';
       if (e.code == 'user-not-found') {
@@ -97,15 +106,23 @@ class FirebaseService {
     }
   }
 
-  Future<String?> uploadImageToStorage(Uint8List imageBytes, String folderName) async {
+  Future<String?> uploadImageToStorage(
+    Uint8List imageBytes,
+    String folderName,
+  ) async {
     try {
       final String fileName = '${DateTime.now().millisecondsSinceEpoch}.png';
-      final Reference ref = FirebaseStorage.instance.ref().child(folderName).child(fileName);
-      final SettableMetadata metadata = SettableMetadata(contentType: 'image/png');
-      
+      final Reference ref = FirebaseStorage.instance
+          .ref()
+          .child(folderName)
+          .child(fileName);
+      final SettableMetadata metadata = SettableMetadata(
+        contentType: 'image/png',
+      );
+
       final UploadTask uploadTask = ref.putData(imageBytes, metadata);
       final TaskSnapshot snapshot = await uploadTask;
-      
+
       final String downloadUrl = await snapshot.ref.getDownloadURL();
       return downloadUrl;
     } catch (e) {
@@ -181,7 +198,7 @@ class FirebaseService {
           .where('userId', isEqualTo: userId)
           .orderBy('created_at')
           .get();
-      
+
       return querySnapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
@@ -217,14 +234,20 @@ class FirebaseService {
     }
   }
 
-  Future<void> updateItem(String docId, Map<String, dynamic> newMetadata, {String? wardrobeId}) async {
+  Future<void> updateItem(
+    String docId,
+    Map<String, dynamic> newMetadata, {
+    String? wardrobeId,
+  }) async {
     try {
       // Create a map to update specific fields without wiping the whole document
       // We assume newMetadata contains the structure for basic_info, styling_info, etc.
       // We might want to flatten it or just merge.
       // Since we are passing the whole structure from the details screen, standard merge is fine.
-      
-      Map<String, dynamic> dataToUpdate = Map<String, dynamic>.from(newMetadata);
+
+      Map<String, dynamic> dataToUpdate = Map<String, dynamic>.from(
+        newMetadata,
+      );
       if (wardrobeId != null) {
         dataToUpdate['wardrobe_id'] = wardrobeId;
       }
@@ -240,7 +263,8 @@ class FirebaseService {
   Future<void> deleteItem(String docId, {String? imageUrl}) async {
     try {
       // Delete image from storage if it's a Firebase Storage URL
-      if (imageUrl != null && imageUrl.startsWith('https://firebasestorage.googleapis.com')) {
+      if (imageUrl != null &&
+          imageUrl.startsWith('https://firebasestorage.googleapis.com')) {
         try {
           final Reference ref = _storage.refFromURL(imageUrl);
           await ref.delete();
@@ -259,22 +283,23 @@ class FirebaseService {
       throw Exception("Failed to delete item: $e");
     }
   }
+
   Future<List<Map<String, dynamic>>> getItemsByIds(List<String> ids) async {
     if (ids.isEmpty) return [];
 
     try {
-      // Firestore 'in' query supports up to 10 items. 
-      // If we have more, we might need to batch or loop. 
+      // Firestore 'in' query supports up to 10 items.
+      // If we have more, we might need to batch or loop.
       // For an outfit (usually 3-5 items), this is fine.
       // If we expect more, we should split the list.
-      
+
       List<Map<String, dynamic>> items = [];
-      
+
       // Process in chunks of 10 just to be safe
       for (var i = 0; i < ids.length; i += 10) {
         var end = (i + 10 < ids.length) ? i + 10 : ids.length;
         var chunk = ids.sublist(i, end);
-        
+
         var querySnapshot = await _firestore
             .collection('clothing')
             .where(FieldPath.documentId, whereIn: chunk)
@@ -292,6 +317,7 @@ class FirebaseService {
       return [];
     }
   }
+
   Future<String> saveOutfit(Map<String, dynamic> outfitData) async {
     try {
       // Ensure required fields are present
@@ -310,10 +336,13 @@ class FirebaseService {
     }
   }
 
-  Future<void> logWearExistingOutfit(String outfitId, List<String> itemIds) async {
+  Future<void> logWearExistingOutfit(
+    String outfitId,
+    List<String> itemIds,
+  ) async {
     try {
       final batch = _firestore.batch();
-      
+
       // Update outfit document
       final outfitRef = _firestore.collection('outfits').doc(outfitId);
       batch.update(outfitRef, {
@@ -324,9 +353,7 @@ class FirebaseService {
       // Update each item in the clothing collection
       for (final itemId in itemIds) {
         final itemRef = _firestore.collection('clothing').doc(itemId);
-        batch.update(itemRef, {
-          'last_worn': FieldValue.serverTimestamp(),
-        });
+        batch.update(itemRef, {'last_worn': FieldValue.serverTimestamp()});
       }
 
       await batch.commit();
@@ -375,9 +402,9 @@ class FirebaseService {
   }
 
   Future<void> updateTrip(
-    String tripId, 
-    List<String> itemIds, 
-    List<Map<String, dynamic>> outfits, 
+    String tripId,
+    List<String> itemIds,
+    List<Map<String, dynamic>> outfits,
     String reasoning, {
     String? vibe,
     String? tripPlans,

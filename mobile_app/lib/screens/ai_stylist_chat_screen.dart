@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/api_service.dart';
 import '../services/firebase_service.dart';
 import '../services/weather_service.dart';
 import '../widgets/save_outfit_dialog.dart';
 import '../services/wardrobe_state_service.dart';
 import '../widgets/global_wardrobe_selector.dart';
-import '../services/calendar_service.dart';
 import '../utils/outfit_sorting_utils.dart';
 import 'virtual_dressing_room_screen.dart';
 
@@ -67,14 +65,20 @@ class _FeedbackButtonsState extends State<_FeedbackButtons> {
 
   void _animatePop(bool isLike) async {
     setState(() {
-      if (isLike) _likeScale = 1.35;
-      else _dislikeScale = 1.35;
+      if (isLike) {
+        _likeScale = 1.35;
+      } else {
+        _dislikeScale = 1.35;
+      }
     });
     await Future.delayed(const Duration(milliseconds: 150));
     if (mounted) {
       setState(() {
-        if (isLike) _likeScale = 1.0;
-        else _dislikeScale = 1.0;
+        if (isLike) {
+          _likeScale = 1.0;
+        } else {
+          _dislikeScale = 1.0;
+        }
       });
     }
   }
@@ -90,19 +94,23 @@ class _FeedbackButtonsState extends State<_FeedbackButtons> {
     Future.delayed(const Duration(milliseconds: 120), () {
       if (mounted) setState(() => _likeScale = 1.0);
     });
-    if (ids.isNotEmpty && widget.message.userPrompt != null && widget.message.weatherContext != null) {
-      widget.firebaseService.saveOutfitFeedback(
-        itemIds: ids,
-        userPrompt: widget.message.userPrompt!,
-        weatherContext: widget.message.weatherContext!,
-        isLike: true,
-      ).catchError((e) {
-        if (mounted) {
-          ScaffoldMessenger.of(widget.parentContext).showSnackBar(
-            SnackBar(content: Text('Failed to save feedback: $e')),
-          );
-        }
-      });
+    if (ids.isNotEmpty &&
+        widget.message.userPrompt != null &&
+        widget.message.weatherContext != null) {
+      widget.firebaseService
+          .saveOutfitFeedback(
+            itemIds: ids,
+            userPrompt: widget.message.userPrompt!,
+            weatherContext: widget.message.weatherContext!,
+            isLike: true,
+          )
+          .catchError((e) {
+            if (mounted) {
+              ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+                SnackBar(content: Text('Failed to save feedback: $e')),
+              );
+            }
+          });
     }
   }
 
@@ -123,8 +131,10 @@ class _FeedbackButtonsState extends State<_FeedbackButtons> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text("Why didn't you like this?",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text(
+                  "Why didn't you like this?",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 16),
                 ListTile(
                   leading: const Icon(Icons.style_outlined),
@@ -160,20 +170,24 @@ class _FeedbackButtonsState extends State<_FeedbackButtons> {
     Future.delayed(const Duration(milliseconds: 120), () {
       if (mounted) setState(() => _dislikeScale = 1.0);
     });
-    if (ids.isNotEmpty && widget.message.userPrompt != null && widget.message.weatherContext != null) {
-      widget.firebaseService.saveOutfitFeedback(
-        itemIds: ids,
-        userPrompt: widget.message.userPrompt!,
-        weatherContext: widget.message.weatherContext!,
-        isLike: false,
-        dislikeReason: reason,
-      ).catchError((e) {
-        if (mounted) {
-          ScaffoldMessenger.of(widget.parentContext).showSnackBar(
-            SnackBar(content: Text('Failed to save feedback: $e')),
-          );
-        }
-      });
+    if (ids.isNotEmpty &&
+        widget.message.userPrompt != null &&
+        widget.message.weatherContext != null) {
+      widget.firebaseService
+          .saveOutfitFeedback(
+            itemIds: ids,
+            userPrompt: widget.message.userPrompt!,
+            weatherContext: widget.message.weatherContext!,
+            isLike: false,
+            dislikeReason: reason,
+          )
+          .catchError((e) {
+            if (mounted) {
+              ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+                SnackBar(content: Text('Failed to save feedback: $e')),
+              );
+            }
+          });
     }
   }
 
@@ -186,17 +200,19 @@ class _FeedbackButtonsState extends State<_FeedbackButtons> {
     final isSelected = isLike ? status == 'liked' : status == 'disliked';
     final isDisabled = status != null && !isSelected;
 
-    final activeColor = isLike ? const Color(0xFF22C55E) : const Color(0xFFEF4444);
+    final activeColor = isLike
+        ? const Color(0xFF22C55E)
+        : const Color(0xFFEF4444);
     final bgColor = isSelected
         ? activeColor.withOpacity(0.12)
         : isDisabled
-            ? Colors.grey.shade100
-            : Colors.grey.shade100;
+        ? Colors.grey.shade100
+        : Colors.grey.shade100;
     final iconColor = isSelected
         ? activeColor
         : isDisabled
-            ? Colors.grey.shade300
-            : Colors.grey.shade500;
+        ? Colors.grey.shade300
+        : Colors.grey.shade500;
     final borderColor = isSelected ? activeColor : Colors.transparent;
 
     final icon = isLike
@@ -224,7 +240,12 @@ class _FeedbackButtonsState extends State<_FeedbackButtons> {
               duration: const Duration(milliseconds: 200),
               transitionBuilder: (child, animation) =>
                   ScaleTransition(scale: animation, child: child),
-              child: Icon(icon, key: ValueKey(isSelected), color: iconColor, size: 18),
+              child: Icon(
+                icon,
+                key: ValueKey(isSelected),
+                color: iconColor,
+                size: 18,
+              ),
             ),
           ),
         ),
@@ -264,7 +285,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
   final List<ChatMessage> _messages = [];
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  
+
   bool _isTyping = false;
 
   final ApiService _apiService = ApiService();
@@ -283,10 +304,17 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
     });
   }
 
-  Future<void> _handleDislike(ChatMessage message, List<Map<String, dynamic>> items, String reason, BuildContext sheetContext) async {
+  Future<void> _handleDislike(
+    ChatMessage message,
+    List<Map<String, dynamic>> items,
+    String reason,
+    BuildContext sheetContext,
+  ) async {
     Navigator.pop(sheetContext);
     List<String> ids = items.map((e) => e['id'].toString()).toList();
-    if (ids.isNotEmpty && message.userPrompt != null && message.weatherContext != null) {
+    if (ids.isNotEmpty &&
+        message.userPrompt != null &&
+        message.weatherContext != null) {
       try {
         await _firebaseService.saveOutfitFeedback(
           itemIds: ids,
@@ -302,7 +330,9 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save feedback: $e')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to save feedback: $e')),
+          );
         }
       }
     }
@@ -349,10 +379,10 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                 ...scores.entries.map((entry) {
                   final key = entry.key;
                   final num value = entry.value as num;
-                  
+
                   String title = "";
                   IconData iconData = Icons.star_outline;
-                  
+
                   if (key == 'style_match') {
                     title = "Style Match";
                     iconData = Icons.checkroom;
@@ -366,7 +396,14 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                     title = "Color Harmony";
                     iconData = Icons.palette_outlined;
                   } else {
-                    title = key.split('_').map((word) => word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1)}' : '').join(' ');
+                    title = key
+                        .split('_')
+                        .map(
+                          (word) => word.isNotEmpty
+                              ? '${word[0].toUpperCase()}${word.substring(1)}'
+                              : '',
+                        )
+                        .join(' ');
                   }
 
                   return Padding(
@@ -379,7 +416,10 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                           width: 110,
                           child: Text(
                             title,
-                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -400,13 +440,16 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                           child: Text(
                             '${value.toInt()}%',
                             textAlign: TextAlign.right,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   );
-                }).toList(),
+                }),
               ],
             ),
           ),
@@ -414,7 +457,6 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
       },
     );
   }
-
 
   Future<void> _sendMessage(String text) async {
     if (text.trim().isEmpty) return;
@@ -432,12 +474,15 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
 
     final weather = _weatherService.cachedWeather;
     if (weather != null) {
-      currentWeatherStr = 'Currently ${weather.temperature}°C and ${weather.condition} in ${weather.cityName}';
-      
+      currentWeatherStr =
+          'Currently ${weather.temperature}°C and ${weather.condition} in ${weather.cityName}';
+
       // Build simple timeline string
       final buffer = StringBuffer();
       for (var item in weather.forecast) {
-        buffer.write('${item.timeLabel}: ${item.temperature}°C (${item.condition}), ');
+        buffer.write(
+          '${item.timeLabel}: ${item.temperature}°C (${item.condition}), ',
+        );
       }
       hourlyForecastStr = buffer.toString();
     }
@@ -452,7 +497,9 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
       );
 
       final explanation = response['explanation'] as String;
-      final selectedIds = List<String>.from(response['selected_item_ids'] ?? []);
+      final selectedIds = List<String>.from(
+        response['selected_item_ids'] ?? [],
+      );
       final overallScore = response['overall_score'] as int?;
       final scores = response['scores'] as Map<String, dynamic>?;
 
@@ -465,35 +512,40 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
       if (mounted) {
         setState(() {
           _isTyping = false;
-          
+
           // Add merged Explanation and Outfit Message
           if (outfitItems.isNotEmpty) {
-             _messages.add(ChatMessage(
-              role: 'ai', 
-              text: explanation, 
-              isOutfit: true,
-              outfitItems: outfitItems,
-              overallScore: overallScore,
-              scores: scores,
-              userPrompt: text,
-              weatherContext: '$currentWeatherStr | Forecast: $hourlyForecastStr',
-            ));
+            _messages.add(
+              ChatMessage(
+                role: 'ai',
+                text: explanation,
+                isOutfit: true,
+                outfitItems: outfitItems,
+                overallScore: overallScore,
+                scores: scores,
+                userPrompt: text,
+                weatherContext:
+                    '$currentWeatherStr | Forecast: $hourlyForecastStr',
+              ),
+            );
           } else {
-             // Fallback if no items found but we have an explanation
-             _messages.add(ChatMessage(role: 'ai', text: explanation));
+            // Fallback if no items found but we have an explanation
+            _messages.add(ChatMessage(role: 'ai', text: explanation));
           }
         });
         _scrollToBottom();
       }
-
     } catch (e) {
       if (mounted) {
         setState(() {
           _isTyping = false;
-          _messages.add(ChatMessage(
-            role: 'ai', 
-            text: "Sorry, I'm having trouble connecting to my fashion brain right now. Please try again later. ($e)"
-          ));
+          _messages.add(
+            ChatMessage(
+              role: 'ai',
+              text:
+                  "Sorry, I'm having trouble connecting to my fashion brain right now. Please try again later. ($e)",
+            ),
+          );
         });
         _scrollToBottom();
       }
@@ -516,7 +568,11 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.checkroom_rounded, size: 64, color: Colors.blueGrey),
+              const Icon(
+                Icons.checkroom_rounded,
+                size: 64,
+                color: Colors.blueGrey,
+              ),
               const SizedBox(height: 24),
               const Text(
                 "What's your plan for today?",
@@ -538,7 +594,10 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                     backgroundColor: Colors.white,
                     elevation: 2,
                     shadowColor: Colors.black26,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     labelStyle: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
@@ -556,12 +615,12 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
 
   Widget _buildMessage(ChatMessage message) {
     final isUser = message.role == 'user';
-    
+
     if (message.isOutfit) {
       final items = message.outfitItems ?? [];
 
       OutfitSortingUtils.sortOutfitItems(items);
-      
+
       return Container(
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         alignment: Alignment.centerLeft,
@@ -572,7 +631,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha:0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -602,7 +661,10 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                             Center(
                               child: Text(
                                 '${message.overallScore}%',
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
                               ),
                             ),
                           ],
@@ -611,7 +673,10 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                       const SizedBox(width: 8),
                       const Text(
                         "Outfit Score",
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       const Spacer(),
                       _FeedbackButtons(
@@ -623,8 +688,12 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                       ),
                       if (message.scores != null)
                         IconButton(
-                          icon: const Icon(Icons.info_outline, color: Colors.grey),
-                          onPressed: () => _showScoreDetails(context, message.scores!),
+                          icon: const Icon(
+                            Icons.info_outline,
+                            color: Colors.grey,
+                          ),
+                          onPressed: () =>
+                              _showScoreDetails(context, message.scores!),
                         ),
                     ],
                   ),
@@ -633,44 +702,63 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
               // Explanation Text
               if (message.text.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.only(left: 12, right: 12, top: 8, bottom: 12),
+                  padding: const EdgeInsets.only(
+                    left: 12,
+                    right: 12,
+                    top: 8,
+                    bottom: 12,
+                  ),
                   child: Text(
                     message.text,
                     style: const TextStyle(fontSize: 14, color: Colors.black87),
                   ),
                 ),
-                
+
               // Scrollable Horizontal List of Items or Grid
               Container(
                 height: 180,
                 color: Colors.transparent,
-                child: items.isEmpty 
-                  ? const Center(child: Text("No items found", style: TextStyle(color: Colors.grey)))
-                  : GestureDetector(
-                      onTap: () => _showVerticalPreview(context, items),
-                      behavior: HitTestBehavior.opaque,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        itemCount: items.length,
-                        itemBuilder: (context, index) {
-                          final item = items[index];
-                          
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              _buildChatImageThumbnail(item),
-                              
-                              if (index < items.length - 1)
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8), 
-                                  child: Icon(Icons.add, color: Colors.grey.shade400, size: 24),
-                                ),
-                            ],
-                          );
-                        },
+                child: items.isEmpty
+                    ? const Center(
+                        child: Text(
+                          "No items found",
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      )
+                    : GestureDetector(
+                        onTap: () => _showVerticalPreview(context, items),
+                        behavior: HitTestBehavior.opaque,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          itemCount: items.length,
+                          itemBuilder: (context, index) {
+                            final item = items[index];
+
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                _buildChatImageThumbnail(item),
+
+                                if (index < items.length - 1)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                    ),
+                                    child: Icon(
+                                      Icons.add,
+                                      color: Colors.grey.shade400,
+                                      size: 24,
+                                    ),
+                                  ),
+                              ],
+                            );
+                          },
+                        ),
                       ),
-                    ),
               ),
               Padding(
                 padding: const EdgeInsets.all(12),
@@ -679,8 +767,17 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () {
-                          final List<String> itemIds = items.map((e) => e['id'].toString()).toList();
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => VirtualDressingRoomScreen(initialItemIds: itemIds)));
+                          final List<String> itemIds = items
+                              .map((e) => e['id'].toString())
+                              .toList();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => VirtualDressingRoomScreen(
+                                initialItemIds: itemIds,
+                              ),
+                            ),
+                          );
                         },
                         icon: const Icon(Icons.tune, size: 16),
                         label: const FittedBox(
@@ -698,19 +795,27 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () {
-                          List<String> ids = items.map((e) => e['id'].toString()).toList();
+                          List<String> ids = items
+                              .map((e) => e['id'].toString())
+                              .toList();
                           if (ids.isNotEmpty) {
-                            SaveOutfitDialog.show(context, itemIds: ids, isAiGenerated: true).then((outfitId) {
-                               if (outfitId != null && mounted) {
-                                 setState(() {
-                                   message.savedOutfitId = outfitId;
-                                 });
-                               }
+                            SaveOutfitDialog.show(
+                              context,
+                              itemIds: ids,
+                              isAiGenerated: true,
+                            ).then((outfitId) {
+                              if (outfitId != null && mounted) {
+                                setState(() {
+                                  message.savedOutfitId = outfitId;
+                                });
+                              }
                             });
                           } else {
-                             ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("No items to save.")),
-                             );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("No items to save."),
+                              ),
+                            );
                           }
                         },
                         icon: const Icon(Icons.favorite_border, size: 16),
@@ -728,30 +833,42 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                     const SizedBox(width: 6),
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: message.isLoggingWear ? null : () {
-                           List<String> ids = items.map((e) => e['id'].toString()).toList();
-                           if (ids.isNotEmpty) {
-                             SaveOutfitDialog.show(
-                               context, 
-                               itemIds: ids, 
-                               isAiGenerated: true,
-                               isWearAction: true,
-                               existingOutfitId: message.savedOutfitId,
-                             ).then((outfitId) {
-                               if (outfitId != null && mounted) {
-                                 setState(() {
-                                   message.savedOutfitId = outfitId;
-                                 });
-                               }
-                             });
-                           } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                 const SnackBar(content: Text("No items to wear.")),
-                              );
-                           }
-                        },
-                        icon: message.isLoggingWear 
-                            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                        onPressed: message.isLoggingWear
+                            ? null
+                            : () {
+                                List<String> ids = items
+                                    .map((e) => e['id'].toString())
+                                    .toList();
+                                if (ids.isNotEmpty) {
+                                  SaveOutfitDialog.show(
+                                    context,
+                                    itemIds: ids,
+                                    isAiGenerated: true,
+                                    isWearAction: true,
+                                    existingOutfitId: message.savedOutfitId,
+                                  ).then((outfitId) {
+                                    if (outfitId != null && mounted) {
+                                      setState(() {
+                                        message.savedOutfitId = outfitId;
+                                      });
+                                    }
+                                  });
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text("No items to wear."),
+                                    ),
+                                  );
+                                }
+                              },
+                        icon: message.isLoggingWear
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
                             : const Icon(Icons.checkroom, size: 16),
                         label: const FittedBox(
                           fit: BoxFit.scaleDown,
@@ -766,7 +883,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                     ),
                   ],
                 ),
-              )
+              ),
             ],
           ),
         ),
@@ -784,16 +901,22 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(20),
             topRight: const Radius.circular(20),
-            bottomLeft: isUser ? const Radius.circular(20) : const Radius.circular(4),
-            bottomRight: isUser ? const Radius.circular(4) : const Radius.circular(20),
+            bottomLeft: isUser
+                ? const Radius.circular(20)
+                : const Radius.circular(4),
+            bottomRight: isUser
+                ? const Radius.circular(4)
+                : const Radius.circular(20),
           ),
-          boxShadow: isUser ? [] : [
-             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          boxShadow: isUser
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Text(
           message.text,
@@ -814,41 +937,43 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
       backgroundColor: const Color(0xFFFAFAFA),
       appBar: AppBar(
         title: const Text(
-          "AI Stylist", 
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)
+          "AI Stylist",
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: const BackButton(color: Colors.black),
-        actions: const [
-          GlobalWardrobeSelector(isActionItem: true),
-        ],
+        actions: const [GlobalWardrobeSelector(isActionItem: true)],
       ),
       body: Column(
         children: [
           Expanded(
-            child: _messages.isEmpty 
-              ? _buildEmptyState() 
-              : ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.only(top: 16, bottom: 16),
-                  itemCount: _messages.length + (_isTyping ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index == _messages.length) {
-                       return Container(
-                         margin: const EdgeInsets.only(left: 16, top: 8),
-                         child: const Text(
-                           "AI Stylist is thinking...",
-                           style: TextStyle(color: Colors.grey, fontSize: 12, fontStyle: FontStyle.italic),
-                         ),
-                       );
-                    }
-                    return _buildMessage(_messages[index]);
-                  },
-                ),
+            child: _messages.isEmpty
+                ? _buildEmptyState()
+                : ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.only(top: 16, bottom: 16),
+                    itemCount: _messages.length + (_isTyping ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == _messages.length) {
+                        return Container(
+                          margin: const EdgeInsets.only(left: 16, top: 8),
+                          child: const Text(
+                            "AI Stylist is thinking...",
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        );
+                      }
+                      return _buildMessage(_messages[index]);
+                    },
+                  ),
           ),
-          
+
           // Input Area
           SafeArea(
             child: Container(
@@ -881,7 +1006,10 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                             decoration: const InputDecoration(
                               hintText: "Type your plans...",
                               border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 14,
+                              ),
                             ),
                             onSubmitted: _sendMessage,
                           ),
@@ -894,7 +1022,10 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                           color: Colors.black,
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.arrow_upward_rounded, color: Colors.white), // Icons.send replacement
+                          icon: const Icon(
+                            Icons.arrow_upward_rounded,
+                            color: Colors.white,
+                          ), // Icons.send replacement
                           onPressed: () => _sendMessage(_controller.text),
                         ),
                       ),
@@ -908,8 +1039,6 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
       ),
     );
   }
-
-
 
   int _getItemFlex(Map<String, dynamic> item) {
     final info = item['metadata']?['basic_info'] ?? item['basic_info'] ?? {};
@@ -928,24 +1057,61 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
       sub = info['sub_category'].toString().toLowerCase();
     }
 
-    if (cat.contains('head') || sub.contains('hat') || sub.contains('cap') || sub.contains('beanie')) return 1;
-    if (cat.contains('outerwear') || sub.contains('jacket') || sub.contains('coat') || sub.contains('blazer')) return 3;
-    if (cat.contains('midwear') || sub.contains('sweater') || sub.contains('hoodie') || sub.contains('cardigan') || sub.contains('sweatshirt')) return 3;
-    if (cat.contains('bottom') || cat.contains('pant') || sub.contains('jean') || sub.contains('skirt') || sub.contains('short') || sub.contains('legging')) return 4;
-    if (cat.contains('shoe') || cat.contains('footwear') || sub.contains('sneaker') || sub.contains('boot') || sub.contains('sandal')) return 2;
-    
+    if (cat.contains('head') ||
+        sub.contains('hat') ||
+        sub.contains('cap') ||
+        sub.contains('beanie')) {
+      return 1;
+    }
+    if (cat.contains('outerwear') ||
+        sub.contains('jacket') ||
+        sub.contains('coat') ||
+        sub.contains('blazer')) {
+      return 3;
+    }
+    if (cat.contains('midwear') ||
+        sub.contains('sweater') ||
+        sub.contains('hoodie') ||
+        sub.contains('cardigan') ||
+        sub.contains('sweatshirt')) {
+      return 3;
+    }
+    if (cat.contains('bottom') ||
+        cat.contains('pant') ||
+        sub.contains('jean') ||
+        sub.contains('skirt') ||
+        sub.contains('short') ||
+        sub.contains('legging')) {
+      return 4;
+    }
+    if (cat.contains('shoe') ||
+        cat.contains('footwear') ||
+        sub.contains('sneaker') ||
+        sub.contains('boot') ||
+        sub.contains('sandal')) {
+      return 2;
+    }
+
     return 3; // Tops / Default
   }
 
-  void _showVerticalPreview(BuildContext context, List<Map<String, dynamic>> items) {
+  void _showVerticalPreview(
+    BuildContext context,
+    List<Map<String, dynamic>> items,
+  ) {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 56.0, vertical: 32.0),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 56.0,
+            vertical: 32.0,
+          ),
           child: Container(
-            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.75),
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.75,
+            ),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
@@ -959,12 +1125,21 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
               children: [
                 Column(
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 24.0, bottom: 12.0, left: 24.0, right: 40.0),
+                    const Padding(
+                      padding: EdgeInsets.only(
+                        top: 24.0,
+                        bottom: 12.0,
+                        left: 24.0,
+                        right: 40.0,
+                      ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.start,
-                        children: const [
-                          Icon(Icons.auto_awesome, color: Colors.black87, size: 16),
+                        children: [
+                          Icon(
+                            Icons.auto_awesome,
+                            color: Colors.black87,
+                            size: 16,
+                          ),
                           SizedBox(width: 8),
                           Text(
                             "OUTFIT PREVIEW",
@@ -985,18 +1160,18 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                           children: items.asMap().entries.expand((entry) {
                             final int index = entry.key;
                             final Map<String, dynamic> item = entry.value;
-                            
+
                             final widgets = <Widget>[
                               Expanded(
                                 flex: _getItemFlex(item),
                                 child: _buildFullOutfitPreviewImage(item),
                               ),
                             ];
-                            
+
                             if (index < items.length - 1) {
                               widgets.add(const SizedBox(height: 4));
                             }
-                            
+
                             return widgets;
                           }).toList(),
                         ),
@@ -1008,12 +1183,14 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
                       margin: const EdgeInsets.only(bottom: 24, top: 8),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.05),
-                        borderRadius: const BorderRadius.all(Radius.elliptical(100, 12)),
+                        borderRadius: const BorderRadius.all(
+                          Radius.elliptical(100, 12),
+                        ),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.02),
                             blurRadius: 4,
-                          )
+                          ),
                         ],
                       ),
                     ),
@@ -1050,57 +1227,74 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
 
     if (imageBase64 != null && imageBase64.isNotEmpty) {
       try {
-        final String cleanBase64 = imageBase64.contains(',') ? imageBase64.split(',').last : imageBase64;
+        final String cleanBase64 = imageBase64.contains(',')
+            ? imageBase64.split(',').last
+            : imageBase64;
         return Image.memory(
-          base64Decode(cleanBase64), 
+          base64Decode(cleanBase64),
           fit: BoxFit.contain,
           width: double.infinity,
         );
       } catch (e) {
-        return const Center(child: Icon(Icons.broken_image, color: Colors.grey));
+        return const Center(
+          child: Icon(Icons.broken_image, color: Colors.grey),
+        );
       }
     } else if (imageUrl != null && imageUrl.isNotEmpty) {
       return CachedNetworkImage(
-        imageUrl: imageUrl, 
+        imageUrl: imageUrl,
         fit: BoxFit.contain,
         width: double.infinity,
-        placeholder: (context, url) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-        errorWidget: (context, url, error) => const Center(child: Icon(Icons.error_outline, color: Colors.grey)),
+        placeholder: (context, url) =>
+            const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        errorWidget: (context, url, error) =>
+            const Center(child: Icon(Icons.error_outline, color: Colors.grey)),
       );
     } else {
-      return const Center(child: Icon(Icons.checkroom, color: Colors.grey, size: 40));
+      return const Center(
+        child: Icon(Icons.checkroom, color: Colors.grey, size: 40),
+      );
     }
   }
 
-  Widget _buildChatImageThumbnail(Map<String, dynamic> item, {double height = 160}) {
+  Widget _buildChatImageThumbnail(
+    Map<String, dynamic> item, {
+    double height = 160,
+  }) {
     final imageBase64 = item['image_base64'] as String?;
     final imageUrl = item['imageUrl'] as String?;
 
     Widget imageWidget;
     if (imageBase64 != null && imageBase64.isNotEmpty) {
       try {
-        final String cleanBase64 = imageBase64.contains(',') ? imageBase64.split(',').last : imageBase64;
+        final String cleanBase64 = imageBase64.contains(',')
+            ? imageBase64.split(',').last
+            : imageBase64;
         imageWidget = Image.memory(
-          base64Decode(cleanBase64), 
-          fit: BoxFit.contain
+          base64Decode(cleanBase64),
+          fit: BoxFit.contain,
         );
       } catch (e) {
         imageWidget = const Icon(Icons.broken_image, color: Colors.grey);
       }
     } else if (imageUrl != null && imageUrl.isNotEmpty) {
       imageWidget = CachedNetworkImage(
-        imageUrl: imageUrl, 
+        imageUrl: imageUrl,
         fit: BoxFit.contain,
-        placeholder: (context, url) => const SizedBox(width: 80, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
-        errorWidget: (context, url, error) => const Icon(Icons.error_outline, color: Colors.grey),
+        placeholder: (context, url) => const SizedBox(
+          width: 80,
+          child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        ),
+        errorWidget: (context, url, error) =>
+            const Icon(Icons.error_outline, color: Colors.grey),
       );
     } else {
-      imageWidget = const SizedBox(width: 80, child: Icon(Icons.checkroom, color: Colors.grey, size: 40));
+      imageWidget = const SizedBox(
+        width: 80,
+        child: Icon(Icons.checkroom, color: Colors.grey, size: 40),
+      );
     }
 
-    return SizedBox(
-      height: height, 
-      child: imageWidget,
-    );
+    return SizedBox(height: height, child: imageWidget);
   }
 }

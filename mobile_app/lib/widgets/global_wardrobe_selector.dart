@@ -4,23 +4,19 @@ import '../services/wardrobe_state_service.dart';
 class GlobalWardrobeSelector extends StatefulWidget {
   final bool isActionItem;
 
-  const GlobalWardrobeSelector({
-    super.key,
-    this.isActionItem = false,
-  });
+  const GlobalWardrobeSelector({super.key, this.isActionItem = false});
 
   @override
   State<GlobalWardrobeSelector> createState() => _GlobalWardrobeSelectorState();
 }
 
 class _GlobalWardrobeSelectorState extends State<GlobalWardrobeSelector> {
-
   String _getActiveWardrobeName() {
     final activeId = wardrobeStateService.activeWardrobeId;
     if (activeId == null) return widget.isActionItem ? "All" : "All Wardrobes";
     final wardrobe = wardrobeStateService.wardrobes.firstWhere(
       (w) => w['id'] == activeId,
-      orElse: () => {'name': widget.isActionItem ? 'All' : 'All Wardrobes'}
+      orElse: () => {'name': widget.isActionItem ? 'All' : 'All Wardrobes'},
     );
     return wardrobe['name'];
   }
@@ -54,7 +50,10 @@ class _GlobalWardrobeSelectorState extends State<GlobalWardrobeSelector> {
                 }
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
-              child: const Text('Create', style: TextStyle(color: Colors.white)),
+              child: const Text(
+                'Create',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         );
@@ -63,7 +62,9 @@ class _GlobalWardrobeSelectorState extends State<GlobalWardrobeSelector> {
   }
 
   void _showEditDialog(Map<String, dynamic> wardrobe) {
-    final TextEditingController nameController = TextEditingController(text: wardrobe['name'] ?? '');
+    final TextEditingController nameController = TextEditingController(
+      text: wardrobe['name'] ?? '',
+    );
     showDialog(
       context: context,
       builder: (context) {
@@ -71,9 +72,7 @@ class _GlobalWardrobeSelectorState extends State<GlobalWardrobeSelector> {
           title: const Text('Rename Wardrobe'),
           content: TextField(
             controller: nameController,
-            decoration: const InputDecoration(
-              hintText: 'New Wardrobe Name',
-            ),
+            decoration: const InputDecoration(hintText: 'New Wardrobe Name'),
             textCapitalization: TextCapitalization.words,
             autofocus: true,
           ),
@@ -87,7 +86,10 @@ class _GlobalWardrobeSelectorState extends State<GlobalWardrobeSelector> {
                 final newName = nameController.text.trim();
                 if (newName.isNotEmpty && newName != wardrobe['name']) {
                   Navigator.pop(context);
-                  await wardrobeStateService.updateWardrobe(wardrobe['id'], newName);
+                  await wardrobeStateService.updateWardrobe(
+                    wardrobe['id'],
+                    newName,
+                  );
                 } else {
                   Navigator.pop(context);
                 }
@@ -124,19 +126,27 @@ class _GlobalWardrobeSelectorState extends State<GlobalWardrobeSelector> {
                   await wardrobeStateService.deleteWardrobe(wardrobe['id']);
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Wardrobe deleted successfully.')),
+                      const SnackBar(
+                        content: Text('Wardrobe deleted successfully.'),
+                      ),
                     );
                   }
                 } catch (e) {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to delete wardrobe: $e'), backgroundColor: Colors.red),
+                      SnackBar(
+                        content: Text('Failed to delete wardrobe: $e'),
+                        backgroundColor: Colors.red,
+                      ),
                     );
                   }
                 }
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text('Delete', style: TextStyle(color: Colors.white)),
+              child: const Text(
+                'Delete',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         );
@@ -166,7 +176,11 @@ class _GlobalWardrobeSelectorState extends State<GlobalWardrobeSelector> {
                   children: [
                     const Text(
                       'Manage Wardrobes',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Flexible(
@@ -175,8 +189,13 @@ class _GlobalWardrobeSelectorState extends State<GlobalWardrobeSelector> {
                         children: [
                           ListTile(
                             leading: const Icon(Icons.checkroom),
-                            title: const Text('All Wardrobes', style: TextStyle(fontWeight: FontWeight.w600)),
-                            trailing: activeId == null ? const Icon(Icons.check, color: Colors.green) : null,
+                            title: const Text(
+                              'All Wardrobes',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                            trailing: activeId == null
+                                ? const Icon(Icons.check, color: Colors.green)
+                                : null,
                             onTap: () {
                               wardrobeStateService.setActiveWardrobe(null);
                               Navigator.pop(sheetContext);
@@ -186,7 +205,12 @@ class _GlobalWardrobeSelectorState extends State<GlobalWardrobeSelector> {
                             final isSelected = activeId == w['id'];
                             return ListTile(
                               leading: const Icon(Icons.checkroom),
-                              title: Text(w['name'], style: const TextStyle(fontWeight: FontWeight.w600)),
+                              title: Text(
+                                w['name'],
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                               onTap: () {
                                 wardrobeStateService.setActiveWardrobe(w['id']);
                                 Navigator.pop(sheetContext);
@@ -194,19 +218,31 @@ class _GlobalWardrobeSelectorState extends State<GlobalWardrobeSelector> {
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  if (isSelected) const Icon(Icons.check, color: Colors.green),
+                                  if (isSelected)
+                                    const Icon(
+                                      Icons.check,
+                                      color: Colors.green,
+                                    ),
                                   IconButton(
-                                    icon: const Icon(Icons.edit_outlined, color: Colors.grey, size: 20),
+                                    icon: const Icon(
+                                      Icons.edit_outlined,
+                                      color: Colors.grey,
+                                      size: 20,
+                                    ),
                                     onPressed: () => _showEditDialog(w),
                                   ),
                                   IconButton(
-                                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                                    icon: const Icon(
+                                      Icons.delete_outline,
+                                      color: Colors.redAccent,
+                                      size: 20,
+                                    ),
                                     onPressed: () => _showDeleteConfirmation(w),
                                   ),
                                 ],
                               ),
                             );
-                          }).toList(),
+                          }),
                         ],
                       ),
                     ),
@@ -217,13 +253,18 @@ class _GlobalWardrobeSelectorState extends State<GlobalWardrobeSelector> {
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 50),
                           backgroundColor: Colors.black,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         onPressed: () {
                           _showCreateDialog();
                         },
                         icon: const Icon(Icons.add, color: Colors.white),
-                        label: const Text('Add New Wardrobe', style: TextStyle(color: Colors.white, fontSize: 16)),
+                        label: const Text(
+                          'Add New Wardrobe',
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
                       ),
                     ),
                   ],
@@ -252,7 +293,10 @@ class _GlobalWardrobeSelectorState extends State<GlobalWardrobeSelector> {
                 onTap: () => _showWardrobeManagerSheet(context),
                 borderRadius: BorderRadius.circular(20),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(20),
@@ -261,21 +305,35 @@ class _GlobalWardrobeSelectorState extends State<GlobalWardrobeSelector> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.checkroom, size: 16, color: Colors.black87),
+                      const Icon(
+                        Icons.checkroom,
+                        size: 16,
+                        color: Colors.black87,
+                      ),
                       const SizedBox(width: 4),
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 300),
-                         child: ConstrainedBox(
-                           key: ValueKey(activeName),
-                           constraints: const BoxConstraints(maxWidth: 80), // limit width to not squeeze appbar 
-                           child: Text(
-                             activeName,
-                             style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87),
-                             overflow: TextOverflow.ellipsis,
-                           ),
-                         ),
+                        child: ConstrainedBox(
+                          key: ValueKey(activeName),
+                          constraints: const BoxConstraints(
+                            maxWidth: 80,
+                          ), // limit width to not squeeze appbar
+                          child: Text(
+                            activeName,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                       ),
-                      const Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.black54),
+                      const Icon(
+                        Icons.keyboard_arrow_down,
+                        size: 16,
+                        color: Colors.black54,
+                      ),
                     ],
                   ),
                 ),
@@ -291,12 +349,16 @@ class _GlobalWardrobeSelectorState extends State<GlobalWardrobeSelector> {
             mainAxisSize: MainAxisSize.min,
             children: [
               AnimatedSwitcher(
-                 duration: const Duration(milliseconds: 300),
-                 child: Text(
-                   activeName,
-                   key: ValueKey(activeName),
-                   style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20),
-                 ),
+                duration: const Duration(milliseconds: 300),
+                child: Text(
+                  activeName,
+                  key: ValueKey(activeName),
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  ),
+                ),
               ),
               const Icon(Icons.keyboard_arrow_down, color: Colors.black),
             ],

@@ -2,8 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../services/weather_service.dart';
-import '../services/packing_service.dart';
 import '../widgets/global_wardrobe_selector.dart';
 import 'trip_view_screen.dart';
 
@@ -56,11 +54,15 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
 
   void _generateCapsuleWardrobe() {
     FocusScope.of(context).unfocus();
-    
-    if (_destinationController.text.trim().isEmpty || _selectedDateRange == null || _selectedVibe == null) {
+
+    if (_destinationController.text.trim().isEmpty ||
+        _selectedDateRange == null ||
+        _selectedVibe == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Please enter a destination, select travel dates, and pick a vibe.'),
+          content: const Text(
+            'Please enter a destination, select travel dates, and pick a vibe.',
+          ),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
@@ -80,7 +82,9 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
           days: days,
           vibe: _selectedVibe!,
           dateRange: _selectedDateRange!,
-          tripPlans: _tripPlansController.text.trim().isNotEmpty ? _tripPlansController.text.trim() : null,
+          tripPlans: _tripPlansController.text.trim().isNotEmpty
+              ? _tripPlansController.text.trim()
+              : null,
           luggageSize: _selectedLuggage,
         ),
       ),
@@ -97,15 +101,10 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
         scrolledUnderElevation: 0, // Material 3 transparent fix
         title: const Text(
           'Plan Your Trip',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
         ),
         iconTheme: const IconThemeData(color: Colors.black87),
-        actions: const [
-          GlobalWardrobeSelector(isActionItem: true),
-        ],
+        actions: const [GlobalWardrobeSelector(isActionItem: true)],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -121,17 +120,26 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
                 textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
                   hintText: 'e.g., Milan, Italy',
-                  prefixIcon: const Icon(Icons.flight_takeoff, color: Colors.blueAccent),
+                  prefixIcon: const Icon(
+                    Icons.flight_takeoff,
+                    color: Colors.blueAccent,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
+                    borderSide: BorderSide(
+                      color: Colors.grey.shade300,
+                      width: 1.5,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: Colors.blueAccent, width: 2),
+                    borderSide: const BorderSide(
+                      color: Colors.blueAccent,
+                      width: 2,
+                    ),
                   ),
                   filled: true,
                   fillColor: Colors.white,
@@ -146,10 +154,15 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
                 onTap: _selectDateRange,
                 borderRadius: BorderRadius.circular(16),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: _selectedDateRange != null ? Colors.blueAccent : Colors.grey.shade300,
+                      color: _selectedDateRange != null
+                          ? Colors.blueAccent
+                          : Colors.grey.shade300,
                       width: _selectedDateRange != null ? 2 : 1.5,
                     ),
                     borderRadius: BorderRadius.circular(16),
@@ -165,8 +178,10 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
                   child: Row(
                     children: [
                       Icon(
-                        Icons.calendar_today_outlined, 
-                        color: _selectedDateRange != null ? Colors.blueAccent : Colors.grey.shade600,
+                        Icons.calendar_today_outlined,
+                        color: _selectedDateRange != null
+                            ? Colors.blueAccent
+                            : Colors.grey.shade600,
                       ),
                       const SizedBox(width: 12),
                       Text(
@@ -175,8 +190,12 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
                             : 'Select Dates',
                         style: TextStyle(
                           fontSize: 16,
-                          color: _selectedDateRange != null ? Colors.black87 : Colors.black54,
-                          fontWeight: _selectedDateRange != null ? FontWeight.bold : FontWeight.w500,
+                          color: _selectedDateRange != null
+                              ? Colors.black87
+                              : Colors.black54,
+                          fontWeight: _selectedDateRange != null
+                              ? FontWeight.bold
+                              : FontWeight.w500,
                         ),
                       ),
                     ],
@@ -263,21 +282,31 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
                 textInputAction: TextInputAction.done,
                 maxLines: 3,
                 decoration: InputDecoration(
-                  hintText: 'e.g., Visiting museums, hiking on Tuesday, fancy dinner...',
+                  hintText:
+                      'e.g., Visiting museums, hiking on Tuesday, fancy dinner...',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
+                    borderSide: BorderSide(
+                      color: Colors.grey.shade300,
+                      width: 1.5,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: Colors.blueAccent, width: 2),
+                    borderSide: const BorderSide(
+                      color: Colors.blueAccent,
+                      width: 2,
+                    ),
                   ),
                   filled: true,
                   fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
                 ),
               ),
               const SizedBox(height: 48),
@@ -299,10 +328,7 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
                   icon: const Icon(Icons.auto_awesome),
                   label: const Text(
                     'Generate Capsule Wardrobe',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -354,15 +380,18 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
         color: isSelected ? Colors.blueAccent : Colors.grey.shade300,
         width: 1.5,
       ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       showCheckmark: false,
       padding: const EdgeInsets.symmetric(vertical: 12.0),
     );
   }
 
-  Widget _buildLuggageOption(String value, String title, String subtitle, IconData icon) {
+  Widget _buildLuggageOption(
+    String value,
+    String title,
+    String subtitle,
+    IconData icon,
+  ) {
     final isSelected = _selectedLuggage == value;
     return InkWell(
       onTap: () {
@@ -383,7 +412,11 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
         ),
         child: Row(
           children: [
-            Icon(icon, color: isSelected ? Colors.blueAccent : Colors.grey.shade600, size: 28),
+            Icon(
+              icon,
+              color: isSelected ? Colors.blueAccent : Colors.grey.shade600,
+              size: 28,
+            ),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
@@ -393,17 +426,16 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
                     title,
                     style: TextStyle(
                       fontSize: 16,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w600,
                       color: Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey.shade600,
-                    ),
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
                   ),
                 ],
               ),
@@ -424,7 +456,8 @@ class _SmartLoadingDialog extends StatefulWidget {
   State<_SmartLoadingDialog> createState() => _SmartLoadingDialogState();
 }
 
-class _SmartLoadingDialogState extends State<_SmartLoadingDialog> with SingleTickerProviderStateMixin {
+class _SmartLoadingDialogState extends State<_SmartLoadingDialog>
+    with SingleTickerProviderStateMixin {
   final List<String> _messages = [
     "Analyzing weather...",
     "Selecting best fabrics...",
@@ -438,8 +471,11 @@ class _SmartLoadingDialogState extends State<_SmartLoadingDialog> with SingleTic
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 1))..repeat(reverse: true);
-    
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..repeat(reverse: true);
+
     _timer = Timer.periodic(const Duration(milliseconds: 1500), (timer) {
       setState(() {
         _currentIndex = (_currentIndex + 1) % _messages.length;
@@ -467,10 +503,7 @@ class _SmartLoadingDialogState extends State<_SmartLoadingDialog> with SingleTic
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 20,
-              ),
+              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20),
             ],
           ),
           child: Column(

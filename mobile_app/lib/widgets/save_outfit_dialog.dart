@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/firebase_service.dart';
@@ -11,17 +10,28 @@ class SaveOutfitDialog extends StatefulWidget {
   final String? existingOutfitId;
 
   const SaveOutfitDialog({
-    Key? key,
+    super.key,
     required this.itemIds,
     required this.isAiGenerated,
     this.isWearAction = false,
     this.existingOutfitId,
-  }) : super(key: key);
+  });
 
-  static Future<String?> show(BuildContext context, {required List<String> itemIds, required bool isAiGenerated, bool isWearAction = false, String? existingOutfitId}) {
+  static Future<String?> show(
+    BuildContext context, {
+    required List<String> itemIds,
+    required bool isAiGenerated,
+    bool isWearAction = false,
+    String? existingOutfitId,
+  }) {
     return showDialog<String>(
       context: context,
-      builder: (context) => SaveOutfitDialog(itemIds: itemIds, isAiGenerated: isAiGenerated, isWearAction: isWearAction, existingOutfitId: existingOutfitId),
+      builder: (context) => SaveOutfitDialog(
+        itemIds: itemIds,
+        isAiGenerated: isAiGenerated,
+        isWearAction: isWearAction,
+        existingOutfitId: existingOutfitId,
+      ),
     );
   }
 
@@ -69,23 +79,28 @@ class _SaveOutfitDialogState extends State<SaveOutfitDialog> {
 
       String outfitId;
       if (widget.existingOutfitId != null && widget.isWearAction) {
-         // If already saved and now we just want to wear it, we could just log wear. 
-         // But the user's prompt explicitly asks to "save the outfit to Firestore" with the dialog fields.
-         // We will just do a save/update. Actually, let's just save it. Wait, if it exists, maybe we update?
-         // Let's just follow the prompt perfectly: "save the outfit to Firestore".
-         // For safety and to avoid duplicate creation from the dialog if existingOutfitId is provided,
-         // we update the existing doc.
-         outfitId = widget.existingOutfitId!;
-         await FirebaseFirestore.instance.collection('outfits').doc(outfitId).update(outfitData);
+        // If already saved and now we just want to wear it, we could just log wear.
+        // But the user's prompt explicitly asks to "save the outfit to Firestore" with the dialog fields.
+        // We will just do a save/update. Actually, let's just save it. Wait, if it exists, maybe we update?
+        // Let's just follow the prompt perfectly: "save the outfit to Firestore".
+        // For safety and to avoid duplicate creation from the dialog if existingOutfitId is provided,
+        // we update the existing doc.
+        outfitId = widget.existingOutfitId!;
+        await FirebaseFirestore.instance
+            .collection('outfits')
+            .doc(outfitId)
+            .update(outfitData);
       } else {
-         outfitId = await FirebaseService().saveOutfit(outfitData);
+        outfitId = await FirebaseService().saveOutfit(outfitData);
       }
 
       if (widget.isWearAction) {
         // Update clothing collection items' last_worn
         final batch = FirebaseFirestore.instance.batch();
         for (final itemId in widget.itemIds) {
-          final itemRef = FirebaseFirestore.instance.collection('clothing').doc(itemId);
+          final itemRef = FirebaseFirestore.instance
+              .collection('clothing')
+              .doc(itemId);
           batch.update(itemRef, {'last_worn': FieldValue.serverTimestamp()});
         }
         await batch.commit();
@@ -97,14 +112,20 @@ class _SaveOutfitDialogState extends State<SaveOutfitDialog> {
       if (mounted) {
         Navigator.of(context).pop(outfitId); // Close dialog and return ID
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(widget.isWearAction ? 'Outfit logged as worn and saved to your collection!' : 'Outfit saved successfully!')),
+          SnackBar(
+            content: Text(
+              widget.isWearAction
+                  ? 'Outfit logged as worn and saved to your collection!'
+                  : 'Outfit saved successfully!',
+            ),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving outfit: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving outfit: $e')));
       }
     } finally {
       if (mounted) {
@@ -134,7 +155,10 @@ class _SaveOutfitDialogState extends State<SaveOutfitDialog> {
               textCapitalization: TextCapitalization.sentences,
             ),
             const SizedBox(height: 16),
-            const Text('Rate this outfit:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'Rate this outfit:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(5, (index) {
@@ -154,7 +178,10 @@ class _SaveOutfitDialogState extends State<SaveOutfitDialog> {
             const SizedBox(height: 16),
             Row(
               children: [
-                const Text('Created by: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(
+                  'Created by: ',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 Icon(
                   widget.isAiGenerated ? Icons.auto_awesome : Icons.person,
                   color: widget.isAiGenerated ? Colors.purple : Colors.blue,

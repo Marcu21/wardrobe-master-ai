@@ -1,8 +1,6 @@
 import 'dart:convert';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import '../services/packing_service.dart';
@@ -40,7 +38,7 @@ class TripViewScreen extends StatefulWidget {
 
 class _TripViewScreenState extends State<TripViewScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
+
   List<Map<String, dynamic>> _clothingItems = [];
   List<String> _editableItemIds = [];
   bool _isLoading = true;
@@ -49,10 +47,10 @@ class _TripViewScreenState extends State<TripViewScreen> {
   CapsuleWardrobe? _wardrobe;
   bool _isStylistNoteExpanded = false;
   bool _hasUnsavedChanges = false;
-  Set<int> _loadingOutfitIndices = {};
+  final Set<int> _loadingOutfitIndices = {};
   bool _isAddingAdHocOutfit = false;
   final TextEditingController _adHocOutfitController = TextEditingController();
-  
+
   List<String> _lastSyncedItemIds = [];
   String? _currentTripId;
 
@@ -78,7 +76,10 @@ class _TripViewScreenState extends State<TripViewScreen> {
     final data = widget.initialTripData!;
     var outfitsList = data['outfits'] as List? ?? [];
     List<TripOutfit> parsedOutfits = outfitsList
-        .map((outfitJson) => TripOutfit.fromJson(outfitJson as Map<String, dynamic>))
+        .map(
+          (outfitJson) =>
+              TripOutfit.fromJson(outfitJson as Map<String, dynamic>),
+        )
         .toList();
 
     _wardrobe = CapsuleWardrobe(
@@ -94,14 +95,14 @@ class _TripViewScreenState extends State<TripViewScreen> {
 
   Future<void> _generateWardrobe() async {
     try {
-      final weatherSummary = widget.dateRange != null 
+      final weatherSummary = widget.dateRange != null
           ? await WeatherService().getTripWeatherSummary(
-              widget.destination, 
+              widget.destination,
               widget.dateRange!.start,
-              widget.dateRange!.end
+              widget.dateRange!.end,
             )
           : 'Unknown Weather';
-      
+
       final wardrobe = await PackingService().generatePackingList(
         destination: widget.destination,
         days: widget.days,
@@ -163,7 +164,8 @@ class _TripViewScreenState extends State<TripViewScreen> {
     final newIds = await Navigator.push<List<String>>(
       context,
       MaterialPageRoute(
-        builder: (_) => ItemSelectionScreen(initialSelectedIds: _editableItemIds),
+        builder: (_) =>
+            ItemSelectionScreen(initialSelectedIds: _editableItemIds),
       ),
     );
 
@@ -185,22 +187,23 @@ class _TripViewScreenState extends State<TripViewScreen> {
   Future<void> _syncAndRestyle() async {
     setState(() => _isSyncing = true);
     try {
-      final weatherSummary = widget.dateRange != null 
+      final weatherSummary = widget.dateRange != null
           ? await WeatherService().getTripWeatherSummary(
-              widget.destination, 
+              widget.destination,
               widget.dateRange!.start,
-              widget.dateRange!.end
+              widget.dateRange!.end,
             )
           : 'Unknown Weather';
 
       final wardrobe = await PackingService().generatePackingList(
         destination: widget.destination,
         days: widget.days,
-        vibe: widget.vibe, 
-        weatherForecast: weatherSummary, 
+        vibe: widget.vibe,
+        weatherForecast: weatherSummary,
         itemIdsOverride: _editableItemIds,
         tripPlans: widget.tripPlans ?? widget.initialTripData?['trip_plans'],
-        luggageSize: widget.luggageSize ?? widget.initialTripData?['luggage_size'],
+        luggageSize:
+            widget.luggageSize ?? widget.initialTripData?['luggage_size'],
       );
 
       if (mounted) {
@@ -220,9 +223,9 @@ class _TripViewScreenState extends State<TripViewScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSyncing = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to re-style trip: $e")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Failed to re-style trip: $e")));
       }
     }
   }
@@ -275,8 +278,8 @@ class _TripViewScreenState extends State<TripViewScreen> {
         );
         if (mounted) {
           setState(() {
-             _currentTripId = newTripId;
-             _hasUnsavedChanges = false;
+            _currentTripId = newTripId;
+            _hasUnsavedChanges = false;
           });
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Trip saved successfully!")),
@@ -284,9 +287,9 @@ class _TripViewScreenState extends State<TripViewScreen> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Failed to save trip: $e")),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text("Failed to save trip: $e")));
         }
       } finally {
         if (mounted) setState(() => _isLoading = false);
@@ -307,7 +310,8 @@ class _TripViewScreenState extends State<TripViewScreen> {
         _wardrobe!.reasoning,
         vibe: widget.vibe,
         tripPlans: widget.tripPlans ?? widget.initialTripData?['trip_plans'],
-        luggageSize: widget.luggageSize ?? widget.initialTripData?['luggage_size'],
+        luggageSize:
+            widget.luggageSize ?? widget.initialTripData?['luggage_size'],
         startDate: widget.dateRange?.start,
         endDate: widget.dateRange?.end,
       );
@@ -321,9 +325,9 @@ class _TripViewScreenState extends State<TripViewScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to update trip: $e")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Failed to update trip: $e")));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -338,7 +342,9 @@ class _TripViewScreenState extends State<TripViewScreen> {
           fit: BoxFit.contain,
           placeholder: (context, url) => Container(
             color: Colors.grey[100],
-            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            child: const Center(
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
           ),
           errorWidget: (context, url, error) => Container(
             color: Colors.grey[200],
@@ -348,25 +354,28 @@ class _TripViewScreenState extends State<TripViewScreen> {
       } else if (imageUrl.startsWith('data:image')) {
         final base64String = imageUrl.split(',').last;
         try {
-          return Image.memory(
-            base64Decode(base64String),
-            fit: BoxFit.contain,
-          );
+          return Image.memory(base64Decode(base64String), fit: BoxFit.contain);
         } catch (e) {
-          return Container(color: Colors.grey[200], child: const Icon(Icons.broken_image));
+          return Container(
+            color: Colors.grey[200],
+            child: const Icon(Icons.broken_image),
+          );
         }
       } else {
         try {
-          return Image.memory(
-            base64Decode(imageUrl),
-            fit: BoxFit.contain,
-          );
+          return Image.memory(base64Decode(imageUrl), fit: BoxFit.contain);
         } catch (e) {
-          return Container(color: Colors.grey[200], child: const Icon(Icons.image));
+          return Container(
+            color: Colors.grey[200],
+            child: const Icon(Icons.image),
+          );
         }
       }
     }
-    return Container(color: Colors.grey[200], child: const Icon(Icons.checkroom));
+    return Container(
+      color: Colors.grey[200],
+      child: const Icon(Icons.checkroom),
+    );
   }
 
   Widget _buildSkeletonLoader() {
@@ -404,48 +413,57 @@ class _TripViewScreenState extends State<TripViewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    bool hasChanges = _editableItemIds.length != _lastSyncedItemIds.length || 
-                      !_editableItemIds.every((id) => _lastSyncedItemIds.contains(id));
+    bool hasChanges =
+        _editableItemIds.length != _lastSyncedItemIds.length ||
+        !_editableItemIds.every((id) => _lastSyncedItemIds.contains(id));
 
     Widget? fab;
     if (_isSyncing) {
-        fab = FloatingActionButton.extended(
-          onPressed: null,
-          icon: const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
-          label: const Text("Syncing..."),
-        );
+      fab = const FloatingActionButton.extended(
+        onPressed: null,
+        icon: SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+        ),
+        label: Text("Syncing..."),
+      );
     } else if (hasChanges) {
-        fab = FloatingActionButton.extended(
-          onPressed: _syncAndRestyle,
-          icon: const Icon(Icons.sync),
-          label: const Text("Sync & Re-style"),
-          backgroundColor: Colors.blueAccent,
-        );
+      fab = FloatingActionButton.extended(
+        onPressed: _syncAndRestyle,
+        icon: const Icon(Icons.sync),
+        label: const Text("Sync & Re-style"),
+        backgroundColor: Colors.blueAccent,
+      );
     } else if (_wardrobe != null && !_isLoading) {
-        if (_currentTripId == null) {
-          fab = FloatingActionButton.extended(
-            onPressed: _saveTrip,
-            icon: const Icon(Icons.bookmark_add),
-            label: const Text("Save Trip"),
+      if (_currentTripId == null) {
+        fab = FloatingActionButton.extended(
+          onPressed: _saveTrip,
+          icon: const Icon(Icons.bookmark_add),
+          label: const Text("Save Trip"),
+        );
+      } else {
+        bool hasUnsavedDatabaseChanges = false;
+        if (widget.initialTripData != null) {
+          List<String> initialDbIds = List<String>.from(
+            widget.initialTripData!['item_ids'] ?? [],
           );
+          hasUnsavedDatabaseChanges =
+              _lastSyncedItemIds.length != initialDbIds.length ||
+              !_lastSyncedItemIds.every((id) => initialDbIds.contains(id)) ||
+              _hasUnsavedChanges;
         } else {
-          bool hasUnsavedDatabaseChanges = false;
-          if (widget.initialTripData != null) {
-            List<String> initialDbIds = List<String>.from(widget.initialTripData!['item_ids'] ?? []);
-            hasUnsavedDatabaseChanges = _lastSyncedItemIds.length != initialDbIds.length ||
-                !_lastSyncedItemIds.every((id) => initialDbIds.contains(id)) || _hasUnsavedChanges;
-          } else {
-             hasUnsavedDatabaseChanges = _hasUnsavedChanges;
-          }
-          
-          if (hasUnsavedDatabaseChanges) {
-            fab = FloatingActionButton.extended(
-              onPressed: _updateTrip,
-              icon: const Icon(Icons.update),
-              label: const Text("Update Trip"),
-            );
-          }
+          hasUnsavedDatabaseChanges = _hasUnsavedChanges;
         }
+
+        if (hasUnsavedDatabaseChanges) {
+          fab = FloatingActionButton.extended(
+            onPressed: _updateTrip,
+            icon: const Icon(Icons.update),
+            label: const Text("Update Trip"),
+          );
+        }
+      }
     }
 
     return DefaultTabController(
@@ -453,92 +471,100 @@ class _TripViewScreenState extends State<TripViewScreen> {
       child: Scaffold(
         backgroundColor: Colors.grey[50],
         floatingActionButton: fab,
-        body: _isLoading 
-          ? SafeArea(child: _buildSkeletonLoader())
-          : SafeArea(
-              top: false,
-              bottom: true,
-              child: NestedScrollView(
-              headerSliverBuilder: (context, innerBoxIsScrolled) {
-                return [
-                  SliverAppBar(
-                    floating: false,
-                    pinned: true,
-                    toolbarHeight: 80.0,
-                    expandedHeight: 130.0,
-                    backgroundColor: Colors.grey[50],
-                    elevation: innerBoxIsScrolled ? 2 : 0,
-                    centerTitle: true,
-                    shadowColor: Colors.black.withOpacity(0.3),
-                    iconTheme: const IconThemeData(color: Colors.black87),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          setState(() {
-                            _isEditMode = !_isEditMode;
-                            if (!_isEditMode) {
-                              _editableItemIds = List<String>.from(_lastSyncedItemIds);
-                              _fetchItems();
-                            }
-                          });
-                        },
-                        child: Text(
-                          _isEditMode ? "Cancel" : "Edit",
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        body: _isLoading
+            ? SafeArea(child: _buildSkeletonLoader())
+            : SafeArea(
+                top: false,
+                bottom: true,
+                child: NestedScrollView(
+                  headerSliverBuilder: (context, innerBoxIsScrolled) {
+                    return [
+                      SliverAppBar(
+                        floating: false,
+                        pinned: true,
+                        toolbarHeight: 80.0,
+                        expandedHeight: 130.0,
+                        backgroundColor: Colors.grey[50],
+                        elevation: innerBoxIsScrolled ? 2 : 0,
+                        centerTitle: true,
+                        shadowColor: Colors.black.withOpacity(0.3),
+                        iconTheme: const IconThemeData(color: Colors.black87),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _isEditMode = !_isEditMode;
+                                if (!_isEditMode) {
+                                  _editableItemIds = List<String>.from(
+                                    _lastSyncedItemIds,
+                                  );
+                                  _fetchItems();
+                                }
+                              });
+                            },
+                            child: Text(
+                              _isEditMode ? "Cancel" : "Edit",
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                        title: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(height: 17),
+                            Text(
+                              widget.destination,
+                              style: TextStyle(
+                                fontSize: 22.0,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.grey[900],
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "${widget.days} Days • ${widget.vibe}",
+                              style: TextStyle(
+                                fontSize: 13.0,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                        bottom: TabBar(
+                          labelColor: Colors.black87,
+                          unselectedLabelColor: Colors.grey[500],
+                          indicatorColor: Theme.of(context).primaryColor,
+                          indicatorWeight: 3,
+                          indicatorSize: TabBarIndicatorSize.label,
+                          labelStyle: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                          unselectedLabelStyle: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          tabs: const [
+                            Tab(icon: Icon(Icons.luggage), text: "Suitcase"),
+                            Tab(icon: Icon(Icons.style), text: "Daily Outfits"),
+                          ],
                         ),
                       ),
-                    ],
-                    title: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const SizedBox(height: 17), 
-                        Text(
-                          widget.destination,
-                          style: TextStyle(
-                            fontSize: 22.0,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.grey[900],
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "${widget.days} Days • ${widget.vibe}",
-                          style: TextStyle(
-                            fontSize: 13.0,
-                            color: Colors.grey[600],
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    bottom: TabBar(
-                      labelColor: Colors.black87,
-                      unselectedLabelColor: Colors.grey[500],
-                      indicatorColor: Theme.of(context).primaryColor,
-                      indicatorWeight: 3,
-                      indicatorSize: TabBarIndicatorSize.label,
-                      labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                      unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      tabs: const [
-                        Tab(icon: Icon(Icons.luggage), text: "Suitcase"),
-                        Tab(icon: Icon(Icons.style), text: "Daily Outfits"),
-                      ],
+                    ];
+                  },
+                  body: Padding(
+                    padding: const EdgeInsets.only(top: 8.0, bottom: 16.0),
+                    child: TabBarView(
+                      children: [_buildChecklistTab(), _buildOutfitsTab()],
                     ),
                   ),
-                ];
-              },
-              body: Padding(
-                padding: const EdgeInsets.only(top: 8.0, bottom: 16.0),
-                child: TabBarView(
-                  children: [
-                    _buildChecklistTab(),
-                    _buildOutfitsTab(),
-                  ],
                 ),
               ),
-            ),
-            ),
       ),
     );
   }
@@ -550,7 +576,8 @@ class _TripViewScreenState extends State<TripViewScreen> {
 
     return CustomScrollView(
       slivers: [
-        if (_wardrobe?.warningMessage != null && _wardrobe!.warningMessage!.isNotEmpty)
+        if (_wardrobe?.warningMessage != null &&
+            _wardrobe!.warningMessage!.isNotEmpty)
           SliverToBoxAdapter(
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -562,23 +589,32 @@ class _TripViewScreenState extends State<TripViewScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
+                  const Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.redAccent,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       _wardrobe!.warningMessage!,
-                      style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        color: Colors.redAccent,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-        
+
         if (_isEditMode)
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -590,7 +626,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
                     onPressed: _openItemSelection,
                     icon: const Icon(Icons.add),
                     label: const Text("Add Items"),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -598,7 +634,12 @@ class _TripViewScreenState extends State<TripViewScreen> {
         if (_wardrobe?.reasoning.isNotEmpty ?? false)
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 12),
+              padding: const EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 8,
+                bottom: 12,
+              ),
               child: AnimatedSize(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
@@ -614,7 +655,11 @@ class _TripViewScreenState extends State<TripViewScreen> {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.auto_awesome, size: 16, color: Colors.amber[800]),
+                          Icon(
+                            Icons.auto_awesome,
+                            size: 16,
+                            color: Colors.amber[800],
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             "STYLIST'S SECRET",
@@ -631,7 +676,9 @@ class _TripViewScreenState extends State<TripViewScreen> {
                       Text(
                         _wardrobe!.reasoning,
                         maxLines: _isStylistNoteExpanded ? null : 3,
-                        overflow: _isStylistNoteExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                        overflow: _isStylistNoteExpanded
+                            ? TextOverflow.visible
+                            : TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 14,
                           height: 1.5,
@@ -653,7 +700,9 @@ class _TripViewScreenState extends State<TripViewScreen> {
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
                           icon: Icon(
-                            _isStylistNoteExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                            _isStylistNoteExpanded
+                                ? Icons.keyboard_arrow_up
+                                : Icons.keyboard_arrow_down,
                             size: 16,
                             color: Colors.amber[900],
                           ),
@@ -677,57 +726,58 @@ class _TripViewScreenState extends State<TripViewScreen> {
           padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0),
           sliver: SliverGrid(
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 8.0,
-            mainAxisSpacing: 8.0,
-            childAspectRatio: 0.85,
-          ),
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final item = _clothingItems[index];
+              crossAxisCount: 3,
+              crossAxisSpacing: 8.0,
+              mainAxisSpacing: 8.0,
+              childAspectRatio: 0.85,
+            ),
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final item = _clothingItems[index];
 
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        _buildImageWidget(item['imageUrl']?.toString()),
-                        if (_isEditMode)
-                          Positioned(
-                            top: 4,
-                            right: 4,
-                            child: GestureDetector(
-                              onTap: () => _removeItem(item['id']),
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.redAccent,
-                                ),
-                                child: const Icon(Icons.close, size: 14, color: Colors.white),
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      _buildImageWidget(item['imageUrl']?.toString()),
+                      if (_isEditMode)
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: GestureDetector(
+                            onTap: () => _removeItem(item['id']),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.redAccent,
+                              ),
+                              child: const Icon(
+                                Icons.close,
+                                size: 14,
+                                color: Colors.white,
                               ),
                             ),
                           ),
-                      ],
-                    ),
+                        ),
+                    ],
                   ),
-                );
-              },
-            childCount: _clothingItems.length,
+                ),
+              );
+            }, childCount: _clothingItems.length),
           ),
-        ),
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 40)),
       ],
@@ -743,7 +793,9 @@ class _TripViewScreenState extends State<TripViewScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: const BoxDecoration(
@@ -756,7 +808,10 @@ class _TripViewScreenState extends State<TripViewScreen> {
             children: [
               Text(
                 "Edit Outfit ${index + 1}",
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 16),
               const Text("What are your plans for this day?"),
@@ -766,10 +821,15 @@ class _TripViewScreenState extends State<TripViewScreen> {
                 autofocus: true,
                 decoration: InputDecoration(
                   hintText: "e.g., Fancy dinner party, Hiking in the rain...",
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).primaryColor,
+                      width: 2,
+                    ),
                   ),
                 ),
                 maxLines: 2,
@@ -778,12 +838,18 @@ class _TripViewScreenState extends State<TripViewScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context, controller.text.trim()),
+                  onPressed: () =>
+                      Navigator.pop(context, controller.text.trim()),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  child: const Text("Generate New Outfit", style: TextStyle(fontSize: 16)),
+                  child: const Text(
+                    "Generate New Outfit",
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ),
               ),
             ],
@@ -795,11 +861,11 @@ class _TripViewScreenState extends State<TripViewScreen> {
     if (result != null && result.isNotEmpty) {
       setState(() => _loadingOutfitIndices.add(index));
       try {
-        final weatherSummary = widget.dateRange != null 
+        final weatherSummary = widget.dateRange != null
             ? await WeatherService().getTripWeatherSummary(
-                widget.destination, 
+                widget.destination,
                 widget.dateRange!.start,
-                widget.dateRange!.end
+                widget.dateRange!.end,
               )
             : 'Unknown Weather';
 
@@ -830,7 +896,9 @@ class _TripViewScreenState extends State<TripViewScreen> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to update outfit: $e")));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Failed to update outfit: $e")),
+          );
         }
       } finally {
         if (mounted) {
@@ -842,21 +910,20 @@ class _TripViewScreenState extends State<TripViewScreen> {
 
   Future<void> _addAdHocOutfit(String contextPlan) async {
     if (contextPlan.isEmpty) return;
-    
+
     setState(() => _isAddingAdHocOutfit = true);
     try {
-      final weatherSummary = widget.dateRange != null 
+      final weatherSummary = widget.dateRange != null
           ? await WeatherService().getTripWeatherSummary(
-              widget.destination, 
+              widget.destination,
               widget.dateRange!.start,
-              widget.dateRange!.end
+              widget.dateRange!.end,
             )
           : 'Unknown Weather';
 
-      final existingOutfits = _wardrobe!.outfits.map((o) => {
-        'context': o.title,
-        'used_item_ids': o.itemIds,
-      }).toList();
+      final existingOutfits = _wardrobe!.outfits
+          .map((o) => {'context': o.title, 'used_item_ids': o.itemIds})
+          .toList();
 
       final newOutfit = await PackingService().generateSpecificTripOutfit(
         destination: widget.destination,
@@ -876,7 +943,9 @@ class _TripViewScreenState extends State<TripViewScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to add outfit: $e")));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Failed to add outfit: $e")));
       }
     } finally {
       if (mounted) {
@@ -887,7 +956,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
 
   Widget _buildOutfitsTab() {
     if (_wardrobe == null || _wardrobe!.outfits.isEmpty) {
-       return const Center(child: Text("No outfits generated."));
+      return const Center(child: Text("No outfits generated."));
     }
 
     return ListView.builder(
@@ -916,11 +985,18 @@ class _TripViewScreenState extends State<TripViewScreen> {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.auto_awesome, color: Theme.of(context).primaryColor, size: 20),
+                    Icon(
+                      Icons.auto_awesome,
+                      color: Theme.of(context).primaryColor,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     const Text(
                       "Add another outfit",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                   ],
                 ),
@@ -941,23 +1017,34 @@ class _TripViewScreenState extends State<TripViewScreen> {
                             hintText: "Need an outfit for a specific occasion?",
                             hintStyle: TextStyle(fontSize: 14),
                             border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
                           ),
                           onSubmitted: (val) => _addAdHocOutfit(val),
                         ),
                       ),
                       _isAddingAdHocOutfit
-                        ? const Padding(
-                            padding: EdgeInsets.all(14.0),
-                            child: SizedBox(
-                              width: 20, height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                          ? const Padding(
+                              padding: EdgeInsets.all(14.0),
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            )
+                          : IconButton(
+                              icon: Icon(
+                                Icons.send_rounded,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                              onPressed: () => _addAdHocOutfit(
+                                _adHocOutfitController.text.trim(),
+                              ),
                             ),
-                          )
-                        : IconButton(
-                            icon: Icon(Icons.send_rounded, color: Theme.of(context).primaryColor),
-                            onPressed: () => _addAdHocOutfit(_adHocOutfitController.text.trim()),
-                          ),
                     ],
                   ),
                 ),
@@ -970,9 +1057,9 @@ class _TripViewScreenState extends State<TripViewScreen> {
         final outfitItems = _clothingItems
             .where((item) => outfit.itemIds.contains(item['id']))
             .toList();
-        
+
         OutfitSortingUtils.sortOutfitItems(outfitItems);
-        
+
         final isLoading = _loadingOutfitIndices.contains(index);
 
         return Container(
@@ -1003,7 +1090,10 @@ class _TripViewScreenState extends State<TripViewScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.black87,
                                   borderRadius: BorderRadius.circular(12),
@@ -1037,88 +1127,102 @@ class _TripViewScreenState extends State<TripViewScreen> {
                       ],
                     ),
                   ),
-              if (outfitItems.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(left: 20.0, bottom: 20.0, right: 20.0),
-                  child: SizedBox(
-                    height: 140,
-                    child: ListView.builder(
-                      physics: const BouncingScrollPhysics(),
-                      scrollDirection: Axis.horizontal,
-                      itemCount: outfitItems.length,
-                      itemBuilder: (context, idx) {
-                        final itemInfo = outfitItems[idx];
-                        return Row(
-                          children: [
-                            Container(
-                              width: 110,
-                              height: 130,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.15),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
+                  if (outfitItems.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        left: 20.0,
+                        bottom: 20.0,
+                        right: 20.0,
+                      ),
+                      child: SizedBox(
+                        height: 140,
+                        child: ListView.builder(
+                          physics: const BouncingScrollPhysics(),
+                          scrollDirection: Axis.horizontal,
+                          itemCount: outfitItems.length,
+                          itemBuilder: (context, idx) {
+                            final itemInfo = outfitItems[idx];
+                            return Row(
+                              children: [
+                                Container(
+                                  width: 110,
+                                  height: 130,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.15),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: _buildImageWidget(itemInfo['imageUrl']?.toString()), 
-                              ),
-                            ),
-                            if (idx != outfitItems.length - 1)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                                child: Icon(Icons.add, size: 16, color: Colors.grey[300]),
-                              ),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              Container(
-                decoration: BoxDecoration(
-                  border: Border(top: BorderSide(color: Colors.grey[200]!)),
-                ),
-                padding: const EdgeInsets.all(20.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.lightbulb_outline, color: Colors.grey[400], size: 18),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        outfit.description,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[700],
-                          height: 1.5,
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: _buildImageWidget(
+                                      itemInfo['imageUrl']?.toString(),
+                                    ),
+                                  ),
+                                ),
+                                if (idx != outfitItems.length - 1)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4.0,
+                                    ),
+                                    child: Icon(
+                                      Icons.add,
+                                      size: 16,
+                                      color: Colors.grey[300],
+                                    ),
+                                  ),
+                              ],
+                            );
+                          },
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border(top: BorderSide(color: Colors.grey[200]!)),
+                    ),
+                    padding: const EdgeInsets.all(20.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.lightbulb_outline,
+                          color: Colors.grey[400],
+                          size: 18,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            outfit.description,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[700],
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
+              if (isLoading)
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.7),
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: const Center(child: CircularProgressIndicator()),
+                  ),
+                ),
             ],
           ),
-          if (isLoading)
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.7),
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: const Center(
-                  child: CircularProgressIndicator(),
-                ),
-              ),
-            ),
-          ],
-          )
         );
       },
     );

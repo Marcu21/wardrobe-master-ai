@@ -1,14 +1,14 @@
 import 'dart:convert';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class WeatherService {
   static String get apiKey => dotenv.env['OPENWEATHER_API_KEY'] ?? '';
-  static const String baseUrl = 'https://api.openweathermap.org/data/2.5/forecast';
+  static const String baseUrl =
+      'https://api.openweathermap.org/data/2.5/forecast';
 
   // Singleton instance
   static final WeatherService _instance = WeatherService._internal();
@@ -25,25 +25,41 @@ class WeatherService {
 
   WeatherModel? get cachedWeather => _cachedWeather;
 
-  Future<String> getTripWeatherSummary(String destination, DateTime startDate, DateTime endDate) async {
+  Future<String> getTripWeatherSummary(
+    String destination,
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
     const monthNames = [
-      "January", "February", "March", "April", "May", "June", 
-      "July", "August", "September", "October", "November", "December"
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ];
-    
+
     // Handle months spanning logic
     String monthString;
     if (startDate.month == endDate.month) {
       monthString = monthNames[startDate.month - 1];
     } else {
-      monthString = "${monthNames[startDate.month - 1]}/${monthNames[endDate.month - 1]}";
+      monthString =
+          "${monthNames[startDate.month - 1]}/${monthNames[endDate.month - 1]}";
     }
 
-    final fallbackString = "Exact daily forecast unavailable. The trip takes place in $monthString. Please rely on your general knowledge to use typical historical weather averages and temperature ranges for this destination during this time of year to plan the daily outfits.";
+    final fallbackString =
+        "Exact daily forecast unavailable. The trip takes place in $monthString. Please rely on your general knowledge to use typical historical weather averages and temperature ranges for this destination during this time of year to plan the daily outfits.";
 
     try {
       final daysUntilTrip = startDate.difference(DateTime.now()).inDays;
-      
+
       // Historical Fallback (> 5 days) or past dates
       // OpenWeatherMap free forecast is 5 days
       if (daysUntilTrip > 5 || daysUntilTrip < 0) {
@@ -55,91 +71,109 @@ class WeatherService {
       if (locations.isEmpty) {
         return fallbackString;
       }
-      
+
       final lat = locations.first.latitude;
       final lon = locations.first.longitude;
 
-      final response = await http.get(Uri.parse(
-          '$baseUrl?lat=$lat&lon=$lon&appid=$apiKey&units=metric'));
+      final response = await http.get(
+        Uri.parse('$baseUrl?lat=$lat&lon=$lon&appid=$apiKey&units=metric'),
+      );
 
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
         final List<dynamic> list = json['list'];
-        
+
         if (list.isNotEmpty) {
-           Map<String, Map<String, dynamic>> dailyWeather = {};
-           
-           for (var i = 0; i < list.length; i++) {
-             final item = list[i];
-             final dt = DateTime.fromMillisecondsSinceEpoch(item['dt'] * 1000);
-             
-             final dateKey = "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}";
-             final displayDate = "${monthNames[dt.month - 1].substring(0, 3)} ${dt.day}";
-             
-             DateTime forecastDateOnly = DateTime(dt.year, dt.month, dt.day);
-             DateTime endDateOnly = DateTime(endDate.year, endDate.month, endDate.day);
-             DateTime startDateOnly = DateTime(startDate.year, startDate.month, startDate.day);
-             
-             if (forecastDateOnly.isBefore(startDateOnly)) continue;
-             if (forecastDateOnly.isAfter(endDateOnly)) break;
+          Map<String, Map<String, dynamic>> dailyWeather = {};
 
-             int temp = (item['main']['temp'] as num).round();
-             String condition = item['weather'][0]['main'];
+          for (var i = 0; i < list.length; i++) {
+            final item = list[i];
+            final dt = DateTime.fromMillisecondsSinceEpoch(item['dt'] * 1000);
 
-             if (!dailyWeather.containsKey(dateKey)) {
-                dailyWeather[dateKey] = {
-                  'displayDate': displayDate,
-                  'maxTemp': temp,
-                  'conditions': {condition: 1},
-                };
-             } else {
-                if (temp > dailyWeather[dateKey]!['maxTemp']) dailyWeather[dateKey]!['maxTemp'] = temp;
-                
-                final conds = dailyWeather[dateKey]!['conditions'] as Map<String, int>;
-                conds[condition] = (conds[condition] ?? 0) + 1;
-             }
-           }
+            final dateKey =
+                "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}";
+            final displayDate =
+                "${monthNames[dt.month - 1].substring(0, 3)} ${dt.day}";
 
-           if (dailyWeather.isEmpty) return fallbackString;
+            DateTime forecastDateOnly = DateTime(dt.year, dt.month, dt.day);
+            DateTime endDateOnly = DateTime(
+              endDate.year,
+              endDate.month,
+              endDate.day,
+            );
+            DateTime startDateOnly = DateTime(
+              startDate.year,
+              startDate.month,
+              startDate.day,
+            );
 
-           List<String> dailySummaries = [];
-           int dayCounter = 1;
-           final sortedKeys = dailyWeather.keys.toList()..sort();
-           
-           for (String key in sortedKeys) {
-             final dayData = dailyWeather[key]!;
-             final displayDate = dayData['displayDate'];
-             
-             final conds = dayData['conditions'] as Map<String, int>;
-             String dominantCondition = '';
-             int maxCount = 0;
-             conds.forEach((k, v) {
-                if (v > maxCount) {
-                  maxCount = v;
-                  dominantCondition = k;
-                }
-             });
+            if (forecastDateOnly.isBefore(startDateOnly)) continue;
+            if (forecastDateOnly.isAfter(endDateOnly)) break;
 
-             final temp = dayData['maxTemp']; 
-             dailySummaries.add("Day $dayCounter ($displayDate): $temp°C, $dominantCondition");
-             dayCounter++;
-           }
+            int temp = (item['main']['temp'] as num).round();
+            String condition = item['weather'][0]['main'];
 
-           String finalSummary = dailySummaries.join(". ") + ".";
+            if (!dailyWeather.containsKey(dateKey)) {
+              dailyWeather[dateKey] = {
+                'displayDate': displayDate,
+                'maxTemp': temp,
+                'conditions': {condition: 1},
+              };
+            } else {
+              if (temp > dailyWeather[dateKey]!['maxTemp']) {
+                dailyWeather[dateKey]!['maxTemp'] = temp;
+              }
 
-           // Check for partial coverage
-           final lastKey = sortedKeys.last;
-           final lastDateParsed = DateTime.parse(lastKey);
-           if (lastDateParsed.isBefore(DateTime(endDate.year, endDate.month, endDate.day))) {
-             finalSummary += "\nNote: Exact forecast for the remaining days of the trip is unavailable. Please rely on your general knowledge of typical historical weather averages for this destination during this time of year to complete the wardrobe selection.";
-           }
+              final conds =
+                  dailyWeather[dateKey]!['conditions'] as Map<String, int>;
+              conds[condition] = (conds[condition] ?? 0) + 1;
+            }
+          }
 
-           return finalSummary;
+          if (dailyWeather.isEmpty) return fallbackString;
+
+          List<String> dailySummaries = [];
+          int dayCounter = 1;
+          final sortedKeys = dailyWeather.keys.toList()..sort();
+
+          for (String key in sortedKeys) {
+            final dayData = dailyWeather[key]!;
+            final displayDate = dayData['displayDate'];
+
+            final conds = dayData['conditions'] as Map<String, int>;
+            String dominantCondition = '';
+            int maxCount = 0;
+            conds.forEach((k, v) {
+              if (v > maxCount) {
+                maxCount = v;
+                dominantCondition = k;
+              }
+            });
+
+            final temp = dayData['maxTemp'];
+            dailySummaries.add(
+              "Day $dayCounter ($displayDate): $temp°C, $dominantCondition",
+            );
+            dayCounter++;
+          }
+
+          String finalSummary = "${dailySummaries.join(". ")}.";
+
+          // Check for partial coverage
+          final lastKey = sortedKeys.last;
+          final lastDateParsed = DateTime.parse(lastKey);
+          if (lastDateParsed.isBefore(
+            DateTime(endDate.year, endDate.month, endDate.day),
+          )) {
+            finalSummary +=
+                "\nNote: Exact forecast for the remaining days of the trip is unavailable. Please rely on your general knowledge of typical historical weather averages for this destination during this time of year to complete the wardrobe selection.";
+          }
+
+          return finalSummary;
         }
       }
-      
-      return fallbackString;
 
+      return fallbackString;
     } catch (e) {
       print('Error getting trip weather summary: $e');
       return fallbackString;
@@ -163,11 +197,12 @@ class WeatherService {
         return Future.error('Location permissions are denied');
       }
     }
-    
+
     if (permission == LocationPermission.deniedForever) {
       return Future.error(
-        'Location permissions are permanently denied, we cannot request permissions.');
-    } 
+        'Location permissions are permanently denied, we cannot request permissions.',
+      );
+    }
 
     return await Geolocator.getCurrentPosition();
   }
@@ -186,7 +221,10 @@ class WeatherService {
     try {
       List<Placemark> placemarks = await placemarkFromCoordinates(lat, lon);
       if (placemarks.isNotEmpty) {
-        cityName = placemarks.first.locality ?? placemarks.first.subLocality ?? 'Unknown Location';
+        cityName =
+            placemarks.first.locality ??
+            placemarks.first.subLocality ??
+            'Unknown Location';
       }
     } catch (e) {
       // ignore: avoid_print
@@ -194,8 +232,9 @@ class WeatherService {
     }
 
     // 2. Fetch Forecast Data
-    final response = await http.get(Uri.parse(
-        '$baseUrl?lat=$lat&lon=$lon&appid=$apiKey&units=metric'));
+    final response = await http.get(
+      Uri.parse('$baseUrl?lat=$lat&lon=$lon&appid=$apiKey&units=metric'),
+    );
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
@@ -204,7 +243,7 @@ class WeatherService {
       if (list.isNotEmpty) {
         // Current weather is effectively the first item (or close to it)
         final current = list.first;
-        
+
         // Base time: Current hour rounded down (e.g. 19:13 -> 19:00)
         final now = DateTime.now();
         final baseTime = DateTime(now.year, now.month, now.day, now.hour);
@@ -218,7 +257,7 @@ class WeatherService {
           condition: current['weather'][0]['main'],
           iconCode: current['weather'][0]['icon'],
         );
-        
+
         // Get next 8 items for 24h forecast (3h intervals * 8 = 24h)
         // We skip the first one as it's "current"
         final List<ForecastItem> forecastList = [];
@@ -227,20 +266,24 @@ class WeatherService {
 
         // Process next 8 items
         final apiForecast = list.skip(1).take(8).toList();
-        
+
         for (int i = 0; i < apiForecast.length; i++) {
           final itemJson = apiForecast[i];
           // Calculate projected time: baseTime + (i+1)*3 hours
           final projectedTime = baseTime.add(Duration(hours: (i + 1) * 3));
-          final timeLabel = "${projectedTime.hour.toString().padLeft(2, '0')}:00";
-          
-          forecastList.add(ForecastItem(
-            time: projectedTime, // We purposely override the API time with our calculated time
-            timeLabel: timeLabel,
-            temperature: (itemJson['main']['temp'] as num).round(),
-            condition: itemJson['weather'][0]['main'],
-            iconCode: itemJson['weather'][0]['icon'],
-          ));
+          final timeLabel =
+              "${projectedTime.hour.toString().padLeft(2, '0')}:00";
+
+          forecastList.add(
+            ForecastItem(
+              time:
+                  projectedTime, // We purposely override the API time with our calculated time
+              timeLabel: timeLabel,
+              temperature: (itemJson['main']['temp'] as num).round(),
+              condition: itemJson['weather'][0]['main'],
+              iconCode: itemJson['weather'][0]['icon'],
+            ),
+          );
         }
 
         final weatherModel = WeatherModel(
@@ -258,7 +301,7 @@ class WeatherService {
 
         return weatherModel;
       } else {
-         throw Exception('No weather data available');
+        throw Exception('No weather data available');
       }
     } else {
       throw Exception('Failed to load weather data: ${response.statusCode}');

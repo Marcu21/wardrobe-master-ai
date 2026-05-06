@@ -474,6 +474,11 @@ async def generate_outfits(request: OutfitGenerationRequest):
         - Newly Scanned Item: {scanned_item_json}
         - User's Wardrobe: {wardrobe_json}
         
+        ### EMPTY WARDROBE EXCEPTION
+        - If the User's Wardrobe is completely empty (`[]`), you MUST NOT generate any outfits. The `outfits` array in the JSON response MUST be left completely empty (`[]`). Do NOT hallucinate items.
+        - Evaluate the newly scanned item purely on its standalone versatility as a foundational wardrobe piece (e.g., a basic neutral tee is an excellent 90+ score starting piece, whereas a highly specific neon item might score lower since there's nothing to anchor it yet).
+        - Acknowledge in the `pros` or `cons` that their digital wardrobe is currently empty, explaining whether this item is a solid foundational piece to start building upon.
+
         ### MANDATORY OUTFIT RULES
         1. COMPLETE LOOKS ONLY: Each outfit must be a functional, full look.
            - If Scanned Item is a TOP/OUTERWEAR: Add 1 Bottom and 1 Pair of Shoes.

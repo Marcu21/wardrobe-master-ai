@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -8,6 +7,7 @@ import 'package:mobile_app/screens/add_clothing_screen.dart';
 import 'package:mobile_app/screens/clothing_detail_screen.dart';
 import 'package:mobile_app/services/wardrobe_state_service.dart';
 import '../widgets/global_wardrobe_selector.dart';
+import 'package:mobile_app/widgets/smart_clothing_image.dart';
 
 class WardrobeGalleryScreen extends StatefulWidget {
   const WardrobeGalleryScreen({super.key});
@@ -18,7 +18,7 @@ class WardrobeGalleryScreen extends StatefulWidget {
 
 class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
+
   String _selectedCategory = 'All';
   String _selectedSubCategory = 'All';
 
@@ -49,12 +49,12 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
         .collection('clothing')
         .where('userId', isEqualTo: currentUserId)
         .orderBy('createdAt', descending: true);
-        
+
     final activeId = wardrobeStateService.activeWardrobeId;
     if (activeId != null) {
       query = query.where('wardrobe_id', isEqualTo: activeId);
     }
-    
+
     _clothingStream = query.snapshots();
   }
 
@@ -96,9 +96,12 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                   Icon(Icons.checkroom_outlined, size: 64, color: Colors.grey),
-                   SizedBox(height: 16),
-                   Text('Wardrobe is empty', style: TextStyle(fontSize: 18, color: Colors.grey)),
+                  Icon(Icons.checkroom_outlined, size: 64, color: Colors.grey),
+                  SizedBox(height: 16),
+                  Text(
+                    'Wardrobe is empty',
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                  ),
                 ],
               ),
             );
@@ -126,25 +129,24 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
           final Set<String> subCategories = {'All'};
           if (_selectedCategory != 'All') {
             for (var doc in allDocs) {
-               final data = doc.data() as Map<String, dynamic>;
-               final cat = data['basic_info']?['category'] as String?;
-               if (cat == _selectedCategory) {
-                 final sub = data['basic_info']?['sub_category'] as String?;
-                 if (sub != null && sub.isNotEmpty) {
-                   subCategories.add(sub);
-                 }
-               }
+              final data = doc.data() as Map<String, dynamic>;
+              final cat = data['basic_info']?['category'] as String?;
+              if (cat == _selectedCategory) {
+                final sub = data['basic_info']?['sub_category'] as String?;
+                if (sub != null && sub.isNotEmpty) {
+                  subCategories.add(sub);
+                }
+              }
             }
           }
           final subCategoryList = subCategories.toList()..sort();
           subCategoryList.remove('All');
           subCategoryList.insert(0, 'All');
 
-           // Keep selected subcategory valid
+          // Keep selected subcategory valid
           if (!subCategories.contains(_selectedSubCategory)) {
             _selectedSubCategory = 'All';
           }
-
 
           // 3. Filter Documents
           final filteredDocs = allDocs.where((doc) {
@@ -152,8 +154,11 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
             final cat = data['basic_info']?['category'] as String?;
             final sub = data['basic_info']?['sub_category'] as String?;
 
-            bool matchCategory = (_selectedCategory == 'All') || (cat == _selectedCategory);
-            bool matchSubCategory = (_selectedSubCategory == 'All') || (sub == _selectedSubCategory);
+            bool matchCategory =
+                (_selectedCategory == 'All') || (cat == _selectedCategory);
+            bool matchSubCategory =
+                (_selectedSubCategory == 'All') ||
+                (sub == _selectedSubCategory);
 
             return matchCategory && matchSubCategory;
           }).toList();
@@ -168,7 +173,7 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
                   _selectedSubCategory = 'All'; // Reset sub on category change
                 });
               }),
-              
+
               // Row 2: Subcategories
               // Only sort of useful if we have enough items, but let's always show it for consistency
               if (_selectedCategory != 'All')
@@ -186,9 +191,12 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
     );
   }
 
-
-
-  Widget _buildFilterRow(List<String> items, String selectedItem, Function(String) onSelected, {bool isSecondary = false}) {
+  Widget _buildFilterRow(
+    List<String> items,
+    String selectedItem,
+    Function(String) onSelected, {
+    bool isSecondary = false,
+  }) {
     return SizedBox(
       height: 50,
       child: ListView.builder(
@@ -198,14 +206,16 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
         itemBuilder: (context, index) {
           final item = items[index];
           final isSelected = selectedItem == item;
-          
+
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: ChoiceChip(
               label: Text(
                 item,
                 style: TextStyle(
-                  color: isSelected ? (isSecondary ? Colors.black : Colors.white) : Colors.black87,
+                  color: isSelected
+                      ? (isSecondary ? Colors.black : Colors.white)
+                      : Colors.black87,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   fontSize: isSecondary ? 13 : 14,
                 ),
@@ -217,9 +227,11 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
                 side: BorderSide(
-                  color: isSelected 
-                      ? (isSecondary ? Colors.black : Colors.black) 
-                      : (isSecondary ? Colors.grey.shade300 : Colors.grey.shade300),
+                  color: isSelected
+                      ? (isSecondary ? Colors.black : Colors.black)
+                      : (isSecondary
+                            ? Colors.grey.shade300
+                            : Colors.grey.shade300),
                   width: isSecondary && isSelected ? 1.5 : 1.0,
                 ),
               ),
@@ -262,44 +274,7 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
     final brand = data['sustainability_info']?['brand'] ?? 'Unknown Brand';
     final subCategory = data['basic_info']?['sub_category'] ?? '';
 
-    Widget imageWidget;
-    if (imageUrl != null && imageUrl.isNotEmpty) {
-      if (imageUrl.startsWith('http')) {
-        imageWidget = CachedNetworkImage(
-          imageUrl: imageUrl, 
-          fit: BoxFit.contain,
-          placeholder: (context, url) => Container(
-            color: Colors.grey[100],
-            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          ),
-          errorWidget: (context, url, error) => Container(
-            color: Colors.grey[200], 
-            child: const Icon(Icons.broken_image)
-          ),
-        );
-      } else if (imageUrl.startsWith('data:image')) {
-        final base64String = imageUrl.split(',').last;
-        try {
-          imageWidget = Image.memory(
-            base64Decode(base64String),
-            fit: BoxFit.contain,
-          );
-        } catch (e) {
-          imageWidget = Container(color: Colors.grey[200], child: const Icon(Icons.broken_image));
-        }
-      } else {
-         try {
-            imageWidget = Image.memory(
-              base64Decode(imageUrl),
-              fit: BoxFit.contain,
-            );
-         } catch (e) {
-            imageWidget = Container(color: Colors.grey[200], child: const Icon(Icons.image));
-         }
-      }
-    } else {
-      imageWidget = Container(color: Colors.grey[200], child: const Icon(Icons.checkroom));
-    }
+    Widget imageWidget = SmartClothingImage(imageUrl: imageUrl);
 
     return GestureDetector(
       onTap: () {
@@ -327,7 +302,9 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
           children: [
             Expanded(
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(30),
+                ),
                 child: imageWidget,
               ),
             ),
@@ -338,7 +315,10 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
                 children: [
                   Text(
                     brand,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -346,7 +326,11 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
                   if (subCategory.isNotEmpty)
                     Text(
                       subCategory,
-                      style: TextStyle(color: Colors.grey[500], fontSize: 13, fontWeight: FontWeight.w400),
+                      style: TextStyle(
+                        color: Colors.grey[500],
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

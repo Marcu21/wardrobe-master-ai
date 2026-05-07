@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../widgets/save_outfit_dialog.dart';
 import '../widgets/global_wardrobe_selector.dart';
 import '../services/wardrobe_state_service.dart';
+import '../widgets/smart_clothing_image.dart';
 
 class VirtualDressingRoomScreen extends StatefulWidget {
   final List<String>? initialItemIds;
@@ -508,43 +509,6 @@ class _ClothingCarouselRowInternalState
     super.dispose();
   }
 
-  Widget _buildClothingItem(Map<String, dynamic> item) {
-    String rawData = item['imageUrl'] ?? '';
-    Widget imageWidget;
-
-    try {
-      if (rawData.startsWith('data:image')) {
-        final String base64String = rawData.split(',').last;
-        imageWidget = Image.memory(
-          base64Decode(base64String),
-          fit: BoxFit.contain, // Maximize size, no cropping
-          errorBuilder: (ctx, err, stack) =>
-              const Icon(Icons.broken_image, size: 50, color: Colors.grey),
-        );
-      } else if (rawData.startsWith('http')) {
-        imageWidget = CachedNetworkImage(
-          imageUrl: rawData,
-          fit: BoxFit.contain,
-          placeholder: (context, url) =>
-              const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          errorWidget: (context, url, error) =>
-              const Icon(Icons.broken_image, size: 50, color: Colors.grey),
-        );
-      } else {
-        imageWidget = const Icon(Icons.checkroom, size: 50, color: Colors.grey);
-      }
-    } catch (e) {
-      imageWidget = const Icon(Icons.error, size: 50, color: Colors.red);
-    }
-
-    // Centering or alignment passed from parent
-    return Container(
-      alignment: widget.alignment,
-      width: double.infinity,
-      child: imageWidget,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     if (widget.items.isEmpty) {
@@ -564,7 +528,13 @@ class _ClothingCarouselRowInternalState
       physics: const BouncingScrollPhysics(),
       padEnds: true, // centered item
       itemBuilder: (context, index) {
-        return _buildClothingItem(widget.items[index]);
+        return Container(
+          alignment: widget.alignment,
+          width: double.infinity,
+          child: SmartClothingImage(
+            imageUrl: widget.items[index]['imageUrl']?.toString(),
+          ),
+        );
       },
     );
   }

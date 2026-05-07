@@ -9,6 +9,7 @@ import '../services/wardrobe_state_service.dart';
 import '../widgets/global_wardrobe_selector.dart';
 import '../utils/outfit_sorting_utils.dart';
 import 'virtual_dressing_room_screen.dart';
+import '../widgets/smart_clothing_image.dart';
 
 class ChatMessage {
   final String role; // 'user' or 'ai'
@@ -1224,37 +1225,15 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
   Widget _buildFullOutfitPreviewImage(Map<String, dynamic> item) {
     final imageBase64 = item['image_base64'] as String?;
     final imageUrl = item['imageUrl'] as String?;
+    final resolvedUrl = (imageBase64 != null && imageBase64.isNotEmpty)
+        ? imageBase64
+        : imageUrl;
 
-    if (imageBase64 != null && imageBase64.isNotEmpty) {
-      try {
-        final String cleanBase64 = imageBase64.contains(',')
-            ? imageBase64.split(',').last
-            : imageBase64;
-        return Image.memory(
-          base64Decode(cleanBase64),
-          fit: BoxFit.contain,
-          width: double.infinity,
-        );
-      } catch (e) {
-        return const Center(
-          child: Icon(Icons.broken_image, color: Colors.grey),
-        );
-      }
-    } else if (imageUrl != null && imageUrl.isNotEmpty) {
-      return CachedNetworkImage(
-        imageUrl: imageUrl,
-        fit: BoxFit.contain,
-        width: double.infinity,
-        placeholder: (context, url) =>
-            const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-        errorWidget: (context, url, error) =>
-            const Center(child: Icon(Icons.error_outline, color: Colors.grey)),
-      );
-    } else {
-      return const Center(
-        child: Icon(Icons.checkroom, color: Colors.grey, size: 40),
-      );
-    }
+    return SmartClothingImage(
+      imageUrl: resolvedUrl,
+      fit: BoxFit.contain,
+      width: double.infinity,
+    );
   }
 
   Widget _buildChatImageThumbnail(
@@ -1263,38 +1242,14 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen> {
   }) {
     final imageBase64 = item['image_base64'] as String?;
     final imageUrl = item['imageUrl'] as String?;
+    final resolvedUrl = (imageBase64 != null && imageBase64.isNotEmpty)
+        ? imageBase64
+        : imageUrl;
 
-    Widget imageWidget;
-    if (imageBase64 != null && imageBase64.isNotEmpty) {
-      try {
-        final String cleanBase64 = imageBase64.contains(',')
-            ? imageBase64.split(',').last
-            : imageBase64;
-        imageWidget = Image.memory(
-          base64Decode(cleanBase64),
-          fit: BoxFit.contain,
-        );
-      } catch (e) {
-        imageWidget = const Icon(Icons.broken_image, color: Colors.grey);
-      }
-    } else if (imageUrl != null && imageUrl.isNotEmpty) {
-      imageWidget = CachedNetworkImage(
-        imageUrl: imageUrl,
-        fit: BoxFit.contain,
-        placeholder: (context, url) => const SizedBox(
-          width: 80,
-          child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-        ),
-        errorWidget: (context, url, error) =>
-            const Icon(Icons.error_outline, color: Colors.grey),
-      );
-    } else {
-      imageWidget = const SizedBox(
-        width: 80,
-        child: Icon(Icons.checkroom, color: Colors.grey, size: 40),
-      );
-    }
-
-    return SizedBox(height: height, child: imageWidget);
+    return Container(
+      height: height,
+      constraints: const BoxConstraints(minWidth: 80),
+      child: SmartClothingImage(imageUrl: resolvedUrl, fit: BoxFit.contain),
+    );
   }
 }

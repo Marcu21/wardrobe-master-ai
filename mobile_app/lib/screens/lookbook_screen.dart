@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../services/firebase_service.dart';
 import 'outfit_detail_screen.dart';
 import '../utils/outfit_sorting_utils.dart';
+import '../widgets/smart_clothing_image.dart';
 
 class LookbookScreen extends StatelessWidget {
   const LookbookScreen({super.key});
@@ -142,45 +143,6 @@ class _OutfitGridCardState extends State<OutfitGridCard> {
     }
   }
 
-  Widget _buildThumbnail(Map<String, dynamic> item) {
-    final String rawData = item['imageUrl'] ?? '';
-
-    if (rawData.isEmpty) {
-      // Empty placeholder
-      return const SizedBox.shrink();
-    }
-
-    Widget imageWidget;
-    try {
-      if (rawData.startsWith('data:image')) {
-        final String base64String = rawData.split(',').last;
-        imageWidget = Image.memory(
-          base64Decode(base64String),
-          fit: BoxFit.contain, // Changed to contain for full item visibility
-          alignment: Alignment.center,
-          errorBuilder: (_, __, ___) =>
-              const Icon(Icons.broken_image, color: Colors.grey),
-        );
-      } else if (rawData.startsWith('http')) {
-        imageWidget = CachedNetworkImage(
-          imageUrl: rawData,
-          fit: BoxFit.contain,
-          alignment: Alignment.center,
-          placeholder: (context, url) =>
-              const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          errorWidget: (context, url, error) =>
-              const Icon(Icons.broken_image, color: Colors.grey),
-        );
-      } else {
-        imageWidget = const Icon(Icons.checkroom, color: Colors.grey);
-      }
-    } catch (e) {
-      imageWidget = const Icon(Icons.error, color: Colors.grey);
-    }
-
-    return SizedBox(width: double.infinity, child: imageWidget);
-  }
-
   String _formatDate(Timestamp? timestamp) {
     if (timestamp == null) return '';
     final dt = timestamp.toDate();
@@ -264,7 +226,12 @@ class _OutfitGridCardState extends State<OutfitGridCard> {
                                   child: Container(
                                     // Removed horizontal padding for connected look
                                     padding: EdgeInsets.zero,
-                                    child: _buildThumbnail(item),
+                                    child: SizedBox(
+                                      width: double.infinity,
+                                      child: SmartClothingImage(
+                                        imageUrl: item['imageUrl']?.toString(),
+                                      ),
+                                    ),
                                   ),
                                 );
                               }).toList(),

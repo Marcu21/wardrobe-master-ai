@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mobile_app/services/firebase_service.dart';
 import 'package:mobile_app/services/wardrobe_state_service.dart';
+import '../widgets/smart_clothing_image.dart';
 
 class ClothingDetailScreen extends StatefulWidget {
   final Map<String, dynamic> itemData;
@@ -578,57 +579,11 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
   }
 
   Widget _buildImageHeader(String? imageUrl) {
-    Widget imageWidget;
-    if (imageUrl != null && imageUrl.isNotEmpty) {
-      if (imageUrl.startsWith('http')) {
-        imageWidget = CachedNetworkImage(
-          imageUrl: imageUrl,
-          fit: BoxFit.contain,
-          placeholder: (context, url) => Container(
-            color: Colors.grey[100],
-            child: const Center(
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          ),
-          errorWidget: (context, url, error) =>
-              _buildPlaceholderIcon(Icons.broken_image),
-        );
-      } else if (imageUrl.startsWith('data:image')) {
-        final base64String = imageUrl.split(',').last;
-        try {
-          imageWidget = Image.memory(
-            base64Decode(base64String),
-            fit: BoxFit.contain,
-          );
-        } catch (e) {
-          imageWidget = _buildPlaceholderIcon(Icons.broken_image);
-        }
-      } else {
-        try {
-          imageWidget = Image.memory(
-            base64Decode(imageUrl),
-            fit: BoxFit.contain,
-          );
-        } catch (e) {
-          imageWidget = _buildPlaceholderIcon(Icons.image);
-        }
-      }
-    } else {
-      imageWidget = _buildPlaceholderIcon(Icons.checkroom);
-    }
-
     return Container(
       height: 320,
       width: double.infinity,
       color: Colors.white,
-      child: Center(child: imageWidget),
-    );
-  }
-
-  Widget _buildPlaceholderIcon(IconData icon) {
-    return Container(
-      color: Colors.grey[100],
-      child: Center(child: Icon(icon, size: 48, color: Colors.grey[400])),
+      child: Center(child: SmartClothingImage(imageUrl: imageUrl)),
     );
   }
 

@@ -7,6 +7,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mobile_app/services/laundry_service.dart';
 import 'package:mobile_app/services/wardrobe_state_service.dart';
 import '../widgets/global_wardrobe_selector.dart';
+import 'package:mobile_app/widgets/smart_clothing_image.dart';
 
 class LaundryScreen extends StatefulWidget {
   const LaundryScreen({super.key});
@@ -154,50 +155,6 @@ class _LaundryScreenState extends State<LaundryScreen> {
     });
   }
 
-  Widget _buildImageWidget(String? imageUrl) {
-    if (imageUrl != null && imageUrl.isNotEmpty) {
-      if (imageUrl.startsWith('http')) {
-        return CachedNetworkImage(
-          imageUrl: imageUrl,
-          fit: BoxFit.contain,
-          placeholder: (context, url) => Container(
-            color: Colors.grey[100],
-            child: const Center(
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          ),
-          errorWidget: (context, url, error) => Container(
-            color: Colors.grey[200],
-            child: const Icon(Icons.broken_image),
-          ),
-        );
-      } else if (imageUrl.startsWith('data:image')) {
-        final base64String = imageUrl.split(',').last;
-        try {
-          return Image.memory(base64Decode(base64String), fit: BoxFit.contain);
-        } catch (e) {
-          return Container(
-            color: Colors.grey[200],
-            child: const Icon(Icons.broken_image),
-          );
-        }
-      } else {
-        try {
-          return Image.memory(base64Decode(imageUrl), fit: BoxFit.contain);
-        } catch (e) {
-          return Container(
-            color: Colors.grey[200],
-            child: const Icon(Icons.image),
-          );
-        }
-      }
-    }
-    return Container(
-      color: Colors.grey[200],
-      child: const Icon(Icons.checkroom),
-    );
-  }
-
   void _showAutoSplitBottomSheet(
     BuildContext context,
     List<Map<String, dynamic>> items,
@@ -311,8 +268,8 @@ class _LaundryScreenState extends State<LaundryScreen> {
                                     ),
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(8.0),
-                                      child: _buildImageWidget(
-                                        item['imageUrl']?.toString(),
+                                      child: SmartClothingImage(
+                                        imageUrl: item['imageUrl']?.toString(),
                                       ),
                                     ),
                                   );
@@ -682,8 +639,9 @@ class _LaundryScreenState extends State<LaundryScreen> {
                                     child: Stack(
                                       fit: StackFit.expand,
                                       children: [
-                                        _buildImageWidget(
-                                          item['imageUrl']?.toString(),
+                                        SmartClothingImage(
+                                          imageUrl: item['imageUrl']
+                                              ?.toString(),
                                         ),
                                         Container(
                                           color: Colors.black.withOpacity(0.35),
@@ -772,8 +730,8 @@ class _LaundryScreenState extends State<LaundryScreen> {
                                 children: [
                                   Padding(
                                     padding: const EdgeInsets.all(2.0),
-                                    child: _buildImageWidget(
-                                      item['imageUrl']?.toString(),
+                                    child: SmartClothingImage(
+                                      imageUrl: item['imageUrl']?.toString(),
                                     ),
                                   ),
                                   Positioned(

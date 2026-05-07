@@ -5,14 +5,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../services/wardrobe_state_service.dart';
+import '../widgets/smart_clothing_image.dart';
 
 class ItemSelectionScreen extends StatefulWidget {
   final List<String> initialSelectedIds;
 
-  const ItemSelectionScreen({
-    super.key,
-    required this.initialSelectedIds,
-  });
+  const ItemSelectionScreen({super.key, required this.initialSelectedIds});
 
   @override
   State<ItemSelectionScreen> createState() => _ItemSelectionScreenState();
@@ -66,27 +64,30 @@ class _ItemSelectionScreenState extends State<ItemSelectionScreen> {
       query = query.where('wardrobe_id', isEqualTo: activeId);
     }
 
-    _wardrobeSubscription = query.snapshots().listen((snapshot) {
-      final items = snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id;
-        return data;
-      }).toList();
+    _wardrobeSubscription = query.snapshots().listen(
+      (snapshot) {
+        final items = snapshot.docs.map((doc) {
+          final data = doc.data();
+          data['id'] = doc.id;
+          return data;
+        }).toList();
 
-      if (mounted) {
-        setState(() {
-          _allWardrobeItems = items;
-          _isLoading = false;
-        });
-      }
-    }, onError: (error) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = 'Failed to load wardrobe. ${error.toString()}';
-          _isLoading = false;
-        });
-      }
-    });
+        if (mounted) {
+          setState(() {
+            _allWardrobeItems = items;
+            _isLoading = false;
+          });
+        }
+      },
+      onError: (error) {
+        if (mounted) {
+          setState(() {
+            _errorMessage = 'Failed to load wardrobe. ${error.toString()}';
+            _isLoading = false;
+          });
+        }
+      },
+    );
   }
 
   @override
@@ -104,45 +105,6 @@ class _ItemSelectionScreenState extends State<ItemSelectionScreen> {
         _selectedIds.add(id);
       }
     });
-  }
-
-  Widget _buildImageWidget(String? imageUrl) {
-    if (imageUrl != null && imageUrl.isNotEmpty) {
-      if (imageUrl.startsWith('http')) {
-        return CachedNetworkImage(
-          imageUrl: imageUrl,
-          fit: BoxFit.contain,
-          placeholder: (context, url) => Container(
-            color: Colors.grey[100],
-            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          ),
-          errorWidget: (context, url, error) => Container(
-            color: Colors.grey[200],
-            child: const Icon(Icons.broken_image),
-          ),
-        );
-      } else if (imageUrl.startsWith('data:image')) {
-        final base64String = imageUrl.split(',').last;
-        try {
-          return Image.memory(
-            base64Decode(base64String),
-            fit: BoxFit.contain,
-          );
-        } catch (e) {
-          return Container(color: Colors.grey[200], child: const Icon(Icons.broken_image));
-        }
-      } else {
-        try {
-          return Image.memory(
-            base64Decode(imageUrl),
-            fit: BoxFit.contain,
-          );
-        } catch (e) {
-          return Container(color: Colors.grey[200], child: const Icon(Icons.image));
-        }
-      }
-    }
-    return Container(color: Colors.grey[200], child: const Icon(Icons.checkroom));
   }
 
   Widget _buildFiltersWidget() {
@@ -202,7 +164,12 @@ class _ItemSelectionScreenState extends State<ItemSelectionScreen> {
     );
   }
 
-  Widget _buildChoiceChipRow(List<String> items, String selectedItem, Function(String) onSelected, {bool isSecondary = false}) {
+  Widget _buildChoiceChipRow(
+    List<String> items,
+    String selectedItem,
+    Function(String) onSelected, {
+    bool isSecondary = false,
+  }) {
     return SizedBox(
       height: 40,
       child: ListView.builder(
@@ -212,7 +179,7 @@ class _ItemSelectionScreenState extends State<ItemSelectionScreen> {
         itemBuilder: (context, index) {
           final item = items[index];
           final isSelected = selectedItem == item;
-          
+
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: ChoiceChip(
@@ -226,8 +193,12 @@ class _ItemSelectionScreenState extends State<ItemSelectionScreen> {
               ),
               selected: isSelected,
               showCheckmark: false,
-              selectedColor: isSecondary ? Colors.blueGrey.shade700 : Colors.black,
-              backgroundColor: isSecondary ? Colors.grey.shade100 : Colors.white,
+              selectedColor: isSecondary
+                  ? Colors.blueGrey.shade700
+                  : Colors.black,
+              backgroundColor: isSecondary
+                  ? Colors.grey.shade100
+                  : Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
                 side: BorderSide(
@@ -253,13 +224,18 @@ class _ItemSelectionScreenState extends State<ItemSelectionScreen> {
       return Scaffold(
         backgroundColor: Colors.grey[50],
         appBar: AppBar(
-          title: const Text('Select Items', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          title: const Text(
+            'Select Items',
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          ),
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
           iconTheme: const IconThemeData(color: Colors.black),
         ),
-        body: const Center(child: CircularProgressIndicator(color: Colors.blueGrey)),
+        body: const Center(
+          child: CircularProgressIndicator(color: Colors.blueGrey),
+        ),
       );
     }
 
@@ -267,21 +243,31 @@ class _ItemSelectionScreenState extends State<ItemSelectionScreen> {
       return Scaffold(
         backgroundColor: Colors.grey[50],
         appBar: AppBar(
-          title: const Text('Select Items', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          title: const Text(
+            'Select Items',
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          ),
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
           iconTheme: const IconThemeData(color: Colors.black),
         ),
-        body: Center(child: Text(_errorMessage!, style: const TextStyle(color: Colors.red))),
+        body: Center(
+          child: Text(
+            _errorMessage!,
+            style: const TextStyle(color: Colors.red),
+          ),
+        ),
       );
     }
 
     final filteredDocs = _allWardrobeItems.where((doc) {
       final cat = doc['basic_info']?['category'] as String?;
       final sub = doc['basic_info']?['sub_category'] as String?;
-      bool matchCategory = (_selectedCategory == 'All') || (cat == _selectedCategory);
-      bool matchSubCategory = (_selectedSubCategory == 'All') || (sub == _selectedSubCategory);
+      bool matchCategory =
+          (_selectedCategory == 'All') || (cat == _selectedCategory);
+      bool matchSubCategory =
+          (_selectedSubCategory == 'All') || (sub == _selectedSubCategory);
       return matchCategory && matchSubCategory;
     }).toList();
 
@@ -298,7 +284,13 @@ class _ItemSelectionScreenState extends State<ItemSelectionScreen> {
               elevation: 0,
               centerTitle: true,
               iconTheme: const IconThemeData(color: Colors.black),
-              title: const Text('Select Items', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+              title: const Text(
+                'Select Items',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               actions: [
                 TextButton(
                   onPressed: () {
@@ -306,20 +298,21 @@ class _ItemSelectionScreenState extends State<ItemSelectionScreen> {
                   },
                   child: const Text(
                     "Done",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueAccent),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blueAccent,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
               ],
             ),
-            
+
             SliverToBoxAdapter(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildFiltersWidget(),
-                  const SizedBox(height: 16),
-                ],
+                children: [_buildFiltersWidget(), const SizedBox(height: 16)],
               ),
             ),
 
@@ -330,74 +323,91 @@ class _ItemSelectionScreenState extends State<ItemSelectionScreen> {
                         padding: const EdgeInsets.only(top: 40.0),
                         child: Text(
                           'No available items match the criteria.',
-                          style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                          style: TextStyle(
+                            color: Colors.grey.shade500,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
                     ),
                   )
                 : SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 8.0,
+                    ),
                     sliver: SliverGrid(
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 4.0,
-                        mainAxisSpacing: 6.0,
-                        childAspectRatio: 0.75,
-                      ),
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final item = filteredDocs[index];
-                          final id = item['id'];
-                          final isSelected = _selectedIds.contains(id);
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 4.0,
+                            mainAxisSpacing: 6.0,
+                            childAspectRatio: 0.75,
+                          ),
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final item = filteredDocs[index];
+                        final id = item['id'];
+                        final isSelected = _selectedIds.contains(id);
 
-                          return GestureDetector(
-                            onTap: () => _toggleSelection(id),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: isSelected ? Colors.blueAccent : Colors.transparent,
-                                  width: 2.0,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.06),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ],
+                        return GestureDetector(
+                          onTap: () => _toggleSelection(id),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isSelected
+                                    ? Colors.blueAccent
+                                    : Colors.transparent,
+                                width: 2.0,
                               ),
-                              child: Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(14), // slightly less to fit inside border
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(2.0),
-                                      child: _buildImageWidget(item['imageUrl']?.toString()),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.06),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(
+                                    14,
+                                  ), // slightly less to fit inside border
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(2.0),
+                                    child: SmartClothingImage(
+                                      imageUrl: item['imageUrl']?.toString(),
                                     ),
                                   ),
-                                  if (isSelected)
-                                    Positioned(
-                                      top: 6,
-                                      right: 6,
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: Colors.blueAccent,
-                                          border: Border.all(color: Colors.white, width: 1.5),
+                                ),
+                                if (isSelected)
+                                  Positioned(
+                                    top: 6,
+                                    right: 6,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Colors.blueAccent,
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 1.5,
                                         ),
-                                        child: const Icon(Icons.check, color: Colors.white, size: 16),
+                                      ),
+                                      child: const Icon(
+                                        Icons.check,
+                                        color: Colors.white,
+                                        size: 16,
                                       ),
                                     ),
-                                ],
-                              ),
+                                  ),
+                              ],
                             ),
-                          );
-                        },
-                        childCount: filteredDocs.length,
-                      ),
+                          ),
+                        );
+                      }, childCount: filteredDocs.length),
                     ),
                   ),
             const SliverToBoxAdapter(child: SizedBox(height: 40)),

@@ -9,6 +9,7 @@ import '../services/wardrobe_state_service.dart';
 import '../services/firebase_service.dart';
 import 'item_selection_screen.dart';
 import '../utils/outfit_sorting_utils.dart';
+import '../widgets/smart_clothing_image.dart';
 
 class TripViewScreen extends StatefulWidget {
   final String? tripId;
@@ -339,50 +340,6 @@ class _TripViewScreenState extends State<TripViewScreen> {
     } finally {
       if (mounted && showGlobalLoader) setState(() => _isLoading = false);
     }
-  }
-
-  Widget _buildImageWidget(String? imageUrl) {
-    if (imageUrl != null && imageUrl.isNotEmpty) {
-      if (imageUrl.startsWith('http')) {
-        return CachedNetworkImage(
-          imageUrl: imageUrl,
-          fit: BoxFit.contain,
-          placeholder: (context, url) => Container(
-            color: Colors.grey[100],
-            child: const Center(
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          ),
-          errorWidget: (context, url, error) => Container(
-            color: Colors.grey[200],
-            child: const Icon(Icons.broken_image),
-          ),
-        );
-      } else if (imageUrl.startsWith('data:image')) {
-        final base64String = imageUrl.split(',').last;
-        try {
-          return Image.memory(base64Decode(base64String), fit: BoxFit.contain);
-        } catch (e) {
-          return Container(
-            color: Colors.grey[200],
-            child: const Icon(Icons.broken_image),
-          );
-        }
-      } else {
-        try {
-          return Image.memory(base64Decode(imageUrl), fit: BoxFit.contain);
-        } catch (e) {
-          return Container(
-            color: Colors.grey[200],
-            child: const Icon(Icons.image),
-          );
-        }
-      }
-    }
-    return Container(
-      color: Colors.grey[200],
-      child: const Icon(Icons.checkroom),
-    );
   }
 
   Widget _buildSkeletonLoader() {
@@ -758,7 +715,9 @@ class _TripViewScreenState extends State<TripViewScreen> {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      _buildImageWidget(item['imageUrl']?.toString()),
+                      SmartClothingImage(
+                        imageUrl: item['imageUrl']?.toString(),
+                      ),
                       if (_isEditMode)
                         Positioned(
                           top: 4,
@@ -1147,8 +1106,9 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                   ),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(12),
-                                    child: _buildImageWidget(
-                                      itemInfo['imageUrl']?.toString(),
+                                    child: SmartClothingImage(
+                                      imageUrl: itemInfo['imageUrl']
+                                          ?.toString(),
                                     ),
                                   ),
                                 ),

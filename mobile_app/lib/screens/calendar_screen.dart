@@ -8,6 +8,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../services/firebase_service.dart';
 import 'outfit_detail_screen.dart';
 import '../utils/outfit_sorting_utils.dart';
+import '../widgets/smart_clothing_image.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -301,55 +302,6 @@ class _CalendarOutfitCardState extends State<CalendarOutfitCard> {
     }
   }
 
-  Widget _buildThumbnail(Map<String, dynamic> item) {
-    final String rawData = item['imageUrl'] ?? '';
-
-    if (rawData.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    Widget imageWidget;
-    try {
-      if (rawData.startsWith('data:image')) {
-        final String base64String = rawData.split(',').last;
-        imageWidget = Image.memory(
-          base64Decode(base64String),
-          fit: BoxFit.contain, // Contain to show full item
-          alignment: Alignment.center,
-          errorBuilder: (_, __, ___) =>
-              const Icon(Icons.broken_image, color: Colors.grey),
-        );
-      } else if (rawData.startsWith('http')) {
-        imageWidget = CachedNetworkImage(
-          imageUrl: rawData,
-          fit: BoxFit.contain,
-          alignment: Alignment.center,
-          placeholder: (context, url) =>
-              const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          errorWidget: (context, url, error) =>
-              const Icon(Icons.broken_image, color: Colors.grey),
-        );
-      } else {
-        // Try raw base64 if no prefix
-        try {
-          imageWidget = Image.memory(
-            base64Decode(rawData),
-            fit: BoxFit.contain,
-            alignment: Alignment.center,
-            errorBuilder: (_, __, ___) =>
-                const Icon(Icons.checkroom, color: Colors.grey),
-          );
-        } catch (e) {
-          imageWidget = const Icon(Icons.checkroom, color: Colors.grey);
-        }
-      }
-    } catch (e) {
-      imageWidget = const Icon(Icons.error, color: Colors.grey);
-    }
-
-    return SizedBox(width: double.infinity, child: imageWidget);
-  }
-
   String _getWearTime() {
     if (widget.wearDateTarget == null) return '';
     final List<dynamic> dates = widget.outfitData['wear_dates'] ?? [];
@@ -443,7 +395,12 @@ class _CalendarOutfitCardState extends State<CalendarOutfitCard> {
 
                             return Expanded(
                               flex: flex,
-                              child: _buildThumbnail(item),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: SmartClothingImage(
+                                  imageUrl: item['imageUrl']?.toString(),
+                                ),
+                              ),
                             );
                           }).toList(),
                         ),

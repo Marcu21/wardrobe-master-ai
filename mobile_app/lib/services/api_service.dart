@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
@@ -13,28 +12,35 @@ class ApiService {
   // Use a default URL, but allow it to be overridden for flexibility (e.g. from environment or config)
   // 10.0.2.2 is the localhost alias for Android emulator
   // For physical devices, use your computer's local IP address (e.g. 192.168.x.x)
-  ApiService({String? baseUrl}) 
-      : baseUrl = baseUrl ?? dotenv.env['SERVER_URL'] ?? 'http://10.0.2.2:8000';
+  ApiService({String? baseUrl})
+    : baseUrl = baseUrl ?? dotenv.env['SERVER_URL'] ?? 'http://10.0.2.2:8000';
 
-  Future<Map<String, dynamic>?> processItem(File itemFile, {File? tagFile}) async {
+  Future<Map<String, dynamic>?> processItem(
+    File itemFile, {
+    File? tagFile,
+  }) async {
     var uri = Uri.parse('$baseUrl/process-item/');
     var request = http.MultipartRequest('POST', uri);
 
     // Add itemFile (mandatory)
     // We can try to guess mime type or just use standard image/*
-    request.files.add(await http.MultipartFile.fromPath(
-      'file',
-      itemFile.path,
-      contentType: MediaType('image', 'jpeg'), // Adjust if needed, or detect
-    ));
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        'file',
+        itemFile.path,
+        contentType: MediaType('image', 'jpeg'), // Adjust if needed, or detect
+      ),
+    );
 
     // Add tagFile (optional)
     if (tagFile != null) {
-      request.files.add(await http.MultipartFile.fromPath(
-        'tag_file',
-        tagFile.path,
-        contentType: MediaType('image', 'jpeg'),
-      ));
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'tag_file',
+          tagFile.path,
+          contentType: MediaType('image', 'jpeg'),
+        ),
+      );
     }
 
     try {
@@ -48,7 +54,9 @@ class ApiService {
         // Handle server errors
         print('Server error: ${response.statusCode} - ${response.body}');
         // You might want to throw a custom exception here
-        throw Exception('Failed to process item: ${response.statusCode} - ${response.body}');
+        throw Exception(
+          'Failed to process item: ${response.statusCode} - ${response.body}',
+        );
       }
     } catch (e) {
       // Handle network or other errors
@@ -56,6 +64,7 @@ class ApiService {
       throw Exception('Failed to connect to backend: $e');
     }
   }
+
   Future<Map<String, dynamic>> generateOutfit({
     required String userPrompt,
     required String currentWeather,
@@ -64,7 +73,7 @@ class ApiService {
     String? wardrobeId,
   }) async {
     final uri = Uri.parse('$baseUrl/generate-outfit/');
-    
+
     try {
       final response = await http.post(
         uri,
@@ -73,7 +82,8 @@ class ApiService {
           'user_prompt': userPrompt,
           'current_weather': currentWeather,
           'hourly_forecast': hourlyForecast,
-          'user_id': userId ?? FirebaseService().currentUser?.uid ?? 'unknown_user',
+          'user_id':
+              userId ?? FirebaseService().currentUser?.uid ?? 'unknown_user',
           if (wardrobeId != null) 'wardrobe_id': wardrobeId,
         }),
       );
@@ -81,7 +91,9 @@ class ApiService {
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
       } else {
-        throw Exception('Failed to generate outfit: ${response.statusCode} - ${response.body}');
+        throw Exception(
+          'Failed to generate outfit: ${response.statusCode} - ${response.body}',
+        );
       }
     } catch (e) {
       print('Network error generating outfit: $e');

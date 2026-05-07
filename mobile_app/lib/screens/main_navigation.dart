@@ -16,19 +16,16 @@ class _MainNavigationState extends State<MainNavigation> {
 
   // 1-to-1 Mapping of Screens
   final List<Widget> _screens = const [
-    HomeScreen(),            // Index 0
+    HomeScreen(), // Index 0
     WardrobeGalleryScreen(), // Index 1
-    LookbookScreen(),        // Index 2
-    LaundryScreen(),         // Index 3
+    LookbookScreen(), // Index 2
+    LaundryScreen(), // Index 3
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _selectedIndex, children: _screens),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (int index) {

@@ -1,8 +1,4 @@
-enum LaundryStatus {
-  Safe,
-  Warning,
-  Critical,
-}
+enum LaundryStatus { Safe, Warning, Critical }
 
 class LaundryAnalysisResult {
   final int recommendedTemp;
@@ -48,9 +44,28 @@ class LaundryService {
     bool hasFootwear = false;
     bool hasNonFootwear = false;
 
-    final List<String> heavyKeywords = ['denim', 'jeans', 'leather', 'heavy wool'];
-    final List<String> delicateKeywords = ['silk', 'lace', 'linen', 'chiffon', 'satin'];
-    final List<String> footwearKeywords = ['shoe', 'shoes', 'sneaker', 'sneakers', 'footwear', 'boot', 'boots'];
+    final List<String> heavyKeywords = [
+      'denim',
+      'jeans',
+      'leather',
+      'heavy wool',
+    ];
+    final List<String> delicateKeywords = [
+      'silk',
+      'lace',
+      'linen',
+      'chiffon',
+      'satin',
+    ];
+    final List<String> footwearKeywords = [
+      'shoe',
+      'shoes',
+      'sneaker',
+      'sneakers',
+      'footwear',
+      'boot',
+      'boots',
+    ];
 
     for (final item in items) {
       final basicInfo = item['basic_info'] as Map<String, dynamic>? ?? {};
@@ -65,7 +80,7 @@ class LaundryService {
         } else if (tempRaw is String) {
           temp = int.tryParse(tempRaw);
         }
-        
+
         if (temp != null) {
           if (minTemp == null || temp < minTemp) {
             minTemp = temp;
@@ -86,8 +101,9 @@ class LaundryService {
       // Parse material and sub_category
       final material = basicInfo['material']?.toString().toLowerCase() ?? '';
       final category = basicInfo['category']?.toString().toLowerCase() ?? '';
-      final subCategory = basicInfo['sub_category']?.toString().toLowerCase() ?? '';
-      
+      final subCategory =
+          basicInfo['sub_category']?.toString().toLowerCase() ?? '';
+
       final combinedText = '$material $subCategory';
       final categoryCombined = '$category $subCategory';
 
@@ -131,10 +147,14 @@ class LaundryService {
     // Rule B: Color Bleeding Risk
     if (hasDark && hasLight) {
       status = LaundryStatus.Critical;
-      alerts.add("CRITICAL: Do not wash dark items with light items! Color bleeding risk.");
+      alerts.add(
+        "CRITICAL: Do not wash dark items with light items! Color bleeding risk.",
+      );
     } else if (hasColor && hasLight) {
       status = LaundryStatus.Warning;
-      alerts.add("WARNING: Colored items may transfer pigment to light items. Use a color catcher or wash separately.");
+      alerts.add(
+        "WARNING: Colored items may transfer pigment to light items. Use a color catcher or wash separately.",
+      );
     }
 
     // Rule C: Material Friction / Weight Clash
@@ -142,18 +162,24 @@ class LaundryService {
       if (status != LaundryStatus.Critical) {
         status = LaundryStatus.Warning;
       }
-      alerts.add("WARNING: Heavy items (like denim) can damage delicate fabrics (like silk/lace) in the drum. Consider separating.");
+      alerts.add(
+        "WARNING: Heavy items (like denim) can damage delicate fabrics (like silk/lace) in the drum. Consider separating.",
+      );
     }
 
     // Rule D: The Footwear Hygiene Rule
     if (hasFootwear && hasNonFootwear) {
       status = LaundryStatus.Critical;
-      alerts.add("CRITICAL HYGIENE RISK: Never wash shoes with regular clothes! It is unhygienic and the hard soles will severely damage your fabrics in the drum.");
+      alerts.add(
+        "CRITICAL HYGIENE RISK: Never wash shoes with regular clothes! It is unhygienic and the hard soles will severely damage your fabrics in the drum.",
+      );
     } else if (hasFootwear && !hasNonFootwear) {
       if (status != LaundryStatus.Critical) {
         status = LaundryStatus.Warning;
       }
-      alerts.add("WARNING: When washing shoes, remove the laces and insoles, use a protective mesh laundry bag, and add some old towels to balance the drum and prevent machine damage. Use a cold, gentle cycle.");
+      alerts.add(
+        "WARNING: When washing shoes, remove the laces and insoles, use a protective mesh laundry bag, and add some old towels to balance the drum and prevent machine damage. Use a cold, gentle cycle.",
+      );
       if (recommendedTemp > 30) {
         recommendedTemp = 30;
       }
@@ -167,7 +193,9 @@ class LaundryService {
   }
 
   /// Suggests how to safely split items into mutually exclusive laundry loads.
-  List<LaundryLoadSuggestion> suggestOptimalSplits(List<Map<String, dynamic>> items) {
+  List<LaundryLoadSuggestion> suggestOptimalSplits(
+    List<Map<String, dynamic>> items,
+  ) {
     if (items.isEmpty) return [];
 
     final List<Map<String, dynamic>> footwear = [];
@@ -176,15 +204,30 @@ class LaundryService {
     final List<Map<String, dynamic>> darks = [];
     final List<Map<String, dynamic>> colors = [];
 
-    final List<String> delicateKeywords = ['silk', 'lace', 'linen', 'chiffon', 'satin'];
-    final List<String> footwearKeywords = ['shoe', 'shoes', 'sneaker', 'sneakers', 'footwear', 'boot', 'boots'];
+    final List<String> delicateKeywords = [
+      'silk',
+      'lace',
+      'linen',
+      'chiffon',
+      'satin',
+    ];
+    final List<String> footwearKeywords = [
+      'shoe',
+      'shoes',
+      'sneaker',
+      'sneakers',
+      'footwear',
+      'boot',
+      'boots',
+    ];
 
     for (final item in items) {
       final basicInfo = item['basic_info'] as Map<String, dynamic>? ?? {};
       final laundryInfo = item['laundry_info'] as Map<String, dynamic>? ?? {};
 
       final category = basicInfo['category']?.toString().toLowerCase() ?? '';
-      final subCategory = basicInfo['sub_category']?.toString().toLowerCase() ?? '';
+      final subCategory =
+          basicInfo['sub_category']?.toString().toLowerCase() ?? '';
       final material = basicInfo['material']?.toString().toLowerCase() ?? '';
       final colorGroup = laundryInfo['color_group']?.toString();
 
@@ -232,43 +275,55 @@ class LaundryService {
     final List<LaundryLoadSuggestion> suggestions = [];
 
     if (footwear.isNotEmpty) {
-      suggestions.add(LaundryLoadSuggestion(
-        title: 'Footwear Load',
-        reason: 'Shoes must be washed separately for hygiene and machine safety.',
-        items: footwear,
-      ));
+      suggestions.add(
+        LaundryLoadSuggestion(
+          title: 'Footwear Load',
+          reason:
+              'Shoes must be washed separately for hygiene and machine safety.',
+          items: footwear,
+        ),
+      );
     }
 
     if (delicates.isNotEmpty) {
-      suggestions.add(LaundryLoadSuggestion(
-        title: 'Delicates Load',
-        reason: 'Delicate fabrics need a gentle, cold cycle to prevent damage.',
-        items: delicates,
-      ));
+      suggestions.add(
+        LaundryLoadSuggestion(
+          title: 'Delicates Load',
+          reason:
+              'Delicate fabrics need a gentle, cold cycle to prevent damage.',
+          items: delicates,
+        ),
+      );
     }
 
     if (lights.isNotEmpty) {
-      suggestions.add(LaundryLoadSuggestion(
-        title: 'Whites & Lights Load',
-        reason: 'Wash light colors together to prevent color bleeding.',
-        items: lights,
-      ));
+      suggestions.add(
+        LaundryLoadSuggestion(
+          title: 'Whites & Lights Load',
+          reason: 'Wash light colors together to prevent color bleeding.',
+          items: lights,
+        ),
+      );
     }
 
     if (darks.isNotEmpty) {
-      suggestions.add(LaundryLoadSuggestion(
-        title: 'Darks Load',
-        reason: 'Dark items can bleed; keep them separated from lights.',
-        items: darks,
-      ));
+      suggestions.add(
+        LaundryLoadSuggestion(
+          title: 'Darks Load',
+          reason: 'Dark items can bleed; keep them separated from lights.',
+          items: darks,
+        ),
+      );
     }
 
     if (colors.isNotEmpty) {
-      suggestions.add(LaundryLoadSuggestion(
-        title: 'Colors Load',
-        reason: 'Wash colored items together to maintain vibrancy.',
-        items: colors,
-      ));
+      suggestions.add(
+        LaundryLoadSuggestion(
+          title: 'Colors Load',
+          reason: 'Wash colored items together to maintain vibrancy.',
+          items: colors,
+        ),
+      );
     }
 
     return suggestions;

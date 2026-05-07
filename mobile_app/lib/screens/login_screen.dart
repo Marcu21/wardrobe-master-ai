@@ -14,7 +14,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
-  
+
   bool _isLoading = false;
   bool _isLoginMode = true;
 
@@ -28,9 +28,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     setState(() => _isLoading = true);
-    
+
     try {
       if (_isLoginMode) {
         await FirebaseService().signInWithEmail(
@@ -60,9 +60,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
-    
+
     final credentials = await FirebaseService().signInWithGoogle();
-    
+
     if (mounted) {
       if (credentials == null) {
         // Show error message if sign-in failed
@@ -94,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const Spacer(flex: 2),
-                    
+
                     // App Logo / Title
                     Icon(
                       Icons.checkroom,
@@ -121,9 +121,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: Colors.grey.shade600,
                       ),
                     ),
-                    
+
                     const SizedBox(height: 48),
-                    
+
                     if (_isLoading)
                       const Center(
                         child: CircularProgressIndicator(color: Colors.teal),
@@ -201,7 +201,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.teal.shade700,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -228,25 +230,39 @@ class _LoginScreenState extends State<LoginScreen> {
                                 style: TextStyle(color: Colors.teal.shade700),
                               ),
                             ),
-                            
+
                             const SizedBox(height: 16),
-                            
+
                             Row(
                               children: [
-                                Expanded(child: Divider(color: Colors.grey.shade300)),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  child: Text('OR', style: TextStyle(color: Colors.grey.shade500)),
+                                Expanded(
+                                  child: Divider(color: Colors.grey.shade300),
                                 ),
-                                Expanded(child: Divider(color: Colors.grey.shade300)),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                  ),
+                                  child: Text(
+                                    'OR',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade500,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Divider(color: Colors.grey.shade300),
+                                ),
                               ],
                             ),
-                            
+
                             const SizedBox(height: 24),
-                            
+
                             ElevatedButton.icon(
                               onPressed: _handleGoogleSignIn,
-                              icon: const FaIcon(FontAwesomeIcons.google, color: Colors.black87),
+                              icon: const FaIcon(
+                                FontAwesomeIcons.google,
+                                color: Colors.black87,
+                              ),
                               label: const Text(
                                 'Continue with Google',
                                 style: TextStyle(
@@ -259,7 +275,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 backgroundColor: Colors.white,
                                 foregroundColor: Colors.grey.shade200,
                                 elevation: 2,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   side: BorderSide(color: Colors.grey.shade300),
@@ -269,7 +287,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ],
                         ),
                       ),
-                      
+
                     const Spacer(flex: 2),
                   ],
                 ),

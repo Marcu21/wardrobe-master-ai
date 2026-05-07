@@ -31,7 +31,9 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.outfitData['name'] ?? 'Untitled');
+    _nameController = TextEditingController(
+      text: widget.outfitData['name'] ?? 'Untitled',
+    );
     _currentRating = (widget.outfitData['rating'] ?? 0.0).toDouble();
     _fetchItems();
   }
@@ -45,7 +47,9 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
   Future<void> _fetchItems() async {
     try {
       final List<dynamic> itemIdsDynamic = widget.outfitData['item_ids'] ?? [];
-      final List<String> itemIds = itemIdsDynamic.map((e) => e.toString()).toList();
+      final List<String> itemIds = itemIdsDynamic
+          .map((e) => e.toString())
+          .toList();
 
       if (itemIds.isNotEmpty) {
         final items = await _firebaseService.getItemsByIds(itemIds);
@@ -78,9 +82,9 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
           .collection('outfits')
           .doc(widget.outfitId)
           .update({
-        'name': _nameController.text.trim(),
-        'rating': _currentRating,
-      });
+            'name': _nameController.text.trim(),
+            'rating': _currentRating,
+          });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -89,9 +93,9 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving changes: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving changes: $e')));
       }
     }
   }
@@ -101,7 +105,9 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Delete Outfit"),
-        content: const Text("Are you sure you want to delete this outfit? This action cannot be undone."),
+        content: const Text(
+          "Are you sure you want to delete this outfit? This action cannot be undone.",
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -118,15 +124,18 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
 
     if (confirm == true) {
       try {
-        await FirebaseFirestore.instance.collection('outfits').doc(widget.outfitId).delete();
+        await FirebaseFirestore.instance
+            .collection('outfits')
+            .doc(widget.outfitId)
+            .delete();
         if (mounted) {
           Navigator.pop(context); // Return to Lookbook
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error deleting outfit: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error deleting outfit: $e')));
         }
       }
     }
@@ -146,7 +155,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
       final List<dynamic> itemIdsDynamic = widget.outfitData['item_ids'] ?? [];
       for (var id in itemIdsDynamic) {
         final itemRef = db.collection('clothing').doc(id.toString());
-        
+
         batch.set(itemRef, {
           'wear_count': FieldValue.increment(1),
           'last_worn': Timestamp.now(),
@@ -163,34 +172,42 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Outfit logged! Your style history has been updated.')),
+          const SnackBar(
+            content: Text(
+              'Outfit logged! Your style history has been updated.',
+            ),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error logging wear: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error logging wear: $e')));
       }
     }
   }
 
   Widget _buildLargeImage(Map<String, dynamic> item) {
     final String rawData = item['imageUrl'] ?? '';
-    
+
     // 1. Detectăm categoria ca să știm cât de înaltă să fie poza
     final info = item['basic_info'] ?? {};
     String cat = (info['category'] ?? '').toString().toLowerCase();
     String sub = (info['sub_category'] ?? '').toString().toLowerCase();
 
-    double imageHeight = 200.0; 
+    double imageHeight = 200.0;
 
-    if (cat.contains('bottom') || cat.contains('pant') || sub.contains('jean') || sub.contains('skirt') || sub.contains('dress')) {
+    if (cat.contains('bottom') ||
+        cat.contains('pant') ||
+        sub.contains('jean') ||
+        sub.contains('skirt') ||
+        sub.contains('dress')) {
       imageHeight = 350.0;
     } else if (cat.contains('outerwear') || sub.contains('coat')) {
       imageHeight = 250.0;
     }
-    
+
     if (rawData.isEmpty) return const SizedBox.shrink();
 
     Widget imageWidget;
@@ -200,7 +217,8 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
         imageWidget = Image.memory(
           base64Decode(base64String),
           fit: BoxFit.contain,
-          errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.grey),
+          errorBuilder: (_, __, ___) =>
+              const Icon(Icons.broken_image, color: Colors.grey),
         );
       } else if (rawData.startsWith('http')) {
         imageWidget = CachedNetworkImage(
@@ -208,9 +226,12 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
           fit: BoxFit.contain,
           placeholder: (context, url) => Container(
             color: Colors.grey[100],
-            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            child: const Center(
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
           ),
-          errorWidget: (context, url, error) => const Icon(Icons.broken_image, color: Colors.grey),
+          errorWidget: (context, url, error) =>
+              const Icon(Icons.broken_image, color: Colors.grey),
         );
       } else {
         imageWidget = const Icon(Icons.checkroom, color: Colors.grey);
@@ -218,7 +239,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
     } catch (e) {
       imageWidget = const Icon(Icons.error, color: Colors.grey);
     }
-    
+
     return Container(
       height: imageHeight,
       width: double.infinity,
@@ -231,13 +252,16 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
   Widget build(BuildContext context) {
     final bool isAiGenerated = widget.outfitData['is_ai_generated'] ?? false;
     final Timestamp? createdAt = widget.outfitData['created_at'] as Timestamp?;
-    final String dateStr = createdAt != null 
-        ? "${createdAt.toDate().day}/${createdAt.toDate().month}/${createdAt.toDate().year}" 
+    final String dateStr = createdAt != null
+        ? "${createdAt.toDate().day}/${createdAt.toDate().month}/${createdAt.toDate().year}"
         : "Unknown date";
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Outfit Details", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          "Outfit Details",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
@@ -276,7 +300,9 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
               // 2. Info Section
               Card(
                 elevation: 2,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -298,7 +324,9 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                         children: List.generate(5, (index) {
                           return IconButton(
                             icon: Icon(
-                              index < _currentRating ? Icons.star_rounded : Icons.star_outline_rounded,
+                              index < _currentRating
+                                  ? Icons.star_rounded
+                                  : Icons.star_outline_rounded,
                               color: Colors.amber,
                               size: 32,
                             ),
@@ -310,34 +338,49 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                           );
                         }),
                       ),
-                      
+
                       const SizedBox(height: 16),
-                      
+
                       // Metadata Row
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
-                              color: isAiGenerated ? Colors.purple.withOpacity(0.1) : Colors.blue.withOpacity(0.1),
+                              color: isAiGenerated
+                                  ? Colors.purple.withOpacity(0.1)
+                                  : Colors.blue.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: isAiGenerated ? Colors.purple.withOpacity(0.3) : Colors.blue.withOpacity(0.3),
+                                color: isAiGenerated
+                                    ? Colors.purple.withOpacity(0.3)
+                                    : Colors.blue.withOpacity(0.3),
                               ),
                             ),
                             child: Row(
                               children: [
                                 Icon(
-                                  isAiGenerated ? Icons.auto_awesome : Icons.person,
+                                  isAiGenerated
+                                      ? Icons.auto_awesome
+                                      : Icons.person,
                                   size: 16,
-                                  color: isAiGenerated ? Colors.purple : Colors.blue,
+                                  color: isAiGenerated
+                                      ? Colors.purple
+                                      : Colors.blue,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  isAiGenerated ? "AI Generated" : "User Created",
+                                  isAiGenerated
+                                      ? "AI Generated"
+                                      : "User Created",
                                   style: TextStyle(
-                                    color: isAiGenerated ? Colors.purple : Colors.blue,
+                                    color: isAiGenerated
+                                        ? Colors.purple
+                                        : Colors.blue,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -346,7 +389,10 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                           ),
                           Text(
                             "Created on: $dateStr",
-                            style: const TextStyle(color: Colors.grey, fontSize: 12),
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       ),
@@ -385,12 +431,17 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                       icon: const Icon(Icons.edit),
                       label: const Text("Remix"),
                       onPressed: () {
-                        final List<dynamic> itemIdsDynamic = widget.outfitData['item_ids'] ?? [];
-                        final List<String> itemIds = itemIdsDynamic.map((e) => e.toString()).toList();
+                        final List<dynamic> itemIdsDynamic =
+                            widget.outfitData['item_ids'] ?? [];
+                        final List<String> itemIds = itemIdsDynamic
+                            .map((e) => e.toString())
+                            .toList();
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => VirtualDressingRoomScreen(initialItemIds: itemIds),
+                            builder: (_) => VirtualDressingRoomScreen(
+                              initialItemIds: itemIds,
+                            ),
                           ),
                         );
                       },

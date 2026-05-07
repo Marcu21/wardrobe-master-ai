@@ -6,9 +6,9 @@ import 'firebase_service.dart';
 
 class WardrobeStateService extends ChangeNotifier {
   final FirebaseService _firebaseService = FirebaseService();
-  
+
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
+
   String? _activeWardrobeId;
   List<Map<String, dynamic>> _wardrobes = [];
   bool _isLoading = false;
@@ -43,28 +43,33 @@ class WardrobeStateService extends ChangeNotifier {
         .where('userId', isEqualTo: uid)
         .orderBy('created_at')
         .snapshots()
-        .listen((snapshot) {
-      _wardrobes = snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id;
-        return data;
-      }).toList();
+        .listen(
+          (snapshot) {
+            _wardrobes = snapshot.docs.map((doc) {
+              final data = doc.data();
+              data['id'] = doc.id;
+              return data;
+            }).toList();
 
-      // If active wardrobe ID was deleted or doesn't exist anymore, reset it
-      if (_activeWardrobeId != null) {
-         final exists = _wardrobes.any((w) => w['id'] == _activeWardrobeId);
-         if (!exists) {
-           _activeWardrobeId = null;
-         }
-      }
+            // If active wardrobe ID was deleted or doesn't exist anymore, reset it
+            if (_activeWardrobeId != null) {
+              final exists = _wardrobes.any(
+                (w) => w['id'] == _activeWardrobeId,
+              );
+              if (!exists) {
+                _activeWardrobeId = null;
+              }
+            }
 
-      _isLoading = false;
-      notifyListeners();
-    }, onError: (e) {
-      debugPrint("Error listening to wardrobes: $e");
-      _isLoading = false;
-      notifyListeners();
-    });
+            _isLoading = false;
+            notifyListeners();
+          },
+          onError: (e) {
+            debugPrint("Error listening to wardrobes: $e");
+            _isLoading = false;
+            notifyListeners();
+          },
+        );
   }
 
   void _unsubscribeFromWardrobes() {

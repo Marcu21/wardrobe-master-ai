@@ -16,7 +16,8 @@ class ClothingItem with _$ClothingItem {
     @JsonKey(name: 'basic_info') required BasicInfo basicInfo,
     @JsonKey(name: 'styling_info') required StylingInfo stylingInfo,
     @JsonKey(name: 'laundry_info') required LaundryInfo laundryInfo,
-    @JsonKey(name: 'sustainability_info') required SustainabilityInfo sustainabilityInfo,
+    @JsonKey(name: 'sustainability_info')
+    required SustainabilityInfo sustainabilityInfo,
     @JsonKey(name: 'usage_stats') required UsageStats usageStats,
   }) = _ClothingItem;
 

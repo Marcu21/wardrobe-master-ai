@@ -23,11 +23,7 @@ class TripOutfit {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'title': title,
-      'description': description,
-      'item_ids': itemIds,
-    };
+    return {'title': title, 'description': description, 'item_ids': itemIds};
   }
 }
 
@@ -47,7 +43,10 @@ class CapsuleWardrobe {
   factory CapsuleWardrobe.fromJson(Map<String, dynamic> json) {
     var outfitsList = json['outfits'] as List? ?? [];
     List<TripOutfit> parsedOutfits = outfitsList
-        .map((outfitJson) => TripOutfit.fromJson(outfitJson as Map<String, dynamic>))
+        .map(
+          (outfitJson) =>
+              TripOutfit.fromJson(outfitJson as Map<String, dynamic>),
+        )
         .toList();
 
     return CapsuleWardrobe(
@@ -63,7 +62,7 @@ class PackingService {
   final String baseUrl;
 
   PackingService({String? baseUrl})
-      : baseUrl = baseUrl ?? dotenv.env['SERVER_URL'] ?? 'http://10.0.2.2:8000';
+    : baseUrl = baseUrl ?? dotenv.env['SERVER_URL'] ?? 'http://10.0.2.2:8000';
 
   Future<CapsuleWardrobe> generatePackingList({
     required String destination,
@@ -76,7 +75,7 @@ class PackingService {
     String? luggageSize,
   }) async {
     final uri = Uri.parse('$baseUrl/generate-packing/');
-    
+
     try {
       final response = await http.post(
         uri,
@@ -98,7 +97,9 @@ class PackingService {
         final decoded = jsonDecode(response.body) as Map<String, dynamic>;
         return CapsuleWardrobe.fromJson(decoded);
       } else {
-        throw Exception('Failed to generate packing list: ${response.statusCode} - ${response.body}');
+        throw Exception(
+          'Failed to generate packing list: ${response.statusCode} - ${response.body}',
+        );
       }
     } catch (e) {
       print('Network error generating packing list: $e');
@@ -117,7 +118,7 @@ class PackingService {
     List<String>? currentOutfitItemIds,
   }) async {
     final uri = Uri.parse('$baseUrl/generate-trip-outfit/');
-    
+
     try {
       final response = await http.post(
         uri,
@@ -131,7 +132,8 @@ class PackingService {
           'user_id': FirebaseService().currentUser?.uid ?? 'unknown_user',
           if (existingOutfits != null) 'existing_outfits': existingOutfits,
           if (feedback != null) 'feedback': feedback,
-          if (currentOutfitItemIds != null) 'current_outfit_item_ids': currentOutfitItemIds,
+          if (currentOutfitItemIds != null)
+            'current_outfit_item_ids': currentOutfitItemIds,
         }),
       );
 
@@ -139,7 +141,9 @@ class PackingService {
         final decoded = jsonDecode(response.body) as Map<String, dynamic>;
         return TripOutfit.fromJson(decoded);
       } else {
-        throw Exception('Failed to generate trip outfit: ${response.statusCode} - ${response.body}');
+        throw Exception(
+          'Failed to generate trip outfit: ${response.statusCode} - ${response.body}',
+        );
       }
     } catch (e) {
       print('Network error generating trip outfit: $e');

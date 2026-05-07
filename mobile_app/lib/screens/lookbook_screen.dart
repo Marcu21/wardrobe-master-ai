@@ -1,22 +1,24 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import '../services/firebase_service.dart';
 import 'outfit_detail_screen.dart';
-import '../utils/outfit_sorting_utils.dart';
-import '../widgets/smart_clothing_image.dart';
+import '../widgets/smart_outfit_card.dart';
 
 class LookbookScreen extends StatelessWidget {
   const LookbookScreen({super.key});
+
+  String _formatDate(Timestamp? timestamp) {
+    if (timestamp == null) return '';
+    final dt = timestamp.toDate();
+    return '${dt.day}/${dt.month}/${dt.year}';
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          "My Outfits",
+          'My Outfits',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -40,7 +42,7 @@ class LookbookScreen extends StatelessWidget {
             }
 
             if (snapshot.hasError) {
-              return Center(child: Text("Error: ${snapshot.error}"));
+              return Center(child: Text('Error: ${snapshot.error}'));
             }
 
             if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -51,7 +53,7 @@ class LookbookScreen extends StatelessWidget {
                     Icon(Icons.style, size: 64, color: Colors.grey),
                     SizedBox(height: 16),
                     Text(
-                      "No saved outfits yet.",
+                      'No saved outfits yet.',
                       style: TextStyle(fontSize: 18, color: Colors.grey),
                     ),
                   ],
@@ -63,8 +65,8 @@ class LookbookScreen extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                childAspectRatio: 0.35, // Tall cards for 2x2 layout
-                crossAxisSpacing: 12, // Slightly tighter spacing
+                childAspectRatio: 0.35,
+                crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
               ),
               itemCount: snapshot.data!.docs.length,
@@ -72,274 +74,120 @@ class LookbookScreen extends StatelessWidget {
                 final doc = snapshot.data!.docs[index];
                 final data = doc.data() as Map<String, dynamic>;
 
-                return OutfitGridCard(
+                final String name = data['name'] ?? 'Untitled';
+                final double rating = (data['rating'] ?? 0.0).toDouble();
+                final bool isAiGenerated = data['is_ai_generated'] ?? false;
+                final Timestamp? createdAt = data['created_at'] as Timestamp?;
+
+                return SmartOutfitCard(
                   key: ValueKey(doc.id),
                   outfitData: data,
                   outfitId: doc.id,
-                );
-              },
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class OutfitGridCard extends StatefulWidget {
-  final Map<String, dynamic> outfitData;
-  final String outfitId;
-
-  const OutfitGridCard({
-    super.key,
-    required this.outfitData,
-    required this.outfitId,
-  });
-
-  @override
-  State<OutfitGridCard> createState() => _OutfitGridCardState();
-}
-
-class _OutfitGridCardState extends State<OutfitGridCard> {
-  final FirebaseService _firebaseService = FirebaseService();
-  List<Map<String, dynamic>> _items = [];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchItems();
-  }
-
-  Future<void> _fetchItems() async {
-    try {
-      final List<dynamic> itemIdsDynamic = widget.outfitData['item_ids'] ?? [];
-      final List<String> itemIds = itemIdsDynamic
-          .map((e) => e.toString())
-          .toList();
-
-      if (itemIds.isNotEmpty) {
-        final items = await _firebaseService.getItemsByIds(itemIds);
-        if (mounted) {
-          setState(() {
-            _items = OutfitSortingUtils.sortOutfitItems(items);
-            _isLoading = false;
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      }
-    } catch (e) {
-      debugPrint("Error fetching outfit items: $e");
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  String _formatDate(Timestamp? timestamp) {
-    if (timestamp == null) return '';
-    final dt = timestamp.toDate();
-    return "${dt.day}/${dt.month}/${dt.year}";
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final String name = widget.outfitData['name'] ?? 'Untitled';
-    final double rating = (widget.outfitData['rating'] ?? 0.0).toDouble();
-    final bool isAiGenerated = widget.outfitData['is_ai_generated'] ?? false;
-    final Timestamp? createdAt = widget.outfitData['created_at'] as Timestamp?;
-
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => OutfitDetailScreen(
-              outfitData: widget.outfitData,
-              outfitId: widget.outfitId,
-            ),
-          ),
-        );
-      },
-      child: Card(
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        clipBehavior: Clip.antiAlias,
-        // Subtle gradient background via Container
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Colors.white, Colors.grey.shade50],
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Stack for Image Column + Badge
-              Expanded(
-                child: Stack(
-                  children: [
-                    // "Mannequin" Column
-                    Positioned.fill(
-                      child: _isLoading
-                          ? const Center(
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : _items.isEmpty
-                          ? Center(
-                              child: Icon(
-                                Icons.checkroom,
-                                size: 40,
-                                color: Colors.grey[300],
-                              ),
-                            )
-                          : Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: _items.map((item) {
-                                // Dynamic Flex implementation
-                                int flex = 3; // Default for Tops/Outerwear
-                                final info = item['basic_info'] ?? {};
-                                String cat = (info['category'] ?? '')
-                                    .toString()
-                                    .toLowerCase();
-
-                                if (cat.contains('bottom') ||
-                                    cat.contains('pant')) {
-                                  flex = 4; // More space for pants
-                                } else if (cat.contains('shoe') ||
-                                    cat.contains('footwear')) {
-                                  flex = 2; // Less space for shoes
-                                }
-
-                                return Expanded(
-                                  flex: flex,
-                                  child: Container(
-                                    // Removed horizontal padding for connected look
-                                    padding: EdgeInsets.zero,
-                                    child: SizedBox(
-                                      width: double.infinity,
-                                      child: SmartClothingImage(
-                                        imageUrl: item['imageUrl']?.toString(),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                    ),
-
-                    // Smart Badge (Top Right)
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isAiGenerated
-                              ? Colors.purple.withValues(alpha: 0.9)
-                              : Colors.blue.withValues(alpha: 0.9),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.2),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              isAiGenerated ? Icons.auto_awesome : Icons.person,
-                              size: 10,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              isAiGenerated ? "AI" : "You",
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => OutfitDetailScreen(
+                        outfitData: data,
+                        outfitId: doc.id,
                       ),
                     ),
-                  ],
-                ),
-              ),
-
-              // Info Section
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 8,
-                ), // More compact padding
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border(top: BorderSide(color: Colors.grey.shade100)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ), // Slightly smaller font
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                  ),
+                  badge: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
                     ),
-                    const SizedBox(height: 4),
-                    Row(
+                    decoration: BoxDecoration(
+                      color: isAiGenerated
+                          ? Colors.purple.withValues(alpha: 0.9)
+                          : Colors.blue.withValues(alpha: 0.9),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
-                          Icons.star_rounded,
-                          size: 14,
-                          color: Colors.amber,
+                        Icon(
+                          isAiGenerated ? Icons.auto_awesome : Icons.person,
+                          size: 10,
+                          color: Colors.white,
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          rating.toStringAsFixed(1),
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey[800],
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          _formatDate(createdAt),
-                          style: TextStyle(
+                          isAiGenerated ? 'AI' : 'You',
+                          style: const TextStyle(
+                            color: Colors.white,
                             fontSize: 10,
-                            color: Colors.grey[500],
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+                  ),
+                  footer: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border(
+                        top: BorderSide(color: Colors.grey.shade100),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.star_rounded,
+                              size: 14,
+                              color: Colors.amber,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              rating.toStringAsFixed(1),
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[800],
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              _formatDate(createdAt),
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey[500],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
         ),
       ),
     );

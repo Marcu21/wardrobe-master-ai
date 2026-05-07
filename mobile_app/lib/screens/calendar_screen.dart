@@ -3,12 +3,8 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
-import 'dart:convert';
-import 'package:cached_network_image/cached_network_image.dart';
-import '../services/firebase_service.dart';
 import 'outfit_detail_screen.dart';
-import '../utils/outfit_sorting_utils.dart';
-import '../widgets/smart_clothing_image.dart';
+import '../widgets/smart_outfit_card.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -42,20 +38,21 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return DateTime.utc(date.year, date.month, date.day);
   }
 
-  // 1. Helper to extracting DateTimes for sorting
   DateTime? _getWearDateTime(Map<String, dynamic> data, DateTime targetDate) {
     final List<dynamic> dates = data['wear_dates'] ?? [];
     try {
-      final timestamp = dates.firstWhere((d) {
-        if (d is Timestamp) {
-          final dt = d.toDate();
-          return dt.year == targetDate.year &&
-              dt.month == targetDate.month &&
-              dt.day == targetDate.day;
-        }
-        return false;
-      }, orElse: () => null);
-
+      final timestamp = dates.firstWhere(
+        (d) {
+          if (d is Timestamp) {
+            final dt = d.toDate();
+            return dt.year == targetDate.year &&
+                dt.month == targetDate.month &&
+                dt.day == targetDate.day;
+          }
+          return false;
+        },
+        orElse: () => null,
+      );
       if (timestamp != null && timestamp is Timestamp) {
         return timestamp.toDate();
       }
@@ -65,12 +62,38 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return null;
   }
 
+  /// Returns the formatted wear time for [data] on [targetDate], or empty string.
+  String _getWearTime(Map<String, dynamic> data, DateTime? targetDate) {
+    if (targetDate == null) return '';
+    final List<dynamic> dates = data['wear_dates'] ?? [];
+    try {
+      final timestamp = dates.firstWhere(
+        (d) {
+          if (d is Timestamp) {
+            final dt = d.toDate();
+            return dt.year == targetDate.year &&
+                dt.month == targetDate.month &&
+                dt.day == targetDate.day;
+          }
+          return false;
+        },
+        orElse: () => null,
+      );
+      if (timestamp != null && timestamp is Timestamp) {
+        return DateFormat.jm().format(timestamp.toDate());
+      }
+    } catch (e) {
+      // ignore
+    }
+    return '';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          "Style Calendar",
+          'Style Calendar',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
@@ -79,12 +102,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
           stream: _outfitsStream,
           builder: (context, snapshot) {
             if (snapshot.hasError) {
-              debugPrint("Calendar Error: ${snapshot.error}");
+              debugPrint('Calendar Error: ${snapshot.error}');
               return Center(
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Text(
-                    "Database Index Error.\nCheck your debug console for a direct link to create the required Firestore index.",
+                    'Database Index Error.\nCheck your debug console for a direct link to create the required Firestore index.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.red.shade700,
@@ -109,10 +132,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 for (var dateEntry in datesDynamic) {
                   if (dateEntry is Timestamp) {
                     final normalizedDate = _normalizeDate(dateEntry.toDate());
-                    if (groupedOutfits[normalizedDate] == null) {
-                      groupedOutfits[normalizedDate] = [];
-                    }
-                    // Inject ID for navigation
+                    groupedOutfits[normalizedDate] ??= [];
                     data['id'] = doc.id;
                     groupedOutfits[normalizedDate]!.add(data);
                   }
@@ -120,12 +140,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
               }
             }
 
-            // Get outfits for the currently selected day
             List<Map<String, dynamic>> dayOutfits = _selectedDay != null
                 ? groupedOutfits[_normalizeDate(_selectedDay!)] ?? []
                 : [];
 
-            // 2. Sort outfits chronologically
             if (_selectedDay != null && dayOutfits.isNotEmpty) {
               dayOutfits.sort((a, b) {
                 final dtA = _getWearDateTime(a, _selectedDay!);
@@ -145,11 +163,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   focusedDay: _focusedDay,
                   selectedDayPredicate: (day) => _isSameDay(_selectedDay, day),
                   calendarFormat: CalendarFormat.month,
-
                   eventLoader: (day) {
                     return groupedOutfits[_normalizeDate(day)] ?? [];
                   },
-
                   calendarBuilders: CalendarBuilders(
                     markerBuilder: (context, date, events) {
                       if (events.isNotEmpty) {
@@ -168,14 +184,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       return null;
                     },
                   ),
-
                   onDaySelected: (selectedDay, focusedDay) {
                     setState(() {
                       _selectedDay = selectedDay;
                       _focusedDay = focusedDay;
                     });
                   },
-
                   calendarStyle: CalendarStyle(
                     selectedDecoration: const BoxDecoration(
                       color: Colors.black,
@@ -194,7 +208,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
                 Divider(height: 1, color: Colors.grey[300]),
 
-                // 2. Horizontal Carousel Section
+                // Horizontal carousel of outfits for the selected day
                 Expanded(
                   child: Container(
                     color: Colors.grey[50],
@@ -211,7 +225,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  "No outfits logged for this day",
+                                  'No outfits logged for this day',
                                   style: TextStyle(
                                     fontSize: 16,
                                     color: Colors.grey[600],
@@ -227,10 +241,78 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             itemCount: dayOutfits.length,
                             itemBuilder: (context, index) {
                               final data = dayOutfits[index];
-                              return CalendarOutfitCard(
-                                key: ValueKey(data['id']),
-                                outfitData: data,
-                                wearDateTarget: _selectedDay,
+                              final String name =
+                                  data['name'] ?? 'Untitled';
+                              final String wearTime =
+                                  _getWearTime(data, _selectedDay);
+
+                              return Container(
+                                width: 150,
+                                margin: const EdgeInsets.only(right: 16),
+                                child: SmartOutfitCard(
+                                  key: ValueKey(data['id']),
+                                  outfitData: data,
+                                  outfitId: data['id'] ?? '',
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => OutfitDetailScreen(
+                                        outfitData: data,
+                                        outfitId: data['id'] ?? '',
+                                      ),
+                                    ),
+                                  ),
+                                  footer: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      border: Border(
+                                        top: BorderSide(
+                                          color: Colors.grey.shade200,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          name,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.access_time,
+                                              size: 10,
+                                              color: Colors.grey[600],
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              wearTime.isNotEmpty
+                                                  ? wearTime
+                                                  : 'Logged',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: Colors.grey[600],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               );
                             },
                           ),
@@ -239,220 +321,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ],
             );
           },
-        ),
-      ),
-    );
-  }
-}
-
-class CalendarOutfitCard extends StatefulWidget {
-  final Map<String, dynamic> outfitData;
-  final DateTime? wearDateTarget;
-
-  const CalendarOutfitCard({
-    super.key,
-    required this.outfitData,
-    this.wearDateTarget,
-  });
-
-  @override
-  State<CalendarOutfitCard> createState() => _CalendarOutfitCardState();
-}
-
-class _CalendarOutfitCardState extends State<CalendarOutfitCard> {
-  final FirebaseService _firebaseService = FirebaseService();
-  List<Map<String, dynamic>> _items = [];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchItems();
-  }
-
-  Future<void> _fetchItems() async {
-    try {
-      final List<dynamic> itemIdsDynamic = widget.outfitData['item_ids'] ?? [];
-      final List<String> itemIds = itemIdsDynamic
-          .map((e) => e.toString())
-          .toList();
-
-      if (itemIds.isNotEmpty) {
-        final items = await _firebaseService.getItemsByIds(itemIds);
-        if (mounted) {
-          setState(() {
-            _items = OutfitSortingUtils.sortOutfitItems(items);
-            _isLoading = false;
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      }
-    } catch (e) {
-      debugPrint("Error fetching outfit items: $e");
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  String _getWearTime() {
-    if (widget.wearDateTarget == null) return '';
-    final List<dynamic> dates = widget.outfitData['wear_dates'] ?? [];
-
-    try {
-      final timestamp = dates.firstWhere((d) {
-        if (d is Timestamp) {
-          final dt = d.toDate();
-          return dt.year == widget.wearDateTarget!.year &&
-              dt.month == widget.wearDateTarget!.month &&
-              dt.day == widget.wearDateTarget!.day;
-        }
-        return false;
-      }, orElse: () => null);
-
-      if (timestamp != null && timestamp is Timestamp) {
-        return DateFormat.jm().format(timestamp.toDate());
-      }
-    } catch (e) {
-      // ignore
-    }
-    return '';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final String name = widget.outfitData['name'] ?? 'Untitled';
-    final String wearTime = _getWearTime();
-
-    return Container(
-      width: 150, // 3. Updated Width to 150 (Narrower)
-      margin: const EdgeInsets.only(right: 16),
-      child: GestureDetector(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => OutfitDetailScreen(
-                outfitData: widget.outfitData,
-                outfitId: widget.outfitData['id'] ?? '',
-              ),
-            ),
-          );
-        },
-        child: Card(
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // 1. Vertical Item Stack (Expanded)
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Colors.white, Colors.grey.shade50],
-                    ),
-                  ),
-                  child: _isLoading
-                      ? const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : _items.isEmpty
-                      ? Center(
-                          child: Icon(
-                            Icons.checkroom,
-                            size: 40,
-                            color: Colors.grey[300],
-                          ),
-                        )
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: _items.map((item) {
-                            // Dynamic Flex
-                            int flex = 3;
-                            final info = item['basic_info'] ?? {};
-                            String cat = (info['category'] ?? '')
-                                .toString()
-                                .toLowerCase();
-                            if (cat.contains('bottom') ||
-                                cat.contains('pant')) {
-                              flex = 4;
-                            } else if (cat.contains('shoe') ||
-                                cat.contains('footwear'))
-                              flex = 2;
-
-                            return Expanded(
-                              flex: flex,
-                              child: SizedBox(
-                                width: double.infinity,
-                                child: SmartClothingImage(
-                                  imageUrl: item['imageUrl']?.toString(),
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                ),
-              ),
-
-              // 2. Info Section (Compact Footer)
-              Container(
-                // 4. Compact Padding
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border(top: BorderSide(color: Colors.grey.shade200)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      name,
-                      // 5. Smaller Font Size
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.access_time,
-                          size: 10,
-                          color: Colors.grey[600],
-                        ), // Smaller Icon
-                        const SizedBox(width: 4),
-                        Text(
-                          wearTime.isNotEmpty ? wearTime : "Logged",
-                          // 6. Smaller Font Size
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

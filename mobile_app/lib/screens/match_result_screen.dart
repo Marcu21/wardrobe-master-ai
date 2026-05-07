@@ -1,11 +1,9 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../services/api_service.dart';
-import 'package:http/http.dart' as http;
+import '../services/match_analysis_service.dart';
 import '../utils/outfit_sorting_utils.dart';
 import 'add_clothing_screen.dart';
 
@@ -38,118 +36,25 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
 
   Future<void> _calculateScoreAndOutfits() async {
     try {
-      final scannedMetadata =
-          widget.scannedItemData['metadata'] as Map<String, dynamic>? ?? {};
-      final scannedBasicInfo =
-          scannedMetadata['basic_info'] as Map<String, dynamic>? ?? {};
-      final scannedStylingInfo =
-          scannedMetadata['styling_info'] as Map<String, dynamic>? ?? {};
-
-      // 1. Build Scanned Item JSON payload
-      final scannedItemPayload = {
-        "item_id": "scanned_new_item",
-        "category": scannedBasicInfo['category']?.toString() ?? '',
-        "sub_category": scannedBasicInfo['sub_category']?.toString() ?? '',
-        "primary_colors": List<String>.from(
-          scannedBasicInfo['primary_colors'] ?? [],
-        ),
-        "style_occasions": List<String>.from(
-          scannedStylingInfo['style_occasions'] ?? [],
-        ),
-        "seasonality": List<String>.from(
-          scannedStylingInfo['seasonality'] ?? [],
-        ),
-      };
-
-      // 2. Fetch User's Wardrobe
-      final snapshot = await FirebaseFirestore.instance
-          .collection('clothing')
-          .where('userId', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
-          .get();
-      final wardrobeDocs = snapshot.docs;
-
-      List<Map<String, dynamic>> wardrobePayload = [];
-      Map<String, Map<String, dynamic>> wardrobeMap = {};
-
-      for (var doc in wardrobeDocs) {
-        final data = doc.data();
-        wardrobeMap[doc.id] = data;
-
-        final itemBasic = data['basic_info'] as Map<String, dynamic>? ?? {};
-        final itemStyling = data['styling_info'] as Map<String, dynamic>? ?? {};
-
-        wardrobePayload.add({
-          "item_id": doc.id,
-          "category": itemBasic['category']?.toString() ?? '',
-          "sub_category": itemBasic['sub_category']?.toString() ?? '',
-          "primary_colors": List<String>.from(
-            itemBasic['primary_colors'] ?? [],
-          ),
-          "style_occasions": List<String>.from(
-            itemStyling['style_occasions'] ?? [],
-          ),
-          "seasonality": List<String>.from(itemStyling['seasonality'] ?? []),
-        });
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) {
+        throw Exception("User not logged in");
       }
 
-      // 3. Make HTTP request to /generate-outfits/
-      final apiService = ApiService();
-      final uri = Uri.parse('${apiService.baseUrl}/generate-outfits/');
-
-      final response = await http.post(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          "scanned_item": scannedItemPayload,
-          "wardrobe": wardrobePayload,
-        }),
+      final matchAnalysisService = MatchAnalysisService();
+      final result = await matchAnalysisService.analyzeMatch(
+        scannedItemData: widget.scannedItemData,
+        userId: userId,
       );
-
-      if (response.statusCode != 200) {
-        throw Exception(
-          "Failed to generate outfits: ${response.statusCode} - ${response.body}",
-        );
-      }
-
-      final responseBody = jsonDecode(response.body);
-
-      // 4. Parse response
-      final scoreVal = responseBody['score'] ?? 0;
-      final prosList = List<String>.from(responseBody['pros'] ?? []);
-      final consList = List<String>.from(responseBody['cons'] ?? []);
-      final outfitsList = List<dynamic>.from(responseBody['outfits'] ?? []);
-
-      // 5. Build full outfits with image data
-      List<Map<String, dynamic>> finalOutfits = [];
-      for (var outfit in outfitsList) {
-        final outfitName = outfit['outfit_name'] ?? 'Outfit';
-        final stylingNotes = outfit['styling_notes'] ?? '';
-        final itemIds = List<String>.from(outfit['item_ids'] ?? []);
-
-        List<Map<String, dynamic>> resolvedItems = [];
-        for (var id in itemIds) {
-          if (id == 'scanned_new_item') {
-            resolvedItems.add(widget.scannedItemData);
-          } else if (wardrobeMap.containsKey(id)) {
-            resolvedItems.add(wardrobeMap[id]!);
-          }
-        }
-
-        if (resolvedItems.isNotEmpty) {
-          finalOutfits.add({
-            "outfit_name": outfitName,
-            "styling_notes": stylingNotes,
-            "items": resolvedItems,
-          });
-        }
-      }
 
       if (mounted) {
         setState(() {
-          _matchScore = (scoreVal as num).toInt();
-          _pros = prosList;
-          _cons = consList;
-          _generatedOutfits = finalOutfits;
+          _matchScore = (result['score'] as num).toInt();
+          _pros = List<String>.from(result['pros']);
+          _cons = List<String>.from(result['cons']);
+          _generatedOutfits = List<Map<String, dynamic>>.from(
+            result['generatedOutfits'],
+          );
           _isLoading = false;
         });
       }

@@ -53,7 +53,7 @@ class _ShoppingAssistantScreenState extends State<ShoppingAssistantScreen> {
       final result = await _apiService.processItem(_imageFile!);
 
       if (mounted) {
-        Navigator.pushReplacement(
+        Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => MatchResultScreen(
@@ -82,6 +82,7 @@ class _ShoppingAssistantScreenState extends State<ShoppingAssistantScreen> {
   }
 
   void _resetScanner() {
+    if (!mounted) return;
     setState(() {
       _imageFile = null;
       _scannedItemData = null;

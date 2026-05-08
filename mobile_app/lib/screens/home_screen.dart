@@ -322,7 +322,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 16),
             _buildVirtualDressingRoomCard(),
             _buildMyTripsCard(),
-            const SizedBox(height: kBottomNavigationBarHeight + 60),
+            const SizedBox(height: kBottomNavigationBarHeight + 66),
           ],
         ),
       ),

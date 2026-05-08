@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../services/weather_service.dart';
@@ -56,54 +57,62 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text(
           'Wardrobe Master',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.5,
+          ),
         ),
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.grey[50]!.withOpacity(0.9),
         elevation: 0,
+        scrolledUnderElevation: 0,
+        flexibleSpace: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+            child: Container(color: Colors.transparent),
+          ),
+        ),
         actions: [
-          // Lookbook moved to main navigation
           IconButton(
-            icon: const Icon(Icons.calendar_month),
-            tooltip: 'Style Calendar',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const CalendarScreen()),
-              );
-            },
+            icon: const Icon(
+              Icons.calendar_month_outlined,
+              color: Colors.black87,
+            ),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CalendarScreen()),
+            ),
           ),
           IconButton(
-            icon: const Icon(Icons.eco_outlined),
-            tooltip: 'Sustainability Tracker',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const SustainabilityScreen()),
-              );
-            },
+            icon: const Icon(Icons.eco_outlined, color: Colors.black87),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SustainabilityScreen()),
+            ),
           ),
           PopupMenuButton<String>(
-            offset: const Offset(0, 48), // Opens downwards
+            offset: const Offset(0, 48),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
             ),
             icon: _buildUserAvatar(),
             onSelected: (value) async {
-              if (value == 'settings') {
-                // TODO: Implement settings screen navigation
-              } else if (value == 'logout') {
-                await FirebaseService().signOut();
-              }
+              if (value == 'logout') await FirebaseService().signOut();
             },
             itemBuilder: (context) => [
               const PopupMenuItem(
                 value: 'settings',
                 child: Row(
                   children: [
-                    Icon(Icons.settings, color: Colors.black87, size: 20),
+                    Icon(
+                      Icons.settings_outlined,
+                      color: Colors.black87,
+                      size: 20,
+                    ),
                     SizedBox(width: 12),
                     Text(
                       'Settings',
@@ -116,13 +125,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 value: 'logout',
                 child: Row(
                   children: [
-                    Icon(Icons.logout, color: Colors.red, size: 20),
+                    Icon(
+                      Icons.logout_rounded,
+                      color: Colors.redAccent,
+                      size: 20,
+                    ),
                     SizedBox(width: 12),
                     Text(
                       'Logout',
                       style: TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.w500,
+                        color: Colors.redAccent,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -134,39 +147,171 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.all(8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            StreamBuilder<DocumentSnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(FirebaseService().currentUser?.uid)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                String name = '';
-                if (snapshot.hasData && snapshot.data!.exists) {
-                  final data = snapshot.data!.data() as Map<String, dynamic>?;
-                  if (data != null) {
-                    name = data['name'] ?? '';
-                  }
-                } else if (FirebaseService().currentUser?.displayName != null) {
-                  name = FirebaseService().currentUser!.displayName!;
-                }
-
-                return Text(
-                  name.isNotEmpty ? "Hello, $name!" : "Hello!",
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                );
-              },
+            SizedBox(
+              height: MediaQuery.of(context).padding.top + kToolbarHeight + 10,
             ),
-            const SizedBox(height: 4),
-            Text(
-              "Let's see what we are wearing today.",
-              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned(
+                  top: 10,
+                  right: -10,
+                  child: Container(
+                    width: 180,
+                    height: 180,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFFEADDFF).withOpacity(0.4),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 100,
+                  left: -30,
+                  child: Container(
+                    width: 140,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFFFFCCBC).withOpacity(0.3),
+                    ),
+                  ),
+                ),
+                Positioned.fill(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
+                    child: const SizedBox(),
+                  ),
+                ),
+                TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0.0, end: 1.0),
+                  duration: const Duration(milliseconds: 1000),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, value, child) {
+                    return Transform.translate(
+                      offset: Offset(0, 20 * (1 - value)),
+                      child: Opacity(opacity: value, child: child),
+                    );
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Builder(
+                        builder: (context) {
+                          final now = DateTime.now();
+                          const months = [
+                            'JANUARY',
+                            'FEBRUARY',
+                            'MARCH',
+                            'APRIL',
+                            'MAY',
+                            'JUNE',
+                            'JULY',
+                            'AUGUST',
+                            'SEPTEMBER',
+                            'OCTOBER',
+                            'NOVEMBER',
+                            'DECEMBER',
+                          ];
+                          const weekdays = [
+                            'MONDAY',
+                            'TUESDAY',
+                            'WEDNESDAY',
+                            'THURSDAY',
+                            'FRIDAY',
+                            'SATURDAY',
+                            'SUNDAY',
+                          ];
+                          final dateStr =
+                              '${weekdays[now.weekday - 1]}, ${months[now.month - 1]} ${now.day}';
+                          return Text(
+                            dateStr,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              letterSpacing: 4.0,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black54,
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      StreamBuilder<DocumentSnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(FirebaseService().currentUser?.uid)
+                            .snapshots(),
+                        builder: (context, snapshot) {
+                          String name = '';
+                          if (snapshot.hasData && snapshot.data!.exists) {
+                            final data =
+                                snapshot.data!.data() as Map<String, dynamic>?;
+                            if (data != null) {
+                              name = data['name'] ?? '';
+                            }
+                          } else if (FirebaseService()
+                                  .currentUser
+                                  ?.displayName !=
+                              null) {
+                            name = FirebaseService().currentUser!.displayName!;
+                          }
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Hello,",
+                                style: TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w200,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              ShaderMask(
+                                blendMode: BlendMode.srcIn,
+                                shaderCallback: (bounds) =>
+                                    const LinearGradient(
+                                      colors: [
+                                        Colors.black,
+                                        Color(0xFF424242),
+                                        Colors.black87,
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ).createShader(bounds),
+                                child: Text(
+                                  name.isNotEmpty ? name : "There",
+                                  style: const TextStyle(
+                                    fontSize: 36,
+                                    fontWeight: FontWeight.w900,
+                                    height: 1.1,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        "Discover today's aesthetic.",
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontStyle: FontStyle.italic,
+                          color: Colors.black54,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 24),
             _buildWeatherCard(),
@@ -177,7 +322,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 16),
             _buildVirtualDressingRoomCard(),
             _buildMyTripsCard(),
-            const SizedBox(height: 24),
+            const SizedBox(height: kBottomNavigationBarHeight + 60),
           ],
         ),
       ),
@@ -268,22 +413,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildAIStylistCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Colors.black, Color(0xFF424242)], // Black to Dark Grey
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
+    return _GlassNavCard(
+      accentColor: Colors.black87,
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const AiStylistChatScreen()),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -297,7 +431,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text(
                     "AI Stylist",
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Colors.black87,
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                     ),
@@ -305,19 +439,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   SizedBox(height: 4),
                   Text(
                     "Ready to pick your outfit?",
-                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                    style: TextStyle(color: Colors.black54, fontSize: 14),
                   ),
                 ],
               ),
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.1),
+                  color: Colors.black.withOpacity(0.07),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.auto_awesome,
-                  color: Colors.white,
+                  color: Colors.black87,
                   size: 28,
                 ),
               ),
@@ -326,23 +460,19 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 20),
           const Text(
             "Based on the weather and your style, I recommend a layered look today.",
-            style: TextStyle(color: Colors.white70, fontSize: 14),
+            style: TextStyle(color: Colors.black54, fontSize: 14),
           ),
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const AiStylistChatScreen(),
-                  ),
-                );
-              },
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AiStylistChatScreen()),
+              ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black,
+                backgroundColor: Colors.black87,
+                foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -361,84 +491,57 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildShoppingAssistantCard() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.teal.shade50, Colors.white],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.teal.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+    return _GlassNavCard(
+      accentColor: Colors.teal,
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ShoppingAssistantScreen()),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Should I Buy This?",
+                  style: TextStyle(
+                    color: Colors.teal,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  "Scan an item in-store to see its Wardrobe Match Score.",
+                  style: TextStyle(color: Colors.teal.shade700, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.teal.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.document_scanner_outlined,
+              color: Colors.teal,
+              size: 28,
+            ),
           ),
         ],
-        border: Border.all(color: Colors.teal.withValues(alpha: 0.3)),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ShoppingAssistantScreen()),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Should I Buy This?",
-                      style: TextStyle(
-                        color: Colors.teal,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      "Scan an item in-store to see its Wardrobe Match Score.",
-                      style: TextStyle(
-                        color: Colors.teal.shade700,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.teal.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.document_scanner_outlined,
-                  color: Colors.teal,
-                  size: 28,
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
 
   Widget _buildMyTripsCard() {
     final uid = FirebaseService().currentUser?.uid;
-
     return Padding(
-      padding: const EdgeInsets.only(top: 20),
+      padding: const EdgeInsets.only(top: 16),
       child: StreamBuilder<QuerySnapshot>(
         stream: uid != null
             ? FirebaseFirestore.instance
@@ -447,97 +550,53 @@ class _HomeScreenState extends State<HomeScreen> {
                   .snapshots()
             : const Stream.empty(),
         builder: (context, snapshot) {
-          final hasTrips = snapshot.hasData && snapshot.data!.docs.isNotEmpty;
-
-          return Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.blue.shade50, Colors.white],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.blueAccent.withValues(alpha: 0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
+          return _GlassNavCard(
+            accentColor: Colors.blueAccent,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MyTripsScreen()),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Smart Packing",
+                        style: TextStyle(
+                          color: Colors.blueAccent,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        "Plan your travel outfits with AI-powered capsule wardrobes.",
+                        style: TextStyle(
+                          color: Colors.blueAccent.shade700.withOpacity(0.8),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blueAccent.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: const Icon(
+                    Icons.luggage_rounded,
+                    color: Colors.blueAccent,
+                    size: 28,
+                  ),
                 ),
               ],
-              border: Border.all(
-                color: Colors.blueAccent.withValues(alpha: 0.2),
-              ),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(20),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const MyTripsScreen()),
-                  );
-                },
-                child: Stack(
-                  children: [
-                    Positioned(
-                      right: -10,
-                      bottom: -10,
-                      child: Icon(
-                        Icons.luggage,
-                        size: 100,
-                        color: Colors.blueAccent.withValues(alpha: 0.03),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  "Smart Packing",
-                                  style: TextStyle(
-                                    color: Colors.blueAccent,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: -0.5,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  "Plan your travel outfits with AI-powered capsule wardrobes.",
-                                  style: TextStyle(
-                                    color: Colors.blueAccent.shade700
-                                        .withValues(alpha: 0.8),
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.blueAccent.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            child: const Icon(
-                              Icons.luggage_rounded,
-                              color: Colors.blueAccent,
-                              size: 28,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ),
           );
         },
@@ -546,77 +605,118 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildVirtualDressingRoomCard() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.purple.shade50, Colors.white],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.purple.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+    return _GlassNavCard(
+      accentColor: Colors.purple,
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const VirtualDressingRoomScreen()),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Virtual Dressing Room",
+                  style: TextStyle(
+                    color: Colors.purple,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  "Mix, match, and visualize your outfits on a digital canvas.",
+                  style: TextStyle(
+                    color: Colors.purple.shade700.withOpacity(0.8),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.purple.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: const Icon(Icons.checkroom, color: Colors.purple, size: 28),
           ),
         ],
-        border: Border.all(color: Colors.purple.withValues(alpha: 0.2)),
       ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const VirtualDressingRoomScreen(),
-            ),
-          );
+    );
+  }
+}
+
+// ─── Reusable Glass Navigation Card ───────────────────────────────────────────
+class _GlassNavCard extends StatefulWidget {
+  final Color accentColor;
+  final VoidCallback onTap;
+  final Widget child;
+
+  const _GlassNavCard({
+    required this.accentColor,
+    required this.onTap,
+    required this.child,
+  });
+
+  @override
+  State<_GlassNavCard> createState() => _GlassNavCardState();
+}
+
+class _GlassNavCardState extends State<_GlassNavCard> {
+  double _scale = 1.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0.92, end: 1.0),
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Transform.scale(scale: value, child: child);
+      },
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _scale = 0.97),
+        onTapUp: (_) {
+          setState(() => _scale = 1.0);
+          widget.onTap();
         },
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Virtual Dressing Room",
-                      style: TextStyle(
-                        color: Colors.purple,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      "Mix, match, and visualize your outfits on a digital canvas.",
-                      style: TextStyle(
-                        color: Colors.purple.shade700.withValues(alpha: 0.8),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
+        onTapCancel: () => setState(() => _scale = 1.0),
+        child: AnimatedScale(
+          scale: _scale,
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeOut,
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.72),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: widget.accentColor.withOpacity(0.18),
+                width: 1,
               ),
-              const SizedBox(width: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.purple.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                  color: widget.accentColor.withOpacity(0.14),
+                  blurRadius: 22,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 6),
                 ),
-                child: const Icon(
-                  Icons.checkroom,
-                  color: Colors.purple,
-                  size: 28,
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
-              ),
-            ],
+              ],
+            ),
+            child: widget.child,
           ),
         ),
       ),
@@ -643,29 +743,75 @@ class DynamicWeatherCard extends StatelessWidget {
     if (isLoading) {
       return Container(
         width: double.infinity,
-        margin: const EdgeInsets.only(bottom: 25),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.fromLTRB(22, 24, 22, 20),
         decoration: BoxDecoration(
-          color: Colors.blue[100],
+          color: const Color(0xFFF3F3F3),
           borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
-        height: 150,
-        child: const Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(color: Colors.blue),
-              SizedBox(height: 10),
-              Text(
-                "Checking weather...",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blueGrey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Mimic city name skeleton
+            Container(
+              width: 120,
+              height: 18,
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Mimic condition skeleton
+            Container(
+              width: 80,
+              height: 12,
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Mimic hourly strip skeleton
+            Container(
+              height: 76,
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.black.withOpacity(0.25),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      "Checking weather...",
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.black.withOpacity(0.35),
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       );
     }
@@ -673,26 +819,43 @@ class DynamicWeatherCard extends StatelessWidget {
     if (error != null) {
       return Container(
         width: double.infinity,
-        margin: const EdgeInsets.only(bottom: 25),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.fromLTRB(22, 24, 22, 20),
         decoration: BoxDecoration(
-          color: Colors.red[50],
+          color: const Color(0xFFF3F3F3),
           borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
-        height: 150,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error_outline, size: 32, color: Colors.red),
-              const SizedBox(height: 8),
-              Text(
-                "Weather unavailable.",
-                style: TextStyle(color: Colors.red[800], fontSize: 13),
+        child: Row(
+          children: [
+            Icon(
+              Icons.cloud_off_outlined,
+              size: 28,
+              color: Colors.black.withOpacity(0.3),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                "Weather unavailable",
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.black.withOpacity(0.45),
+                  fontWeight: FontWeight.w400,
+                ),
               ),
-              TextButton(onPressed: onRetry, child: const Text("Retry")),
-            ],
-          ),
+            ),
+            TextButton(
+              onPressed: onRetry,
+              style: TextButton.styleFrom(foregroundColor: Colors.black54),
+              child: const Text("Retry"),
+            ),
+          ],
         ),
       );
     }
@@ -701,154 +864,137 @@ class DynamicWeatherCard extends StatelessWidget {
 
     final gradient = _getGradient(weather!.condition, weather!.iconCode);
     final icon = _getIconForCondition(weather!.condition, weather!.iconCode);
-    final now = DateTime.now();
-    final dateString =
-        "${_getWeekday(now.weekday)}, ${now.day} ${_getMonth(now.month)}";
 
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 25),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         gradient: gradient,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.18),
+            blurRadius: 20,
+            spreadRadius: 0,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 1. Ultra-Compact Single Row Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Left: City & Date
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    weather!.cityName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18, // Reduced to 18
-                      fontWeight: FontWeight.bold,
-                      shadows: [
-                        Shadow(
-                          offset: Offset(0, 1),
-                          blurRadius: 2,
-                          color: Colors.black26,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    dateString,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.8),
-                      fontSize: 13, // Reduced to 13
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-
-              // Right: Temp & Icon (Tight Row)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    "${weather!.temperature}°",
-                    style: const TextStyle(
-                      fontSize: 38, // Reduced to 38
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      height: 1.0,
-                      shadows: [
-                        Shadow(
-                          offset: Offset(0, 2),
-                          blurRadius: 4,
-                          color: Colors.black26,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    icon,
-                    size: 38, // Matches text size
-                    color: Colors.white,
-                    shadows: const [
-                      Shadow(
-                        offset: Offset(0, 2),
-                        blurRadius: 4,
-                        color: Colors.black26,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16), // Breathing room
-          // 2. Hourly Forecast Glass Strip (Compact)
-          Container(
-            height: 80,
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(
-                alpha: 0.15,
-              ), // Slightly more transparent
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.25),
-                width: 1,
-              ),
-            ),
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: weather!.forecast.length,
-              separatorBuilder: (context, index) => const SizedBox(width: 16),
-              itemBuilder: (context, index) {
-                final item = weather!.forecast[index];
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(22, 24, 22, 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Header row ──────────────────────────────────────────
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Left: city + condition
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.timeLabel,
+                      weather!.cityName,
                       style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white70,
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.2,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Icon(
-                      _getIconForCondition(item.condition, item.iconCode),
-                      size: 20,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(height: 4),
                     Text(
-                      "${item.temperature}°",
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                      weather!.condition,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.70),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: 0.2,
                       ),
                     ),
                   ],
-                );
-              },
+                ),
+                // Right: big temperature + icon
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      "${weather!.temperature}\u00b0",
+                      style: const TextStyle(
+                        fontSize: 52,
+                        fontWeight: FontWeight.w200,
+                        color: Colors.white,
+                        height: 1.0,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Icon(icon, size: 32, color: Colors.white70),
+                  ],
+                ),
+              ],
             ),
-          ),
-        ],
+
+            const SizedBox(height: 16),
+
+            // ── Hourly forecast strip ──────────────────────────────
+            Container(
+              height: 76,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.14),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.22),
+                  width: 1,
+                ),
+              ),
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                scrollDirection: Axis.horizontal,
+                itemCount: weather!.forecast.length,
+                separatorBuilder: (_, __) => Container(
+                  width: 1,
+                  margin: const EdgeInsets.symmetric(vertical: 16),
+                  color: Colors.white.withOpacity(0.15),
+                ),
+                itemBuilder: (context, index) {
+                  final item = weather!.forecast[index];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          item.timeLabel,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white.withOpacity(0.65),
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        Icon(
+                          _getIconForCondition(item.condition, item.iconCode),
+                          size: 18,
+                          color: Colors.white.withOpacity(0.85),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          "${item.temperature}\u00b0",
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -878,52 +1024,49 @@ class DynamicWeatherCard extends StatelessWidget {
 
   LinearGradient _getGradient(String condition, String iconCode) {
     condition = condition.toLowerCase();
-    bool isNight = iconCode.endsWith('n'); // verificam daca e noapte
+    bool isNight = iconCode.endsWith('n');
 
     if (condition.contains('clear') || condition.contains('sun')) {
       if (isNight) {
-        // cer senin de noapte (Albastru foarte inchis spre Negru)
         return const LinearGradient(
-          colors: [Color(0xFF1A237E), Color(0xFF000000)],
+          colors: [Color(0xFF1A237E), Color(0xFF283593)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         );
       }
-      // cer senin de zi
       return const LinearGradient(
-        colors: [Color(0xFFFF9800), Color(0xFFFFEB3B)],
+        colors: [Color(0xFFE65100), Color(0xFFF57C00), Color(0xFFFFB300)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       );
     } else if (condition.contains('cloud')) {
       return const LinearGradient(
-        colors: [Color(0xFF607D8B), Color(0xFF90A4AE)],
+        colors: [Color(0xFF455A64), Color(0xFF607D8B)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       );
     } else if (condition.contains('rain') || condition.contains('drizzle')) {
       return const LinearGradient(
-        colors: [Color(0xFF1A237E), Color(0xFF3949AB)],
+        colors: [Color(0xFF0D47A1), Color(0xFF1565C0)],
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
       );
     } else if (condition.contains('snow')) {
       return const LinearGradient(
-        colors: [Color(0xFF81D4FA), Color(0xFFE1F5FE)],
+        colors: [Color(0xFF1E3C72), Color(0xFF2A5298), Color(0xFF00838F)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       );
     }
 
-    // fallback
     return isNight
         ? const LinearGradient(
-            colors: [Color(0xFF311B92), Color(0xFF512DA8)],
+            colors: [Color(0xFF1A237E), Color(0xFF283593)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           )
         : const LinearGradient(
-            colors: [Color(0xFF5E35B1), Color(0xFF9575CD)],
+            colors: [Color(0xFF5E35B1), Color(0xFF7E57C2)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           );

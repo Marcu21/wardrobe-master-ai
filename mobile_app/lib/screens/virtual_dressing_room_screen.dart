@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:ui';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -81,9 +83,9 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
 
       for (var doc in snapshot.docs) {
         Map<String, dynamic> data = doc.data();
-        data['id'] = doc.id; // Keep the ID
+        data['id'] = doc.id;
 
-        // Safely extract category and sub_category
+        // Extract category and sub_category
         Map<String, dynamic> basicInfo = data['basic_info'] ?? {};
         String category = (basicInfo['category'] ?? '')
             .toString()
@@ -92,7 +94,7 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
             .toString()
             .toLowerCase();
 
-        // Grouping logic (robust matching)
+        // Grouping logic
         if (category.contains('shoe') || category.contains('footwear')) {
           newShoes.add(data);
         } else if (category.contains('bottom') ||
@@ -164,7 +166,7 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
               _showTops = true;
             }
 
-            // Do the same find-and-move for Bottoms and Shoes (they are usually always shown, but move them to index 0)
+            // Do the same find-and-move for Bottoms and Shoes
             int foundBottom = newBottoms.indexWhere(
               (item) => widget.initialItemIds!.contains(item['id']),
             );
@@ -240,7 +242,14 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select at least one item')),
+        SnackBar(
+          content: const Text('Please select at least one item'),
+          backgroundColor: Colors.black87,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
       );
     }
   }
@@ -248,54 +257,106 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
   void _openLayersMenu() {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      "Manage Outfit Layers",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+            return ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
+              ),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    8,
+                    20,
+                    MediaQuery.of(context).padding.bottom + 24,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.92),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(28),
+                    ),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.6),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 36,
+                          height: 4,
+                          margin: const EdgeInsets.only(top: 12, bottom: 20),
+                          decoration: BoxDecoration(
+                            color: Colors.black12,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    SwitchListTile(
-                      title: const Text('Outerwear (Jackets, Coats)'),
-                      value: _showOuterwear,
-                      activeThumbColor: Colors.black,
-                      onChanged: (bool value) {
-                        setModalState(() => _showOuterwear = value);
-                        setState(() => _showOuterwear = value);
-                      },
-                    ),
-                    SwitchListTile(
-                      title: const Text('Midwear (Hoodies, Sweaters)'),
-                      value: _showMidwear,
-                      activeThumbColor: Colors.black,
-                      onChanged: (bool value) {
-                        setModalState(() => _showMidwear = value);
-                        setState(() => _showMidwear = value);
-                      },
-                    ),
-                    SwitchListTile(
-                      title: const Text('Tops (T-Shirts, Shirts)'),
-                      value: _showTops,
-                      activeThumbColor: Colors.black,
-                      onChanged: (bool value) {
-                        setModalState(() => _showTops = value);
-                        setState(() => _showTops = value);
-                      },
-                    ),
-                  ],
+                      const Text(
+                        'LAYERS',
+                        style: TextStyle(
+                          fontSize: 11,
+                          letterSpacing: 4.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black45,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Manage outfit layers',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black87,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      const SizedBox(height: 20),
+                      _LayerToggle(
+                        icon: CupertinoIcons.umbrella,
+                        label: 'Outerwear',
+                        subtitle: 'Jackets & Coats',
+                        value: _showOuterwear,
+                        onChanged: (v) {
+                          setModalState(() => _showOuterwear = v);
+                          setState(() => _showOuterwear = v);
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      _LayerToggle(
+                        icon: CupertinoIcons.thermometer,
+                        label: 'Midwear',
+                        subtitle: 'Hoodies & Sweaters',
+                        value: _showMidwear,
+                        onChanged: (v) {
+                          setModalState(() => _showMidwear = v);
+                          setState(() => _showMidwear = v);
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      _LayerToggle(
+                        icon: Icons.dry_cleaning,
+                        label: 'Tops',
+                        subtitle: 'T-Shirts & Shirts',
+                        value: _showTops,
+                        onChanged: (v) {
+                          setModalState(() => _showTops = v);
+                          setState(() => _showTops = v);
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -330,21 +391,30 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
+      extendBodyBehindAppBar: false,
       appBar: AppBar(
         title: const GlobalWardrobeSelector(),
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
         centerTitle: false,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: const IconThemeData(color: Colors.black87),
+        leading: IconButton(
+          icon: const Icon(CupertinoIcons.back, color: Colors.black87),
+          onPressed: () => Navigator.pop(context),
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.layers_outlined, color: Colors.black),
-            onPressed: _openLayersMenu,
+          _CircleIconButton(
+            icon: CupertinoIcons.layers_alt,
+            onTap: _openLayersMenu,
           ),
-          IconButton(
-            icon: const Icon(Icons.check, color: Colors.black),
-            onPressed: _saveOutfit,
+          const SizedBox(width: 8),
+          _CircleIconButton(
+            icon: CupertinoIcons.checkmark_circle_fill,
+            isPrimary: true,
+            onTap: _saveOutfit,
           ),
+          const SizedBox(width: 12),
         ],
       ),
       body: SafeArea(
@@ -352,10 +422,73 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
           children: [
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.deepPurple.withOpacity(0.07),
+                                  border: Border.all(
+                                    color: Colors.deepPurple.withOpacity(0.15),
+                                    width: 1.5,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(
+                                width: 52,
+                                height: 52,
+                                child: CircularProgressIndicator(
+                                  color: Colors.deepPurple.withOpacity(0.25),
+                                  strokeWidth: 1.5,
+                                ),
+                              ),
+                              const SizedBox(
+                                width: 36,
+                                height: 36,
+                                child: CircularProgressIndicator(
+                                  color: Colors.deepPurple,
+                                  strokeWidth: 2.5,
+                                ),
+                              ),
+                              const Icon(
+                                CupertinoIcons.wand_stars,
+                                color: Colors.deepPurple,
+                                size: 18,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          const Text(
+                            'Loading your wardrobe…',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'Preparing your dressing room',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.black45,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
                   : Stack(
                       children: [
-                        // STRATUL 1: Bottoms & Shoes
+                        // LAYER 1: Bottoms & Shoes
                         Column(
                           children: [
                             if (fOuter + fMid + fTop > 0)
@@ -381,7 +514,7 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
                           ],
                         ),
 
-                        // STRATUL 2: Tops
+                        // LAYER 2: Tops
                         if (_showTops)
                           Column(
                             children: [
@@ -398,7 +531,7 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
                             ],
                           ),
 
-                        // STRATUL 3: Midwear
+                        // LAYER 3: Midwear
                         if (_showMidwear)
                           Column(
                             children: [
@@ -416,7 +549,7 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
                             ],
                           ),
 
-                        // STRATUL 4: Outerwear
+                        // LAYER 4: Outerwear
                         if (_showOuterwear)
                           Column(
                             children: [
@@ -526,7 +659,7 @@ class _ClothingCarouselRowInternalState
       itemCount: widget.items.length,
       onPageChanged: widget.onIndexChanged,
       physics: const BouncingScrollPhysics(),
-      padEnds: true, // centered item
+      padEnds: true,
       itemBuilder: (context, index) {
         return Container(
           alignment: widget.alignment,
@@ -536,6 +669,157 @@ class _ClothingCarouselRowInternalState
           ),
         );
       },
+    );
+  }
+}
+
+// Circle Icon Button
+
+class _CircleIconButton extends StatefulWidget {
+  final IconData icon;
+  final bool isPrimary;
+  final VoidCallback onTap;
+
+  const _CircleIconButton({
+    required this.icon,
+    required this.onTap,
+    this.isPrimary = false,
+  });
+
+  @override
+  State<_CircleIconButton> createState() => _CircleIconButtonState();
+}
+
+class _CircleIconButtonState extends State<_CircleIconButton> {
+  double _scale = 1.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _scale = 0.92),
+      onTapUp: (_) {
+        setState(() => _scale = 1.0);
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _scale = 1.0),
+      child: AnimatedScale(
+        scale: _scale,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        child: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: widget.isPrimary
+                ? Colors.deepPurple
+                : Colors.white.withOpacity(0.72),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: widget.isPrimary
+                  ? Colors.transparent
+                  : Colors.black.withOpacity(0.08),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: widget.isPrimary
+                    ? Colors.deepPurple.withOpacity(0.18)
+                    : Colors.black.withOpacity(0.06),
+                blurRadius: widget.isPrimary ? 8 : 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Icon(
+            widget.icon,
+            size: 18,
+            color: widget.isPrimary ? Colors.white : Colors.black87,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Layer Toggle
+
+class _LayerToggle extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _LayerToggle({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: value ? Colors.deepPurple.withOpacity(0.06) : Colors.grey[50],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: value
+              ? Colors.deepPurple.withOpacity(0.20)
+              : Colors.black.withOpacity(0.06),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: value
+                  ? Colors.deepPurple.withOpacity(0.10)
+                  : Colors.black.withOpacity(0.05),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              size: 16,
+              color: value ? Colors.deepPurple : Colors.black45,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: value ? Colors.deepPurple : Colors.black87,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.black45,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          CupertinoSwitch(
+            value: value,
+            activeColor: Colors.deepPurple,
+            onChanged: onChanged,
+          ),
+        ],
+      ),
     );
   }
 }

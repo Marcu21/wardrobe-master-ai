@@ -1,3 +1,7 @@
+import 'dart:ui';
+import 'package:flutter/cupertino.dart';
+import 'dart:ui';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -41,18 +45,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
   DateTime? _getWearDateTime(Map<String, dynamic> data, DateTime targetDate) {
     final List<dynamic> dates = data['wear_dates'] ?? [];
     try {
-      final timestamp = dates.firstWhere(
-        (d) {
-          if (d is Timestamp) {
-            final dt = d.toDate();
-            return dt.year == targetDate.year &&
-                dt.month == targetDate.month &&
-                dt.day == targetDate.day;
-          }
-          return false;
-        },
-        orElse: () => null,
-      );
+      final timestamp = dates.firstWhere((d) {
+        if (d is Timestamp) {
+          final dt = d.toDate();
+          return dt.year == targetDate.year &&
+              dt.month == targetDate.month &&
+              dt.day == targetDate.day;
+        }
+        return false;
+      }, orElse: () => null);
       if (timestamp != null && timestamp is Timestamp) {
         return timestamp.toDate();
       }
@@ -67,18 +68,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
     if (targetDate == null) return '';
     final List<dynamic> dates = data['wear_dates'] ?? [];
     try {
-      final timestamp = dates.firstWhere(
-        (d) {
-          if (d is Timestamp) {
-            final dt = d.toDate();
-            return dt.year == targetDate.year &&
-                dt.month == targetDate.month &&
-                dt.day == targetDate.day;
-          }
-          return false;
-        },
-        orElse: () => null,
-      );
+      final timestamp = dates.firstWhere((d) {
+        if (d is Timestamp) {
+          final dt = d.toDate();
+          return dt.year == targetDate.year &&
+              dt.month == targetDate.month &&
+              dt.day == targetDate.day;
+        }
+        return false;
+      }, orElse: () => null);
       if (timestamp != null && timestamp is Timestamp) {
         return DateFormat.jm().format(timestamp.toDate());
       }
@@ -91,10 +89,22 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text(
           'Style Calendar',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.5,
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: Colors.black87,
+        leading: IconButton(
+          icon: const Icon(CupertinoIcons.back, color: Colors.black87),
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SafeArea(
@@ -119,7 +129,60 @@ class _CalendarScreenState extends State<CalendarScreen> {
             }
 
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          width: 72,
+                          height: 72,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.black.withOpacity(0.05),
+                            border: Border.all(
+                              color: Colors.black.withOpacity(0.08),
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 46,
+                          height: 46,
+                          child: CircularProgressIndicator(
+                            color: Colors.black.withOpacity(0.15),
+                            strokeWidth: 1.5,
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: CircularProgressIndicator(
+                            color: Colors.black87,
+                            strokeWidth: 2.5,
+                          ),
+                        ),
+                        const Icon(
+                          CupertinoIcons.calendar,
+                          color: Colors.black87,
+                          size: 16,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Loading calendar…',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+              );
             }
 
             final Map<DateTime, List<Map<String, dynamic>>> groupedOutfits = {};
@@ -163,25 +226,34 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   focusedDay: _focusedDay,
                   selectedDayPredicate: (day) => _isSameDay(_selectedDay, day),
                   calendarFormat: CalendarFormat.month,
+                  startingDayOfWeek: StartingDayOfWeek.monday,
                   eventLoader: (day) {
                     return groupedOutfits[_normalizeDate(day)] ?? [];
                   },
                   calendarBuilders: CalendarBuilders(
                     markerBuilder: (context, date, events) {
-                      if (events.isNotEmpty) {
+                      if (events.isNotEmpty &&
+                          !_isSameDay(_selectedDay, date)) {
                         return Positioned(
-                          bottom: 8,
+                          bottom: 5,
                           child: Container(
                             width: 6,
                             height: 6,
-                            decoration: const BoxDecoration(
-                              color: Colors.black,
+                            decoration: BoxDecoration(
+                              color: Colors.black87,
                               shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.25),
+                                  blurRadius: 4,
+                                  spreadRadius: 1,
+                                ),
+                              ],
                             ),
                           ),
                         );
                       }
-                      return null;
+                      return const SizedBox.shrink();
                     },
                   ),
                   onDaySelected: (selectedDay, focusedDay) {
@@ -190,25 +262,85 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       _focusedDay = focusedDay;
                     });
                   },
+                  rowHeight: 42,
+                  daysOfWeekHeight: 26,
                   calendarStyle: CalendarStyle(
                     selectedDecoration: const BoxDecoration(
-                      color: Colors.black,
+                      color: Colors.black87,
                       shape: BoxShape.circle,
+                    ),
+                    selectedTextStyle: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
                     ),
                     todayDecoration: BoxDecoration(
-                      color: Colors.grey[400],
+                      color: Colors.transparent,
                       shape: BoxShape.circle,
+                      border: Border.all(color: Colors.black45, width: 1),
                     ),
+                    todayTextStyle: const TextStyle(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                    defaultTextStyle: const TextStyle(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                    weekendTextStyle: const TextStyle(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                    outsideTextStyle: const TextStyle(
+                      color: Colors.black12,
+                      fontWeight: FontWeight.w400,
+                      fontSize: 13,
+                    ),
+                    cellMargin: const EdgeInsets.all(3),
                   ),
-                  headerStyle: const HeaderStyle(
+                  headerStyle: HeaderStyle(
                     formatButtonVisible: false,
                     titleCentered: true,
+                    titleTextStyle: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
+                      letterSpacing: -0.3,
+                    ),
+                    leftChevronIcon: const Icon(
+                      CupertinoIcons.chevron_left,
+                      color: Colors.black54,
+                      size: 16,
+                    ),
+                    rightChevronIcon: const Icon(
+                      CupertinoIcons.chevron_right,
+                      color: Colors.black54,
+                      size: 16,
+                    ),
+                    headerPadding: const EdgeInsets.symmetric(vertical: 8),
+                    leftChevronPadding: const EdgeInsets.all(8),
+                    rightChevronPadding: const EdgeInsets.all(8),
+                  ),
+                  daysOfWeekStyle: const DaysOfWeekStyle(
+                    weekdayStyle: TextStyle(
+                      color: Colors.black38,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.5,
+                    ),
+                    weekendStyle: TextStyle(
+                      color: Colors.black26,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                 ),
 
-                Divider(height: 1, color: Colors.grey[300]),
-
-                // Horizontal carousel of outfits for the selected day
+                // ── Outfits carousel ──────────────────────────────────
                 Expanded(
                   child: Container(
                     color: Colors.grey[50],
@@ -218,18 +350,35 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(
-                                  Icons.checkroom_outlined,
-                                  size: 48,
-                                  color: Colors.grey[400],
+                                Container(
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.05),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    CupertinoIcons.calendar_badge_minus,
+                                    size: 36,
+                                    color: Colors.black38,
+                                  ),
                                 ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'No outfits logged for this day',
+                                const SizedBox(height: 16),
+                                const Text(
+                                  'No outfits logged',
                                   style: TextStyle(
                                     fontSize: 16,
-                                    color: Colors.grey[600],
-                                    fontWeight: FontWeight.w500,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.black54,
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  'Wear an outfit to log it here',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.black38,
+                                    fontStyle: FontStyle.italic,
                                   ),
                                 ),
                               ],
@@ -237,18 +386,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           )
                         : ListView.builder(
                             scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsets.all(16),
+                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                             itemCount: dayOutfits.length,
                             itemBuilder: (context, index) {
                               final data = dayOutfits[index];
-                              final String name =
-                                  data['name'] ?? 'Untitled';
-                              final String wearTime =
-                                  _getWearTime(data, _selectedDay);
+                              final String name = data['name'] ?? 'Untitled';
+                              final String wearTime = _getWearTime(
+                                data,
+                                _selectedDay,
+                              );
 
                               return Container(
-                                width: 150,
-                                margin: const EdgeInsets.only(right: 16),
+                                width: 160,
+                                margin: const EdgeInsets.only(right: 12),
                                 child: SmartOutfitCard(
                                   key: ValueKey(data['id']),
                                   outfitData: data,
@@ -262,54 +412,72 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                       ),
                                     ),
                                   ),
-                                  footer: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 8,
+                                  footer: ClipRRect(
+                                    borderRadius: const BorderRadius.vertical(
+                                      bottom: Radius.circular(20),
                                     ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      border: Border(
-                                        top: BorderSide(
-                                          color: Colors.grey.shade200,
-                                        ),
+                                    child: BackdropFilter(
+                                      filter: ImageFilter.blur(
+                                        sigmaX: 10,
+                                        sigmaY: 10,
                                       ),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          name,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 13,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                                      child: Container(
+                                        padding: const EdgeInsets.fromLTRB(
+                                          10,
+                                          10,
+                                          10,
+                                          12,
                                         ),
-                                        const SizedBox(height: 4),
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              Icons.access_time,
-                                              size: 10,
-                                              color: Colors.grey[600],
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              wearTime.isNotEmpty
-                                                  ? wearTime
-                                                  : 'Logged',
-                                              style: TextStyle(
-                                                fontSize: 11,
-                                                color: Colors.grey[600],
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.85),
+                                          border: Border(
+                                            top: BorderSide(
+                                              color: Colors.black.withOpacity(
+                                                0.06,
                                               ),
+                                            ),
+                                          ),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              name,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 13,
+                                                color: Colors.black87,
+                                                letterSpacing: -0.2,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Row(
+                                              children: [
+                                                const Icon(
+                                                  CupertinoIcons.clock,
+                                                  size: 10,
+                                                  color: Colors.black38,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  wearTime.isNotEmpty
+                                                      ? wearTime
+                                                      : 'Logged',
+                                                  style: const TextStyle(
+                                                    fontSize: 11,
+                                                    color: Colors.black45,
+                                                    fontStyle: FontStyle.italic,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ],
                                         ),
-                                      ],
+                                      ),
                                     ),
                                   ),
                                 ),

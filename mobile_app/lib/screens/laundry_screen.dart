@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:async';
+import 'dart:ui';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -54,7 +56,7 @@ class _LaundryScreenState extends State<LaundryScreen> {
       return;
     }
 
-    _wardrobeSubscription?.cancel(); // Cancel any existing subscription
+    _wardrobeSubscription?.cancel();
 
     var query = _firestore
         .collection('clothing')
@@ -77,18 +79,13 @@ class _LaundryScreenState extends State<LaundryScreen> {
           setState(() {
             _allWardrobeItems = items;
 
-            // React dynamically if items have a status indicating they are dirty
             final dbDirtyItems = items.where((item) {
-              final category =
-                  item['basic_info']?['category'] ??
-                  ''; // Some apps use category to infer
               final status = item['status']?.toString().toLowerCase();
               final isDirty =
                   item['is_dirty'] == true || item['isDirty'] == true;
               return status == 'dirty' || status == 'laundry' || isDirty;
             }).toList();
 
-            // Auto-add dirty items to basket if not already there
             for (var dirty in dbDirtyItems) {
               bool exists = _basketItems.any(
                 (bItem) => bItem['id'] == dirty['id'],
@@ -98,20 +95,14 @@ class _LaundryScreenState extends State<LaundryScreen> {
               }
             }
 
-            // Automatically remove from basket if the item was marked clean remotely
             _basketItems.removeWhere((basketItem) {
               final serverItem = items.firstWhere(
                 (i) => i['id'] == basketItem['id'],
                 orElse: () => <String, dynamic>{},
               );
-              if (serverItem.isEmpty) return true; // deleted
+              if (serverItem.isEmpty) return true;
 
               final status = serverItem['status']?.toString().toLowerCase();
-              final isDirty =
-                  serverItem['is_dirty'] == true ||
-                  serverItem['isDirty'] == true;
-
-              // If we rely strictly on server states for removal, we only remove if explicitly marked clean
               if (status == 'clean' ||
                   serverItem['is_dirty'] == false ||
                   serverItem['isDirty'] == false) {
@@ -164,127 +155,250 @@ class _LaundryScreenState extends State<LaundryScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
       builder: (context) {
-        return SafeArea(
-          child: CustomScrollView(
-            shrinkWrap: true,
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Row(
-                        children: [
-                          Icon(Icons.auto_awesome, color: Colors.amber),
-                          SizedBox(width: 8),
-                          Text(
-                            'Optimal Splits',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+        return DraggableScrollableSheet(
+          initialChildSize: 0.75,
+          minChildSize: 0.35,
+          maxChildSize: 1.0,
+          expand: false,
+          builder: (context, scrollController) {
+            return ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
+              ),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.96),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(28),
+                    ),
+                    border: Border.all(color: Colors.white.withOpacity(0.9)),
+                  ),
+                  child: SafeArea(
+                    top: false,
+                    child: CustomScrollView(
+                      controller: scrollController,
+                      shrinkWrap: true,
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Center(
+                                  child: Container(
+                                    width: 36,
+                                    height: 4,
+                                    margin: const EdgeInsets.only(bottom: 20),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.12),
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFEEF2FF),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: const Icon(
+                                        Icons.auto_awesome,
+                                        color: Color(0xFF4F46E5),
+                                        size: 16,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      'Optimal Splits',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.black87,
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    GestureDetector(
+                                      onTap: () => Navigator.pop(context),
+                                      child: Container(
+                                        width: 28,
+                                        height: 28,
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.06),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.close,
+                                          color: Colors.black54,
+                                          size: 15,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              if (suggestions.isEmpty)
-                const SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.all(24.0),
-                    child: Center(
-                      child: Text(
-                        'Add more items to see optimal combinations.',
-                      ),
+                        ),
+                        if (suggestions.isEmpty)
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: const EdgeInsets.all(32),
+                              child: Center(
+                                child: Text(
+                                  'Add more items to see optimal combinations.',
+                                  style: TextStyle(
+                                    color: Colors.black.withOpacity(0.4),
+                                    fontStyle: FontStyle.italic,
+                                    fontSize: 14,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (suggestions.isNotEmpty)
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              final load = suggestions[index];
+                              return Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  0,
+                                  16,
+                                  14,
+                                ),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(22),
+                                    border: Border.all(
+                                      color: Colors.black.withOpacity(0.07),
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.05),
+                                        blurRadius: 14,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                          18,
+                                          18,
+                                          18,
+                                          0,
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              load.title,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 16,
+                                                color: Colors.black87,
+                                                letterSpacing: -0.3,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 5),
+                                            Text(
+                                              load.reason,
+                                              style: TextStyle(
+                                                color: Colors.black.withOpacity(
+                                                  0.42,
+                                                ),
+                                                fontSize: 13,
+                                                fontStyle: FontStyle.italic,
+                                                height: 1.4,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 14),
+                                      Container(
+                                        height: 1,
+                                        margin: const EdgeInsets.symmetric(
+                                          horizontal: 18,
+                                        ),
+                                        color: Colors.black.withOpacity(0.06),
+                                      ),
+                                      const SizedBox(height: 14),
+                                      SizedBox(
+                                        height: 88,
+                                        child: ListView.builder(
+                                          scrollDirection: Axis.horizontal,
+                                          physics:
+                                              const BouncingScrollPhysics(),
+                                          padding: const EdgeInsets.fromLTRB(
+                                            18,
+                                            0,
+                                            18,
+                                            0,
+                                          ),
+                                          itemCount: load.items.length,
+                                          itemBuilder: (context, idx) {
+                                            final item = load.items[idx];
+                                            return Container(
+                                              width: 76,
+                                              margin: const EdgeInsets.only(
+                                                right: 10,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey[50],
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                                border: Border.all(
+                                                  color: Colors.black
+                                                      .withOpacity(0.06),
+                                                ),
+                                              ),
+                                              child: ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                                child: SmartClothingImage(
+                                                  imageUrl: item['imageUrl']
+                                                      ?.toString(),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }, childCount: suggestions.length),
+                          ),
+                        const SliverToBoxAdapter(child: SizedBox(height: 32)),
+                      ],
                     ),
                   ),
                 ),
-              if (suggestions.isNotEmpty)
-                SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final load = suggestions[index];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 8.0,
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.all(12.0),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(16.0),
-                          border: Border.all(color: Colors.grey.shade200),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              load.title,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              load.reason,
-                              style: TextStyle(
-                                color: Colors.grey.shade700,
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            SizedBox(
-                              height: 70, // compact horizontal list
-                              child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: load.items.length,
-                                itemBuilder: (context, idx) {
-                                  final item = load.items[idx];
-                                  return Container(
-                                    width: 60,
-                                    margin: const EdgeInsets.only(right: 8.0),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(8.0),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.05),
-                                          blurRadius: 2,
-                                          offset: const Offset(0, 1),
-                                        ),
-                                      ],
-                                    ),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(8.0),
-                                      child: SmartClothingImage(
-                                        imageUrl: item['imageUrl']?.toString(),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }, childCount: suggestions.length),
-                ),
-              const SliverToBoxAdapter(child: SizedBox(height: 32)),
-            ],
-          ),
+              ),
+            );
+          },
         );
       },
     );
@@ -305,8 +419,69 @@ class _LaundryScreenState extends State<LaundryScreen> {
           centerTitle: true,
           iconTheme: const IconThemeData(color: Colors.black),
         ),
-        body: const Center(
-          child: CircularProgressIndicator(color: Colors.blueGrey),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.blueGrey.withOpacity(0.07),
+                      border: Border.all(
+                        color: Colors.blueGrey.withOpacity(0.15),
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 46,
+                    height: 46,
+                    child: CircularProgressIndicator(
+                      color: Colors.blueGrey.withOpacity(0.25),
+                      strokeWidth: 1.5,
+                    ),
+                  ),
+                  const SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: CircularProgressIndicator(
+                      color: Colors.blueGrey,
+                      strokeWidth: 2.5,
+                    ),
+                  ),
+                  const Icon(
+                    CupertinoIcons.sparkles,
+                    color: Colors.blueGrey,
+                    size: 16,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Loading wardrobe…',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Getting your items ready',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.black45,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -338,41 +513,45 @@ class _LaundryScreenState extends State<LaundryScreen> {
     Color statusColor;
     IconData statusIcon;
     String statusTitle;
+    String statusSubtitle;
 
     if (_basketItems.isEmpty) {
       statusColor = Colors.blueGrey;
-      statusIcon = Icons.local_laundry_service;
+      statusIcon = CupertinoIcons.sparkles;
       statusTitle = 'Ready to Wash';
+      statusSubtitle = 'Add items from your wardrobe below';
     } else {
       switch (result.status) {
         case LaundryStatus.Safe:
-          statusColor = Colors.green;
-          statusIcon = Icons.check_circle_outline;
+          statusColor = const Color(0xFF16A34A);
+          statusIcon = CupertinoIcons.checkmark_circle;
           statusTitle = 'Safe to Wash';
+          statusSubtitle =
+              '${_basketItems.length} item${_basketItems.length == 1 ? '' : 's'} in basket';
           break;
         case LaundryStatus.Warning:
-          statusColor = Colors.amber.shade700;
-          statusIcon = Icons.warning_amber_rounded;
+          statusColor = const Color(0xFFD97706);
+          statusIcon = CupertinoIcons.exclamationmark_triangle;
           statusTitle = 'Warning';
+          statusSubtitle =
+              '${_basketItems.length} item${_basketItems.length == 1 ? '' : 's'} — check alerts below';
           break;
         case LaundryStatus.Critical:
-          statusColor = Colors.red.shade600;
-          statusIcon = Icons.dangerous_outlined;
+          statusColor = const Color(0xFFDC2626);
+          statusIcon = CupertinoIcons.xmark_circle;
           statusTitle = 'Critical Issue';
+          statusSubtitle =
+              '${_basketItems.length} item${_basketItems.length == 1 ? '' : 's'} — cannot wash together';
           break;
       }
     }
 
-    // Determine which items are already in the basket
     final Set<String> basketItemIds = _basketItems
         .map((e) => e['id'] as String)
         .toSet();
 
-    // Filter Documents for the grid
     final filteredDocs = _allWardrobeItems.where((doc) {
-      if (basketItemIds.contains(doc['id'])) {
-        return false; // Hide items already in the basket
-      }
+      if (basketItemIds.contains(doc['id'])) return false;
       final cat = doc['basic_info']?['category'] as String?;
       final sub = doc['basic_info']?['sub_category'] as String?;
       bool matchCategory =
@@ -388,7 +567,7 @@ class _LaundryScreenState extends State<LaundryScreen> {
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            // 1. The Main Title (Scrolls away)
+            // 1. Title (scrolls away)
             const SliverAppBar(
               pinned: false,
               floating: false,
@@ -399,75 +578,96 @@ class _LaundryScreenState extends State<LaundryScreen> {
               title: Text(
                 'Smart Laundry',
                 style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
                 ),
               ),
               actions: [GlobalWardrobeSelector(isActionItem: true)],
             ),
 
-            // 2. Sticky Status Header
+            // 2. Sticky Status Banner
             SliverPersistentHeader(
               pinned: true,
               delegate: _StatusHeaderDelegate(
-                height: 80.0,
+                height: 88.0,
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  height: 64.0, // Compact banner
-                  margin: const EdgeInsets.symmetric(horizontal: 16.0),
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  duration: const Duration(milliseconds: 350),
+                  curve: Curves.easeOutCubic,
+                  margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor,
-                    borderRadius: BorderRadius.circular(16.0),
+                    borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: statusColor.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
+                        color: statusColor.withOpacity(0.38),
+                        blurRadius: 20,
+                        spreadRadius: 0,
+                        offset: const Offset(0, 8),
                       ),
                     ],
                   ),
                   child: Row(
                     children: [
-                      Icon(statusIcon, color: Colors.white, size: 28),
+                      Icon(statusIcon, color: Colors.white, size: 24),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Text(
-                          statusTitle,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              statusTitle,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                            Text(
+                              statusSubtitle,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.72),
+                                fontSize: 12,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       if (_basketItems.isNotEmpty)
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
+                            horizontal: 12,
+                            vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(16),
+                            color: Colors.white.withOpacity(0.20),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.30),
+                            ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(
-                                Icons.thermostat,
+                                CupertinoIcons.thermometer,
                                 color: Colors.white,
-                                size: 16,
+                                size: 14,
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 5),
                               Text(
                                 'Max ${result.recommendedTemp}°C',
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
                                 ),
                               ),
                             ],
@@ -479,7 +679,7 @@ class _LaundryScreenState extends State<LaundryScreen> {
               ),
             ),
 
-            // 2. Explanations (Alerts)
+            // 3. Alerts
             if (_basketItems.isNotEmpty && result.alerts.isNotEmpty)
               SliverToBoxAdapter(
                 child: Padding(
@@ -493,44 +693,12 @@ class _LaundryScreenState extends State<LaundryScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        ...result.alerts.map(
-                          (alert) => Padding(
-                            padding: const EdgeInsets.only(bottom: 8.0),
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: statusColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: statusColor.withOpacity(0.3),
-                                ),
-                              ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 2.0),
-                                    child: Icon(
-                                      Icons.info_outline,
-                                      color: statusColor,
-                                      size: 18,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      alert,
-                                      style: TextStyle(
-                                        color: Colors.grey[800],
-                                        fontSize: 13,
-                                        height: 1.4,
-                                      ),
-                                      softWrap: true,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                        ...result.alerts.asMap().entries.map(
+                          (entry) => _AnimatedAlert(
+                            key: ValueKey(entry.value),
+                            alert: entry.value,
+                            color: statusColor,
+                            index: entry.key,
                           ),
                         ),
                         if (result.status == LaundryStatus.Warning ||
@@ -539,24 +707,49 @@ class _LaundryScreenState extends State<LaundryScreen> {
                             alignment: Alignment.centerRight,
                             child: Padding(
                               padding: const EdgeInsets.only(top: 4.0),
-                              child: OutlinedButton.icon(
-                                onPressed: () => _showAutoSplitBottomSheet(
+                              child: GestureDetector(
+                                onTap: () => _showAutoSplitBottomSheet(
                                   context,
                                   _basketItems,
                                 ),
-                                icon: const Icon(Icons.auto_awesome, size: 18),
-                                label: const Text(
-                                  'Auto-Split Load',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: statusColor,
-                                  side: BorderSide(
-                                    color: statusColor,
-                                    width: 1.5,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 10,
                                   ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.85),
+                                    borderRadius: BorderRadius.circular(22),
+                                    border: Border.all(
+                                      color: statusColor.withOpacity(0.30),
+                                      width: 1.5,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: statusColor.withOpacity(0.12),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.auto_awesome,
+                                        color: statusColor,
+                                        size: 15,
+                                      ),
+                                      const SizedBox(width: 7),
+                                      Text(
+                                        'Auto-Split Load',
+                                        style: TextStyle(
+                                          color: statusColor,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
@@ -568,54 +761,92 @@ class _LaundryScreenState extends State<LaundryScreen> {
                 ),
               ),
 
-            // 3. Virtual Basket & Filters
+            // 4. Virtual Basket & Filters
             SliverToBoxAdapter(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 8),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 20.0,
-                      vertical: 4.0,
-                    ),
-                    child: Text(
-                      'Virtual Basket',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
+                  const SizedBox(height: 12),
+                  // Section header
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'VIRTUAL BASKET',
+                          style: TextStyle(
+                            fontSize: 10,
+                            letterSpacing: 3,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black.withOpacity(0.35),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        if (_basketItems.isNotEmpty)
+                          const Text(
+                            'Tap to remove',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.black87,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-                  Container(
-                    height: 120,
+                  // Basket container
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    height: 128,
                     margin: const EdgeInsets.symmetric(horizontal: 16.0),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16.0),
+                      color: Colors.white.withOpacity(0.80),
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(
+                        color: _basketItems.isEmpty
+                            ? Colors.black.withOpacity(0.07)
+                            : statusColor.withOpacity(0.25),
+                        width: 1,
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
+                          color: _basketItems.isEmpty
+                              ? Colors.black.withOpacity(0.04)
+                              : statusColor.withOpacity(0.14),
+                          blurRadius: 20,
+                          spreadRadius: 0,
+                          offset: const Offset(0, 6),
                         ),
                       ],
                     ),
                     child: _basketItems.isEmpty
                         ? Center(
-                            child: Text(
-                              'Tap items below to add to the wash',
-                              style: TextStyle(
-                                color: Colors.grey.shade500,
-                                fontStyle: FontStyle.italic,
-                                fontSize: 13,
-                              ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.local_laundry_service,
+                                  size: 26,
+                                  color: Colors.black.withOpacity(0.18),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Tap items below to add to the wash',
+                                  style: TextStyle(
+                                    color: Colors.black.withOpacity(0.35),
+                                    fontStyle: FontStyle.italic,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
                             ),
                           )
                         : ListView.builder(
                             scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsets.all(8.0),
+                            physics: const BouncingScrollPhysics(),
+                            padding: const EdgeInsets.all(10.0),
                             itemCount: _basketItems.length,
                             itemBuilder: (context, index) {
                               final item = _basketItems[index];
@@ -625,17 +856,17 @@ class _LaundryScreenState extends State<LaundryScreen> {
                                   width: 94,
                                   margin: const EdgeInsets.only(right: 10.0),
                                   decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(14),
                                     boxShadow: [
                                       BoxShadow(
                                         color: Colors.black.withOpacity(0.08),
-                                        blurRadius: 4,
+                                        blurRadius: 8,
                                         offset: const Offset(0, 2),
                                       ),
                                     ],
                                   ),
                                   child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(14),
                                     child: Stack(
                                       fit: StackFit.expand,
                                       children: [
@@ -643,14 +874,43 @@ class _LaundryScreenState extends State<LaundryScreen> {
                                           imageUrl: item['imageUrl']
                                               ?.toString(),
                                         ),
+                                        // Gradient overlay
                                         Container(
-                                          color: Colors.black.withOpacity(0.35),
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              begin: Alignment.topCenter,
+                                              end: Alignment.bottomCenter,
+                                              colors: [
+                                                Colors.transparent,
+                                                Colors.black.withOpacity(0.50),
+                                              ],
+                                            ),
+                                          ),
                                         ),
-                                        const Center(
-                                          child: Icon(
-                                            Icons.remove_circle_outline,
-                                            color: Colors.white,
-                                            size: 28,
+                                        // Remove icon
+                                        Positioned(
+                                          bottom: 8,
+                                          left: 0,
+                                          right: 0,
+                                          child: Center(
+                                            child: Container(
+                                              padding: const EdgeInsets.all(4),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withOpacity(
+                                                  0.25,
+                                                ),
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color: Colors.white
+                                                      .withOpacity(0.5),
+                                                ),
+                                              ),
+                                              child: const Icon(
+                                                CupertinoIcons.minus,
+                                                color: Colors.white,
+                                                size: 12,
+                                              ),
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -661,15 +921,33 @@ class _LaundryScreenState extends State<LaundryScreen> {
                             },
                           ),
                   ),
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(20.0, 24.0, 20.0, 4.0),
-                    child: Text(
-                      'My Wardrobe',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
+
+                  // My Wardrobe header
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 4),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'MY WARDROBE',
+                          style: TextStyle(
+                            fontSize: 10,
+                            letterSpacing: 3,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black.withOpacity(0.35),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          'Select to add to basket',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.black87,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   _buildFiltersWidget(),
@@ -678,93 +956,57 @@ class _LaundryScreenState extends State<LaundryScreen> {
               ),
             ),
 
-            // 4. Wardrobe Grid
+            // 5. Wardrobe Grid
             filteredDocs.isEmpty
                 ? SliverToBoxAdapter(
                     child: Center(
                       child: Padding(
-                        padding: const EdgeInsets.only(top: 40.0),
-                        child: Text(
-                          'No available items match the criteria.',
-                          style: TextStyle(
-                            color: Colors.grey.shade500,
-                            fontSize: 14,
-                          ),
+                        padding: const EdgeInsets.only(top: 48.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.05),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                CupertinoIcons.tray,
+                                size: 32,
+                                color: Colors.black.withOpacity(0.25),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            const Text(
+                              'No items match the filters',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black45,
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   )
                 : SliverPadding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 8.0,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
                     sliver: SliverGrid(
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 3,
-                            crossAxisSpacing: 4.0,
-                            mainAxisSpacing: 6.0,
+                            crossAxisSpacing: 8.0,
+                            mainAxisSpacing: 8.0,
                             childAspectRatio: 0.75,
                           ),
                       delegate: SliverChildBuilderDelegate((context, index) {
                         final item = filteredDocs[index];
-                        return GestureDetector(
+                        return _WardrobeGridItem(
+                          item: item,
                           onTap: () => _addToBasket(item),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.06),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(16),
-                              child: Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(2.0),
-                                    child: SmartClothingImage(
-                                      imageUrl: item['imageUrl']?.toString(),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    right: 6,
-                                    bottom: 6,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.blueAccent.withOpacity(
-                                          0.95,
-                                        ),
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withOpacity(
-                                              0.2,
-                                            ),
-                                            blurRadius: 4,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ],
-                                      ),
-                                      padding: const EdgeInsets.all(6),
-                                      child: const Icon(
-                                        Icons.add,
-                                        color: Colors.white,
-                                        size: 16,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
                         );
                       }, childCount: filteredDocs.length),
                     ),
@@ -776,7 +1018,6 @@ class _LaundryScreenState extends State<LaundryScreen> {
   }
 
   Widget _buildFiltersWidget() {
-    // 1. Extract Categories
     final Set<String> categories = {'All'};
     for (var doc in _allWardrobeItems) {
       final cat = doc['basic_info']?['category'] as String?;
@@ -788,12 +1029,10 @@ class _LaundryScreenState extends State<LaundryScreen> {
     categoryList.remove('All');
     categoryList.insert(0, 'All');
 
-    // Keep selected category valid
     if (!categories.contains(_selectedCategory)) {
       _selectedCategory = 'All';
     }
 
-    // 2. Extract Subcategories based on selected category
     final Set<String> subCategories = {'All'};
     if (_selectedCategory != 'All') {
       for (var doc in _allWardrobeItems) {
@@ -810,20 +1049,19 @@ class _LaundryScreenState extends State<LaundryScreen> {
     subCategoryList.remove('All');
     subCategoryList.insert(0, 'All');
 
-    // Keep selected subcategory valid
     if (!subCategories.contains(_selectedSubCategory)) {
       _selectedSubCategory = 'All';
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min, // Essential for space optimization
+      mainAxisSize: MainAxisSize.min,
       children: [
         const SizedBox(height: 12),
         _buildChoiceChipRow(categoryList, _selectedCategory, (val) {
           setState(() {
             _selectedCategory = val;
-            _selectedSubCategory = 'All'; // Reset sub on category change
+            _selectedSubCategory = 'All';
           });
         }),
         if (_selectedCategory != 'All')
@@ -843,10 +1081,11 @@ class _LaundryScreenState extends State<LaundryScreen> {
     bool isSecondary = false,
   }) {
     return SizedBox(
-      height: 40, // Space optimized height
+      height: 44,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         itemCount: items.length,
         itemBuilder: (context, index) {
           final item = items[index];
@@ -854,41 +1093,53 @@ class _LaundryScreenState extends State<LaundryScreen> {
 
           return Padding(
             padding: const EdgeInsets.only(right: 8),
-            child: ChoiceChip(
-              label: Text(
-                item,
-                style: TextStyle(
+            child: GestureDetector(
+              onTap: () => onSelected(item),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 7,
+                ),
+                decoration: BoxDecoration(
                   color: isSelected
-                      ? (isSecondary ? Colors.white : Colors.white)
-                      : Colors.black87,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                  fontSize: isSecondary ? 12 : 13,
+                      ? (isSecondary ? Colors.white : Colors.black87)
+                      : Colors.white.withOpacity(0.85),
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(
+                    color: isSelected
+                        ? (isSecondary ? Colors.black87 : Colors.transparent)
+                        : Colors.black.withOpacity(0.10),
+                    width: isSelected && isSecondary ? 2.0 : 1.0,
+                  ),
+                  boxShadow: isSelected && !isSecondary
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.20),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                ),
+                child: Text(
+                  item,
+                  style: TextStyle(
+                    color: isSelected
+                        ? (isSecondary ? Colors.black87 : Colors.white)
+                        : Colors.black87,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    fontSize: isSecondary ? 12 : 13,
+                    letterSpacing: -0.1,
+                  ),
                 ),
               ),
-              selected: isSelected,
-              showCheckmark: false,
-              selectedColor: isSecondary
-                  ? Colors.blueGrey.shade700
-                  : Colors.black,
-              backgroundColor: isSecondary
-                  ? Colors.grey.shade100
-                  : Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(
-                  color: isSelected
-                      ? Colors.transparent
-                      : (isSecondary
-                            ? Colors.grey.shade300
-                            : Colors.grey.shade300),
-                  width: 1.0,
-                ),
-              ),
-              onSelected: (bool selected) {
-                if (selected) {
-                  onSelected(item);
-                }
-              },
             ),
           );
         },
@@ -896,6 +1147,190 @@ class _LaundryScreenState extends State<LaundryScreen> {
     );
   }
 }
+
+// Wardrobe grid item with tap animation
+
+class _WardrobeGridItem extends StatefulWidget {
+  final Map<String, dynamic> item;
+  final VoidCallback onTap;
+
+  const _WardrobeGridItem({required this.item, required this.onTap});
+
+  @override
+  State<_WardrobeGridItem> createState() => _WardrobeGridItemState();
+}
+
+class _WardrobeGridItemState extends State<_WardrobeGridItem> {
+  double _scale = 1.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _scale = 0.94),
+      onTapUp: (_) {
+        setState(() => _scale = 1.0);
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _scale = 1.0),
+      child: AnimatedScale(
+        scale: _scale,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.07),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(4.0),
+                  child: SmartClothingImage(
+                    imageUrl: widget.item['imageUrl']?.toString(),
+                  ),
+                ),
+                Positioned(
+                  right: 7,
+                  bottom: 7,
+                  child: Container(
+                    padding: const EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                      color: Colors.black87,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.25),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      CupertinoIcons.add,
+                      color: Colors.white,
+                      size: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Animated alert widget
+
+class _AnimatedAlert extends StatefulWidget {
+  final String alert;
+  final Color color;
+  final int index;
+
+  const _AnimatedAlert({
+    super.key,
+    required this.alert,
+    required this.color,
+    required this.index,
+  });
+
+  @override
+  State<_AnimatedAlert> createState() => _AnimatedAlertState();
+}
+
+class _AnimatedAlertState extends State<_AnimatedAlert>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _opacity;
+  late Animation<Offset> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _opacity = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 0.25),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
+
+    Future.delayed(Duration(milliseconds: widget.index * 80), () {
+      if (mounted) _ctrl.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacity,
+      child: SlideTransition(
+        position: _slide,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: widget.color.withOpacity(0.07),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: widget.color.withOpacity(0.20)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: widget.color.withOpacity(0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    CupertinoIcons.info,
+                    color: widget.color,
+                    size: 13,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    widget.alert,
+                    style: TextStyle(
+                      color: Colors.grey[800],
+                      fontSize: 13,
+                      height: 1.45,
+                    ),
+                    softWrap: true,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Sticky header delegate
 
 class _StatusHeaderDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;

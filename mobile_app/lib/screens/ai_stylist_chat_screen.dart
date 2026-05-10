@@ -13,7 +13,7 @@ import '../utils/outfit_sorting_utils.dart';
 import 'virtual_dressing_room_screen.dart';
 import '../widgets/smart_clothing_image.dart';
 
-// ─── Design tokens ────────────────────────────────────────────────────────────
+// Design tokens
 const _kBgColor = Color(0xFFF4F3F0);
 const _kPurple = Color(0xFF4F46E5);
 const _kPurpleLight = Color(0xFFEEEDF8);
@@ -22,8 +22,6 @@ const _kGlass = Color(0xCCFFFFFF); // white 80%
 const _kGlassBorder = Color(0xE5FFFFFF); // white 90%
 const _kBlob1 = Color(0x384F46E5); // indigo blob ~22%
 const _kBlob2 = Color(0x206352D2); // violet accent blob
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 class ChatMessage {
   final String role;
@@ -55,7 +53,7 @@ class ChatMessage {
   });
 }
 
-// ─── Feedback buttons ─────────────────────────────────────────────────────────
+// Feedback buttons
 
 class _FeedbackButtons extends StatefulWidget {
   final ChatMessage message;
@@ -343,7 +341,7 @@ class _FeedbackButtonsState extends State<_FeedbackButtons> {
   }
 }
 
-// ─── Blob painter for animated background ─────────────────────────────────────
+// Blob painter for animated background
 
 class _BlobPainter extends CustomPainter {
   final double t; // animation value 0..1
@@ -354,13 +352,13 @@ class _BlobPainter extends CustomPainter {
     final p1 = Paint()..color = _kBlob1;
     final p2 = Paint()..color = _kBlob2;
 
-    // Blob principal indigo — top-right, mediu ca în mockup
+    // Principal indigo blob
     canvas.drawCircle(
       Offset(size.width * 0.90 + 10 * (0.5 - t), -size.height * 0.02 + 8 * t),
       size.width * 0.38,
       p1,
     );
-    // Blob secundar violet — top-left, mai mic
+    // Secondary violet blob
     canvas.drawCircle(
       Offset(size.width * 0.04 - 6 * t, size.height * 0.10 + 10 * (0.5 - t)),
       size.width * 0.22,
@@ -372,7 +370,7 @@ class _BlobPainter extends CustomPainter {
   bool shouldRepaint(_BlobPainter old) => old.t != t;
 }
 
-// ─── Animated blob background ─────────────────────────────────────────────────
+// Animated blob background
 
 class _AnimatedBlobBg extends StatefulWidget {
   final Widget child;
@@ -408,7 +406,6 @@ class _AnimatedBlobBgState extends State<_AnimatedBlobBg>
       builder: (context, child) {
         return Stack(
           children: [
-            // Solid bg so blobs have something to sit on
             Positioned.fill(child: ColoredBox(color: _kBgColor)),
             // Blobs — CustomPaint needs a child to inherit constraints
             Positioned.fill(
@@ -429,7 +426,7 @@ class _AnimatedBlobBgState extends State<_AnimatedBlobBg>
   }
 }
 
-// ─── Typing indicator ─────────────────────────────────────────────────────────
+// Typing indicator
 
 class _TypingIndicator extends StatefulWidget {
   const _TypingIndicator();
@@ -527,7 +524,7 @@ class _TypingIndicatorState extends State<_TypingIndicator>
   }
 }
 
-// ─── Score badge ──────────────────────────────────────────────────────────────
+// Score badge
 
 class _ScoreBadge extends StatelessWidget {
   final int score;
@@ -585,7 +582,7 @@ class _ScoreBadge extends StatelessWidget {
   }
 }
 
-// ─── Truncated text with Read more ───────────────────────────────────────────
+// Truncated text with Read more
 
 class _TruncatedText extends StatefulWidget {
   final String text;
@@ -636,7 +633,7 @@ class _TruncatedTextState extends State<_TruncatedText> {
   }
 }
 
-// ─── Main screen ──────────────────────────────────────────────────────────────
+// Main screen
 
 class AiStylistChatScreen extends StatefulWidget {
   const AiStylistChatScreen({super.key});
@@ -1014,7 +1011,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
     }
   }
 
-  // ─── Empty state ──────────────────────────────────────────────────────────
+  // Empty state
 
   Widget _buildEmptyState() {
     final suggestions = [
@@ -1216,7 +1213,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
     );
   }
 
-  // ─── Message bubble ───────────────────────────────────────────────────────
+  // Message bubble
 
   Widget _buildMessage(ChatMessage message) {
     final isUser = message.role == 'user';
@@ -1313,7 +1310,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
     );
   }
 
-  // ─── Outfit card ──────────────────────────────────────────────────────────
+  // Outfit card
 
   Widget _buildOutfitCard(
     ChatMessage message,
@@ -1352,12 +1349,12 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Header ───────────────────────────────────────────────
+                  // Header
                   Padding(
                     padding: const EdgeInsets.fromLTRB(14, 12, 12, 0),
                     child: Row(
                       children: [
-                        // Icon + titlu — stânga
+                        // Icon + title
                         Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
@@ -1381,7 +1378,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
                           ),
                         ),
                         const Spacer(),
-                        // Score + feedback — dreapta
+                        // Score + feedback
                         if (message.overallScore != null)
                           GestureDetector(
                             onTap: message.scores != null
@@ -1408,11 +1405,11 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
                     ),
                   ),
 
-                  // ── Explanation — truncated with Read more ────────────────
+                  // Explanation — truncated with Read more
                   if (message.text.isNotEmpty)
                     _TruncatedText(text: message.text),
 
-                  // ── Items scroll ─────────────────────────────────────────
+                  // Items scroll
                   GestureDetector(
                     onTap: () => _showVerticalPreview(context, items),
                     behavior: HitTestBehavior.opaque,
@@ -1499,7 +1496,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
                     ),
                   ),
 
-                  // ── Action buttons — new layout ───────────────────────────
+                  // Action buttons
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
                     child: Column(
@@ -1676,7 +1673,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
     );
   }
 
-  // ─── Input bar ────────────────────────────────────────────────────────────
+  // Input bar
 
   Widget _buildInputBar() {
     return ClipRect(
@@ -1768,7 +1765,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
     );
   }
 
-  // ─── Full build ───────────────────────────────────────────────────────────
+  // Full build
 
   @override
   Widget build(BuildContext context) {
@@ -1804,7 +1801,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
       ),
       body: Stack(
         children: [
-          // ── Background blobs — always visible in chat view ──────────────
+          // Background blobs
           Positioned(
             top: -70,
             right: -50,
@@ -1872,8 +1869,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
     );
   }
 
-  // ─── Helpers ──────────────────────────────────────────────────────────────
-
+  // Helpers
   int _getItemFlex(Map<String, dynamic> item) {
     final info = item['metadata']?['basic_info'] ?? item['basic_info'] ?? {};
     String cat = '';

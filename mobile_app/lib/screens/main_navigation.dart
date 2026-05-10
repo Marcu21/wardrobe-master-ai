@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
+import 'add_clothing_screen.dart';
 import 'wardrobe_gallery_screen.dart';
 import 'lookbook_screen.dart';
 import 'laundry_screen.dart';
@@ -28,6 +29,17 @@ class _MainNavigationState extends State<MainNavigation> {
       extendBody: true,
       body: IndexedStack(index: _selectedIndex, children: _screens),
       bottomNavigationBar: _buildBottomBar(),
+      floatingActionButton: _selectedIndex == 1
+          ? FloatingActionButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AddClothingScreen()),
+              ),
+              backgroundColor: Colors.black87,
+              elevation: 4,
+              child: const Icon(Icons.add, color: Colors.white, size: 22),
+            )
+          : null,
     );
   }
 

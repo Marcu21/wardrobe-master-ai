@@ -1,12 +1,21 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:dotted_border/dotted_border.dart';
 import 'package:mobile_app/services/api_service.dart';
 import 'package:mobile_app/services/firebase_service.dart';
 import 'package:mobile_app/services/wardrobe_state_service.dart';
 import 'dart:convert';
+
+// Design tokens
+const _kBg = Color(0xFFF4F3F0);
+const _kPurple = Color(0xFF4F46E5);
+const _kPurpleLight = Color(0xFFEEEDF8);
+const _kPurpleMid = Color(0xFF8B85D4);
+const _kGlass = Color(0xCCFFFFFF);
+const _kGlassBorder = Color(0xE5FFFFFF);
 
 class AddClothingScreen extends StatefulWidget {
   final Map<String, dynamic>? initialAnalysisResult;
@@ -61,32 +70,6 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
   final TextEditingController _maxTempController = TextEditingController();
 
   @override
-  void dispose() {
-    _categoryController.dispose();
-    _subCategoryController.dispose();
-    _materialController.dispose();
-    _primaryColorController.dispose();
-    _patternController.dispose();
-
-    _brandController.dispose();
-    _priceController.dispose();
-    _currencyController.dispose();
-    _purchaseDateController.dispose();
-
-    _fitController.dispose();
-    _lengthController.dispose();
-    _necklineController.dispose();
-    _sleeveLengthController.dispose();
-    _styleOccasionsController.dispose();
-    _seasonalityController.dispose();
-
-    _careInstructionsController.dispose();
-    _colorGroupController.dispose();
-    _maxTempController.dispose();
-    super.dispose();
-  }
-
-  @override
   void initState() {
     super.initState();
     _selectedWardrobeId = wardrobeStateService.activeWardrobeId;
@@ -101,7 +84,29 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     }
   }
 
-  // Helpers for list-based fields
+  @override
+  void dispose() {
+    _categoryController.dispose();
+    _subCategoryController.dispose();
+    _materialController.dispose();
+    _primaryColorController.dispose();
+    _patternController.dispose();
+    _brandController.dispose();
+    _priceController.dispose();
+    _currencyController.dispose();
+    _purchaseDateController.dispose();
+    _fitController.dispose();
+    _lengthController.dispose();
+    _necklineController.dispose();
+    _sleeveLengthController.dispose();
+    _styleOccasionsController.dispose();
+    _seasonalityController.dispose();
+    _careInstructionsController.dispose();
+    _colorGroupController.dispose();
+    _maxTempController.dispose();
+    super.dispose();
+  }
+
   List<String> _controllerToList(
     TextEditingController controller, {
     String separator = ',',
@@ -129,7 +134,6 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
         maxHeight: 1920,
         imageQuality: 95,
       );
-
       if (pickedFile != null) {
         setState(() {
           if (isTag) {
@@ -140,86 +144,94 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
+      }
     }
   }
 
   void _showImageSourceModal(bool isTag) {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (BuildContext context) {
-        return Container(
-          padding: EdgeInsets.only(
-            top: 20,
-            left: 20,
-            right: 20,
-            bottom: 20 + MediaQuery.of(context).padding.bottom,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                isTag ? 'Select Tag Photo' : 'Select Item Photo',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              padding: EdgeInsets.fromLTRB(
+                24,
+                8,
+                24,
+                24 + MediaQuery.of(ctx).padding.bottom,
               ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.92),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28),
+                ),
+                border: Border.all(color: Colors.white.withOpacity(0.9)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildSourceOption(
-                    icon: Icons.camera_alt_outlined,
-                    label: 'Camera',
-                    onTap: () {
-                      Navigator.pop(context);
-                      _pickImage(isTag, ImageSource.camera);
-                    },
+                  // Drag handle
+                  Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                  _buildSourceOption(
-                    icon: Icons.photo_library_outlined,
-                    label: 'Gallery',
-                    onTap: () {
-                      Navigator.pop(context);
-                      _pickImage(isTag, ImageSource.gallery);
-                    },
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      isTag ? 'Care Tag Photo' : 'Item Photo',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.black87,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _SourceOption(
+                          icon: CupertinoIcons.camera_fill,
+                          label: 'Camera',
+                          onTap: () {
+                            Navigator.pop(ctx);
+                            _pickImage(isTag, ImageSource.camera);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _SourceOption(
+                          icon: CupertinoIcons.photo_on_rectangle,
+                          label: 'Gallery',
+                          onTap: () {
+                            Navigator.pop(ctx);
+                            _pickImage(isTag, ImageSource.gallery);
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
         );
       },
-    );
-  }
-
-  Widget _buildSourceOption({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(15),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, size: 30, color: Colors.black87),
-          ),
-          const SizedBox(height: 8),
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
-        ],
-      ),
     );
   }
 
@@ -230,11 +242,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
       );
       return;
     }
-
-    setState(() {
-      _isLoading = true;
-    });
-
+    setState(() => _isLoading = true);
     try {
       final result = await _apiService.processItem(
         _itemImage!,
@@ -247,13 +255,13 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Analysis failed: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Analysis failed: $e')));
+      }
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -269,7 +277,6 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
             (metadata['basic_info']['primary_colors'] as List).join(', ');
       }
     }
-
     if (metadata['styling_info'] != null) {
       _fitController.text = metadata['styling_info']['fit'] ?? '';
       _lengthController.text = metadata['styling_info']['length'] ?? '';
@@ -285,7 +292,6 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
             (metadata['styling_info']['seasonality'] as List).join(', ');
       }
     }
-
     if (metadata['laundry_info'] != null) {
       if (metadata['laundry_info']['care_instructions'] != null) {
         _careInstructionsController.text =
@@ -296,7 +302,6 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
       _maxTempController.text =
           metadata['laundry_info']['max_temp_celsius']?.toString() ?? '';
     }
-
     if (metadata['sustainability_info'] != null) {
       _brandController.text = metadata['sustainability_info']['brand'] ?? '';
       _priceController.text =
@@ -308,514 +313,1361 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50], // Light background
-      appBar: AppBar(
-        title: const Text(
-          'Add New Item',
-          style: TextStyle(color: Colors.black),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (_analysisResult == null) ...[
-                _buildImageUploadSection(),
-                const SizedBox(height: 30),
-                _buildAnalyzeButton(),
-              ] else ...[
-                _buildResultsView(),
-              ],
-            ],
+  Future<void> _saveItem() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black.withOpacity(0.4),
+      builder: (_) => Center(
+        child: Material(
+          type: MaterialType.transparency,
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 40),
+            width: double.infinity,
+            constraints: const BoxConstraints(maxWidth: 340),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(32),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(24, 40, 24, 32),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.90),
+                    borderRadius: BorderRadius.circular(32),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.8),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _kPurple.withOpacity(0.15),
+                        blurRadius: 40,
+                        spreadRadius: 10,
+                        offset: const Offset(0, 12),
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 15,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Animated rings and icon
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Container(
+                            width: 72,
+                            height: 72,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: _kPurple.withOpacity(0.08),
+                              border: Border.all(
+                                color: _kPurple.withOpacity(0.15),
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 52,
+                            height: 52,
+                            child: CircularProgressIndicator(
+                              color: _kPurple.withOpacity(0.3),
+                              strokeWidth: 2,
+                            ),
+                          ),
+                          const SizedBox(
+                            width: 36,
+                            height: 36,
+                            child: CircularProgressIndicator(
+                              color: _kPurple,
+                              strokeWidth: 2.5,
+                            ),
+                          ),
+                          const Icon(
+                            Icons.auto_awesome,
+                            color: _kPurple,
+                            size: 16,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Saving to wardrobe',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black87,
+                          letterSpacing: -0.4,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Finding the perfect hanger...',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.black.withOpacity(0.5),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),
     );
+    try {
+      Map<String, dynamic> finalMetadata = jsonDecode(
+        jsonEncode(_analysisResult!['metadata'] ?? {}),
+      );
+
+      finalMetadata['basic_info'] = finalMetadata['basic_info'] ?? {};
+      finalMetadata['basic_info']['category'] = _categoryController.text;
+      finalMetadata['basic_info']['sub_category'] = _subCategoryController.text;
+      finalMetadata['basic_info']['material'] = _materialController.text;
+      finalMetadata['basic_info']['pattern'] = _patternController.text;
+      finalMetadata['basic_info']['primary_colors'] = _controllerToList(
+        _primaryColorController,
+      );
+
+      finalMetadata['sustainability_info'] =
+          finalMetadata['sustainability_info'] ?? {};
+      finalMetadata['sustainability_info']['brand'] = _brandController.text;
+      final price = double.tryParse(_priceController.text.replaceAll(',', '.'));
+      finalMetadata['sustainability_info']['price'] =
+          price ??
+          (_priceController.text.isEmpty ? null : _priceController.text);
+      finalMetadata['sustainability_info']['currency'] =
+          _currencyController.text;
+      finalMetadata['sustainability_info']['purchase_date'] =
+          _purchaseDateController.text;
+
+      finalMetadata['styling_info'] = finalMetadata['styling_info'] ?? {};
+      finalMetadata['styling_info']['fit'] = _fitController.text;
+      finalMetadata['styling_info']['length'] = _lengthController.text;
+      finalMetadata['styling_info']['neckline'] = _necklineController.text;
+      finalMetadata['styling_info']['sleeve_length'] =
+          _sleeveLengthController.text;
+      finalMetadata['styling_info']['style_occasions'] = _controllerToList(
+        _styleOccasionsController,
+      );
+      finalMetadata['styling_info']['seasonality'] = _controllerToList(
+        _seasonalityController,
+      );
+
+      finalMetadata['laundry_info'] = finalMetadata['laundry_info'] ?? {};
+      finalMetadata['laundry_info']['care_instructions'] = _controllerToList(
+        _careInstructionsController,
+        separator: '\n',
+      );
+      finalMetadata['laundry_info']['color_group'] = _colorGroupController.text;
+      final temp = int.tryParse(_maxTempController.text);
+      finalMetadata['laundry_info']['max_temp_celsius'] =
+          temp ??
+          (_maxTempController.text.isEmpty ? null : _maxTempController.text);
+
+      final Uint8List imageBytes = base64Decode(
+        _analysisResult!['image_base64'],
+      );
+      final String? downloadUrl = await FirebaseService().uploadImageToStorage(
+        imageBytes,
+        'items',
+      );
+
+      if (downloadUrl == null) {
+        throw Exception('Failed to upload image to storage.');
+      }
+
+      await FirebaseService().saveItem(
+        imageUrl: downloadUrl,
+        metadata: finalMetadata,
+        wardrobeId: _selectedWardrobeId,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Item saved to Wardrobe!'),
+            backgroundColor: const Color(0xFF16A34A),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save: $e'),
+            backgroundColor: const Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) Navigator.pop(context);
+    }
   }
 
-  Widget _buildImageUploadSection() {
-    return Column(
-      children: [
-        _buildUploadCard(
-          title: 'Clothing Item',
-          image: _itemImage,
-          onTap: () => _showImageSourceModal(false),
-          onClear: () => setState(() => _itemImage = null),
-          isMain: true,
+  @override
+  Widget build(BuildContext context) {
+    // Full-screen loading — identical pattern to shopping_assistant_screen
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: _kBg,
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          title: const Text(
+            'Add New Item',
+            style: TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.5,
+            ),
+          ),
+          centerTitle: true,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          foregroundColor: Colors.black87,
+          leading: IconButton(
+            icon: const Icon(CupertinoIcons.back, color: Colors.black87),
+            onPressed: () => Navigator.pop(context),
+          ),
         ),
-        const SizedBox(height: 20),
-        _buildUploadCard(
-          title: 'Care Tag (Optional)',
-          image: _tagImage,
-          onTap: () => _showImageSourceModal(true),
-          onClear: () => setState(() => _tagImage = null),
-          isMain: false,
+        body: Stack(
+          children: [
+            // Blobs
+            Positioned(
+              top: -60,
+              right: -40,
+              child: IgnorePointer(
+                child: ImageFiltered(
+                  imageFilter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+                  child: Container(
+                    width: 200,
+                    height: 200,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0x384F46E5),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 80,
+              left: -40,
+              child: IgnorePointer(
+                child: ImageFiltered(
+                  imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                  child: Container(
+                    width: 140,
+                    height: 140,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0x206352D2),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Double ring spinner
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      duration: const Duration(milliseconds: 500),
+                      curve: Curves.easeOut,
+                      builder: (context, v, child) =>
+                          Opacity(opacity: v, child: child),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Container(
+                            width: 96,
+                            height: 96,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: _kPurple.withOpacity(0.07),
+                              border: Border.all(
+                                color: _kPurple.withOpacity(0.15),
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 64,
+                            height: 64,
+                            child: CircularProgressIndicator(
+                              color: _kPurple.withOpacity(0.25),
+                              strokeWidth: 1.5,
+                            ),
+                          ),
+                          const SizedBox(
+                            width: 44,
+                            height: 44,
+                            child: CircularProgressIndicator(
+                              color: _kPurple,
+                              strokeWidth: 2.5,
+                            ),
+                          ),
+                          const Icon(
+                            Icons.auto_awesome,
+                            color: _kPurple,
+                            size: 22,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 36),
+
+                    // Title
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      duration: const Duration(milliseconds: 600),
+                      curve: Curves.easeOut,
+                      builder: (context, v, child) =>
+                          Opacity(opacity: v, child: child),
+                      child: const Text(
+                        'Analyzing your item…',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black87,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // Animated steps
+                    _AnimatedLoadingStep(
+                      icon: CupertinoIcons.camera_viewfinder,
+                      label: 'Reading the item',
+                      delay: const Duration(milliseconds: 200),
+                    ),
+                    const SizedBox(height: 14),
+                    _AnimatedLoadingStep(
+                      icon: CupertinoIcons.tag,
+                      label: 'Identifying category & brand',
+                      delay: const Duration(milliseconds: 700),
+                    ),
+                    const SizedBox(height: 14),
+                    _AnimatedLoadingStep(
+                      icon: CupertinoIcons.color_filter,
+                      label: 'Extracting colors & style',
+                      delay: const Duration(milliseconds: 1200),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: _analysisResult == null ? _kBg : Colors.grey[50],
+      extendBodyBehindAppBar: _analysisResult == null,
+      appBar: _analysisResult != null
+          ? AppBar(
+              title: const Text(
+                'Review & Save',
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              centerTitle: true,
+              backgroundColor: Colors.grey[50]!.withOpacity(0.9),
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              foregroundColor: Colors.black87,
+              leading: IconButton(
+                icon: const Icon(CupertinoIcons.back, color: Colors.black87),
+                onPressed: () => Navigator.pop(context),
+              ),
+            )
+          : null,
+      body: _analysisResult == null
+          ? SafeArea(
+              top: false,
+              child: CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  SliverAppBar(
+                    pinned: false,
+                    floating: false,
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    foregroundColor: Colors.black87,
+                    leading: IconButton(
+                      icon: const Icon(
+                        CupertinoIcons.back,
+                        color: Colors.black87,
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    title: const Text(
+                      'Add New Item',
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    centerTitle: true,
+                  ),
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        _buildUploadSection(),
+                        const SizedBox(height: 24),
+                        _buildAnalyzeButton(),
+                      ]),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : SafeArea(
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.easeOutCubic,
+                builder: (context, v, child) => Opacity(
+                  opacity: v,
+                  child: Transform.translate(
+                    offset: Offset(0, 24 * (1 - v)),
+                    child: child,
+                  ),
+                ),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                  child: _buildResultsView(),
+                ),
+              ),
+            ),
+    );
+  }
+
+  // ─── Upload section ──────────────────────────────────────────────────────
+
+  Widget _buildUploadSection() {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        // Blobs
+        Positioned(
+          top: -80,
+          right: -60,
+          child: IgnorePointer(
+            child: ImageFiltered(
+              imageFilter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Color(0x384F46E5),
+                ),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          top: 60,
+          left: -50,
+          child: IgnorePointer(
+            child: ImageFiltered(
+              imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+              child: Container(
+                width: 140,
+                height: 140,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Color(0x206352D2),
+                ),
+              ),
+            ),
+          ),
+        ),
+        // Content
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Hero upload
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.0, end: 1.0),
+              duration: const Duration(milliseconds: 700),
+              curve: Curves.easeOutCubic,
+              builder: (_, v, child) => Transform.translate(
+                offset: Offset(0, 20 * (1 - v)),
+                child: Opacity(opacity: v, child: child),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Label
+                  Text(
+                    'CLOTHING ITEM',
+                    style: TextStyle(
+                      fontSize: 10,
+                      letterSpacing: 3,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black.withOpacity(0.35),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Add a photo\nto get started.',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black87,
+                      height: 1.15,
+                      letterSpacing: -0.7,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildUploadCard(
+                    image: _itemImage,
+                    isMain: true,
+                    onTap: () => _showImageSourceModal(false),
+                    onClear: () => setState(() => _itemImage = null),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Tag upload (secondary)
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.0, end: 1.0),
+              duration: const Duration(milliseconds: 800),
+              curve: Curves.easeOutCubic,
+              builder: (_, v, child) => Transform.translate(
+                offset: Offset(0, 16 * (1 - v)),
+                child: Opacity(opacity: v, child: child),
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.black.withOpacity(0.06)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    // Tag image area
+                    GestureDetector(
+                      onTap: _tagImage == null
+                          ? () => _showImageSourceModal(true)
+                          : null,
+                      child: Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          color: _tagImage != null
+                              ? Colors.transparent
+                              : Colors.black.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: Colors.black.withOpacity(0.08),
+                          ),
+                        ),
+                        child: _tagImage != null
+                            ? Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(14),
+                                    child: Image.file(
+                                      _tagImage!,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  Positioned(
+                                    top: 4,
+                                    right: 4,
+                                    child: GestureDetector(
+                                      onTap: () =>
+                                          setState(() => _tagImage = null),
+                                      child: Container(
+                                        width: 20,
+                                        height: 20,
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.55),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.close,
+                                          size: 12,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : const Icon(
+                                CupertinoIcons.tag,
+                                size: 26,
+                                color: Colors.black38,
+                              ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Care Tag',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.black87,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            'Optional — helps AI read laundry instructions accurately.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black.withOpacity(0.45),
+                              height: 1.4,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    if (_tagImage == null)
+                      GestureDetector(
+                        onTap: () => _showImageSourceModal(true),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 9,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.80),
+                            borderRadius: BorderRadius.circular(22),
+                            border: Border.all(
+                              color: Colors.black.withOpacity(0.10),
+                            ),
+                          ),
+                          child: const Text(
+                            'Add',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
 
   Widget _buildUploadCard({
-    required String title,
-    File? image,
+    required File? image,
+    required bool isMain,
     required VoidCallback onTap,
     required VoidCallback onClear,
-    bool isMain = false,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
+    return GestureDetector(
+      onTap: image == null ? onTap : null,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 400),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeIn,
+        transitionBuilder: (child, animation) => FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.95, end: 1.0).animate(animation),
+            child: child,
           ),
         ),
-        const SizedBox(height: 10),
-        GestureDetector(
-          onTap: image == null ? onTap : null,
-          child: Container(
-            height: isMain ? 250 : 150,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+        child: image != null
+            ? Container(
+                key: ValueKey(image.path),
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _kPurple.withOpacity(0.12),
+                      blurRadius: 32,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 12),
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.07),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: image != null
-                ? Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: Image.file(image, fit: BoxFit.cover),
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: Image.file(
+                        image,
+                        fit: BoxFit.contain,
+                        width: double.infinity,
                       ),
-                      Positioned(
-                        top: 10,
-                        right: 10,
-                        child: GestureDetector(
-                          onTap: onClear,
-                          child: Container(
-                            padding: const EdgeInsets.all(5),
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.close,
-                              size: 20,
-                              color: Colors.black,
-                            ),
+                    ),
+                    // Change photo button (bottom left)
+                    Positioned(
+                      bottom: 14,
+                      left: 14,
+                      child: GestureDetector(
+                        onTap: onTap,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 9,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(22),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.18),
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(
+                                CupertinoIcons.camera,
+                                size: 13,
+                                color: Colors.black87,
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                'Change',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                    ],
-                  )
-                : DottedBorder(
-                    borderType: BorderType.RRect,
-                    radius: const Radius.circular(20),
-                    dashPattern: const [8, 4],
-                    color: Colors.grey.shade400,
-                    strokeWidth: 2,
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            isMain
-                                ? Icons.add_a_photo_outlined
-                                : Icons.tag_outlined,
-                            size: 40,
-                            color: Colors.grey.shade400,
+                    ),
+                    // Remove button (top right)
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: GestureDetector(
+                        onTap: onClear,
+                        child: Container(
+                          width: 30,
+                          height: 30,
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.45),
+                            shape: BoxShape.circle,
                           ),
-                          const SizedBox(height: 10),
-                          Text(
-                            isMain ? 'Tap to upload item' : 'Tap to upload tag',
-                            style: TextStyle(color: Colors.grey.shade500),
+                          child: const Icon(
+                            Icons.close,
+                            size: 15,
+                            color: Colors.white,
                           ),
-                        ],
+                        ),
                       ),
                     ),
+                  ],
+                ),
+              )
+            : Container(
+                key: const ValueKey('placeholder'),
+                height: isMain ? 260 : 150,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.72),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.90),
+                    width: 1,
                   ),
-          ),
-        ),
-      ],
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 20,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: const BoxDecoration(
+                        color: _kPurpleLight,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        CupertinoIcons.add_circled,
+                        size: 28,
+                        color: _kPurple,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Tap to upload photo',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Camera or gallery',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.black.withOpacity(0.35),
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+      ),
     );
   }
 
   Widget _buildAnalyzeButton() {
-    return _isLoading
-        ? Container(
-            height: 55,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 900),
+      curve: Curves.easeOutCubic,
+      builder: (_, v, child) => Opacity(opacity: v, child: child),
+      child: _ScaleButton(
+        onTap: _analyzeItem,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF5B52F0), Color(0xFF3730C8)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(width: 15),
-                Text(
-                  "Scanning your new item...",
-                  style: TextStyle(
-                    color: Colors.grey[800],
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          )
-        : Container(
-            height: 55,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Colors.black, Color(0xFF2C2C2C)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: _kPurple.withOpacity(0.35),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
               ),
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: _analyzeItem,
-                borderRadius: BorderRadius.circular(15),
-                child: const Center(
-                  child: Text(
-                    "✨ Analyze with AI",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Icon(Icons.auto_awesome, color: Colors.white, size: 20),
+              SizedBox(width: 10),
+              Text(
+                'Analyze with AI',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.1,
                 ),
               ),
-            ),
-          );
+            ],
+          ),
+        ),
+      ),
+    );
   }
+
+  // ─── Results view ────────────────────────────────────────────────────────
 
   Widget _buildResultsView() {
     Widget displayImage;
-    if (_analysisResult != null && _analysisResult!['image_base64'] != null) {
+    if (_analysisResult?['image_base64'] != null) {
       try {
         displayImage = Image.memory(
           base64Decode(_analysisResult!['image_base64']),
           fit: BoxFit.contain,
+          width: double.infinity,
         );
-      } catch (e) {
-        debugPrint('Error decoding base64 image: $e');
-        displayImage = Image.file(_itemImage!, fit: BoxFit.contain);
+      } catch (_) {
+        displayImage = Image.file(
+          _itemImage!,
+          fit: BoxFit.contain,
+          width: double.infinity,
+        );
       }
     } else {
-      displayImage = Image.file(_itemImage!, fit: BoxFit.contain);
+      displayImage = Image.file(
+        _itemImage!,
+        fit: BoxFit.contain,
+        width: double.infinity,
+      );
     }
+
+    final subCat = _subCategoryController.text.isNotEmpty
+        ? _subCategoryController.text
+        : 'Item';
+    final brand = _brandController.text.isNotEmpty
+        ? _brandController.text.toUpperCase()
+        : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Center(
-          child: Container(
-            height: 300,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: displayImage,
-            ),
-          ),
-        ),
-        const SizedBox(height: 30),
-        const Text(
-          "AI Analysis Results",
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 20),
-
-        _buildSectionHeader("Basic Info", Icons.info_outline),
-        _buildCard([
-          _buildWardrobeDropdown(),
-          _buildTextField("Category", _categoryController),
-          _buildTextField("Sub Category", _subCategoryController),
-          _buildTextField("Material", _materialController),
-          _buildTextField("Colors (comma separated)", _primaryColorController),
-          _buildTextField("Pattern", _patternController),
-        ]),
-
-        _buildSectionHeader("Sustainability & Purchase", Icons.eco_outlined),
-        _buildCard([
-          _buildTextField("Brand", _brandController),
-          Row(
-            children: [
-              Expanded(
-                child: _buildTextField(
-                  "Price",
-                  _priceController,
-                  keyboardType: TextInputType.number,
-                ),
+        // ── Hero image ──────────────────────────────────────────────────
+        Container(
+          constraints: const BoxConstraints(maxHeight: 420),
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.10),
+                blurRadius: 28,
+                spreadRadius: 0,
+                offset: const Offset(0, 8),
               ),
-              const SizedBox(width: 12),
-              Expanded(child: _buildTextField("Currency", _currencyController)),
             ],
           ),
-          _buildTextField(
-            "Purchase Date",
-            _purchaseDateController,
-            hint: "YYYY-MM-DD",
-          ),
-        ]),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: Stack(
+              children: [
+                // Photo
+                displayImage,
 
-        _buildSectionHeader("Styling", Icons.style_outlined),
-        _buildCard([
-          _buildTextField("Fit", _fitController),
-          _buildTextField("Length", _lengthController),
-          _buildTextField("Neckline", _necklineController),
-          _buildTextField("Sleeve Length", _sleeveLengthController),
-          _buildTextField(
-            "Occasions (comma separated)",
-            _styleOccasionsController,
-          ),
-          _buildTextField(
-            "Seasonality (comma separated)",
-            _seasonalityController,
-          ),
-        ]),
+                // Bottom gradient
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    height: 110,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: [
+                          Colors.black.withOpacity(0.52),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
 
-        _buildSectionHeader(
-          "Laundry & Care",
-          Icons.local_laundry_service_outlined,
+                // Brand + subcategory overlay
+                Positioned(
+                  bottom: 16,
+                  left: 18,
+                  right: 18,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (brand != null)
+                        Text(
+                          brand,
+                          style: TextStyle(
+                            fontSize: 11,
+                            letterSpacing: 4.0,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white.withOpacity(0.75),
+                          ),
+                        ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subCat,
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: -0.5,
+                          height: 1.1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Category badge top-right
+                if (_categoryController.text.isNotEmpty)
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(50),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.72),
+                            borderRadius: BorderRadius.circular(50),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.5),
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            _categoryController.text,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
-        _buildCard([
-          _buildTextField(
-            "Care Instructions (one per line)",
-            _careInstructionsController,
-            maxLines: 4,
-          ),
-          _buildTextField("Color Group", _colorGroupController),
-          _buildTextField(
-            "Max Temp (°C)",
-            _maxTempController,
-            keyboardType: TextInputType.number,
-          ),
-        ]),
-        const SizedBox(height: 20),
-        SizedBox(
-          width: double.infinity,
-          height: 55,
-          child: ElevatedButton(
-            onPressed: () async {
-              // Show loading indicator
-              showDialog(
-                context: context,
-                barrierDismissible:
-                    false, // Prevent dismissing by tapping outside
-                builder: (BuildContext context) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: Colors.white),
-                  );
-                },
-              );
 
-              try {
-                // Prepare metadata from form
-                // Maintain any AI metadata not strictly mapped (though we map almost everything)
-                // We're essentially replacing the submaps with our constructed ones based on controllers
-                Map<String, dynamic> finalMetadata = jsonDecode(
-                  jsonEncode(_analysisResult!['metadata'] ?? {}),
-                );
+        Padding(
+          padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ── Section label ───────────────────────────────────────────────
+              _buildSectionLabel('REVIEW & EDIT', 'Confirm AI details'),
+              const SizedBox(height: 16),
 
-                // Update basic info
-                finalMetadata['basic_info'] = finalMetadata['basic_info'] ?? {};
-                finalMetadata['basic_info']['category'] =
-                    _categoryController.text;
-                finalMetadata['basic_info']['sub_category'] =
-                    _subCategoryController.text;
-                finalMetadata['basic_info']['material'] =
-                    _materialController.text;
-                finalMetadata['basic_info']['pattern'] =
-                    _patternController.text;
-                finalMetadata['basic_info']['primary_colors'] =
-                    _controllerToList(_primaryColorController);
-
-                // Update sustainability info
-                finalMetadata['sustainability_info'] =
-                    finalMetadata['sustainability_info'] ?? {};
-                finalMetadata['sustainability_info']['brand'] =
-                    _brandController.text;
-                if (_priceController.text.isNotEmpty) {
-                  final price = double.tryParse(
-                    _priceController.text.replaceAll(',', '.'),
-                  );
-                  finalMetadata['sustainability_info']['price'] =
-                      price ?? _priceController.text;
-                } else {
-                  finalMetadata['sustainability_info']['price'] = null;
-                }
-                finalMetadata['sustainability_info']['currency'] =
-                    _currencyController.text;
-                finalMetadata['sustainability_info']['purchase_date'] =
-                    _purchaseDateController.text;
-
-                // Update styling info
-                finalMetadata['styling_info'] =
-                    finalMetadata['styling_info'] ?? {};
-                finalMetadata['styling_info']['fit'] = _fitController.text;
-                finalMetadata['styling_info']['length'] =
-                    _lengthController.text;
-                finalMetadata['styling_info']['neckline'] =
-                    _necklineController.text;
-                finalMetadata['styling_info']['sleeve_length'] =
-                    _sleeveLengthController.text;
-                finalMetadata['styling_info']['style_occasions'] =
-                    _controllerToList(_styleOccasionsController);
-                finalMetadata['styling_info']['seasonality'] =
-                    _controllerToList(_seasonalityController);
-
-                // Update laundry info
-                finalMetadata['laundry_info'] =
-                    finalMetadata['laundry_info'] ?? {};
-                finalMetadata['laundry_info']['care_instructions'] =
-                    _controllerToList(
-                      _careInstructionsController,
-                      separator: '\n',
-                    );
-                finalMetadata['laundry_info']['color_group'] =
-                    _colorGroupController.text;
-                if (_maxTempController.text.isNotEmpty) {
-                  final temp = int.tryParse(_maxTempController.text);
-                  finalMetadata['laundry_info']['max_temp_celsius'] =
-                      temp ?? _maxTempController.text;
-                } else {
-                  finalMetadata['laundry_info']['max_temp_celsius'] = null;
-                }
-
-                // Decode the base64 string directly to byte array
-                final Uint8List imageBytes = base64Decode(
-                  _analysisResult!['image_base64'],
-                );
-
-                // Upload to Firebase Storage
-                final String? downloadUrl = await FirebaseService()
-                    .uploadImageToStorage(imageBytes, 'items');
-
-                if (downloadUrl == null) {
-                  throw Exception(
-                    'Failed to upload image to storage. Please try again.',
-                  );
-                }
-
-                // Call Firebase Service to save the document URL and metadata
-                await FirebaseService().saveItem(
-                  imageUrl: downloadUrl,
-                  metadata: finalMetadata,
-                  wardrobeId: _selectedWardrobeId,
-                );
-
-                // Hide loading
-                if (mounted) Navigator.pop(context);
-
-                // Show success
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Item saved to Wardrobe!'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                  Navigator.pop(context); // Close screen
-                }
-              } catch (e) {
-                // Hide loading
-                if (mounted) Navigator.pop(context);
-
-                // Show error
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Failed to save: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
+              // ── Form sections ───────────────────────────────────────────────
+              _buildFormSection(
+                icon: CupertinoIcons.info_circle,
+                title: 'Basic Info',
+                children: [
+                  _buildWardrobeDropdown(),
+                  _buildField('Category', _categoryController),
+                  _buildField('Sub Category', _subCategoryController),
+                  _buildField('Material', _materialController),
+                  _buildField(
+                    'Colors (comma separated)',
+                    _primaryColorController,
+                  ),
+                  _buildField('Pattern', _patternController, isLast: true),
+                ],
               ),
-            ),
-            child: const Text(
-              "Save to Wardrobe",
-              style: TextStyle(color: Colors.white, fontSize: 16),
-            ),
+              const SizedBox(height: 14),
+
+              _buildFormSection(
+                icon: CupertinoIcons.leaf_arrow_circlepath,
+                title: 'Sustainability & Purchase',
+                children: [
+                  _buildField('Brand', _brandController),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildField(
+                          'Price',
+                          _priceController,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _buildField(
+                          'Currency',
+                          _currencyController,
+                          isLast: true,
+                        ),
+                      ),
+                    ],
+                  ),
+                  _buildField(
+                    'Purchase Date',
+                    _purchaseDateController,
+                    hint: 'YYYY-MM-DD',
+                    isLast: true,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              _buildFormSection(
+                icon: CupertinoIcons.pencil_outline,
+                title: 'Styling',
+                children: [
+                  _buildField('Fit', _fitController),
+                  _buildField('Length', _lengthController),
+                  _buildField('Neckline', _necklineController),
+                  _buildField('Sleeve Length', _sleeveLengthController),
+                  _buildField(
+                    'Occasions (comma separated)',
+                    _styleOccasionsController,
+                  ),
+                  _buildField(
+                    'Seasonality (comma separated)',
+                    _seasonalityController,
+                    isLast: true,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              _buildFormSection(
+                icon: CupertinoIcons.thermometer,
+                title: 'Laundry & Care',
+                children: [
+                  _buildField(
+                    'Care Instructions (one per line)',
+                    _careInstructionsController,
+                    maxLines: 4,
+                  ),
+                  _buildField('Color Group', _colorGroupController),
+                  _buildField(
+                    'Max Temp (°C)',
+                    _maxTempController,
+                    keyboardType: TextInputType.number,
+                    isLast: true,
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              // ── Save button ─────────────────────────────────────────────────
+              _ScaleButton(
+                onTap: _saveItem,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF5B52F0), Color(0xFF3730C8)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _kPurple.withOpacity(0.35),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(
+                        CupertinoIcons.checkmark_circle,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      SizedBox(width: 10),
+                      Text(
+                        'Save to Wardrobe',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 0.1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Discard / restart
+              _ScaleButton(
+                onTap: () => setState(() {
+                  _analysisResult = null;
+                  _itemImage = null;
+                  _tagImage = null;
+                }),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.72),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: Colors.black.withOpacity(0.08),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(
+                        CupertinoIcons.arrow_counterclockwise,
+                        color: Colors.black54,
+                        size: 17,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Start over',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],
     );
   }
 
-  Widget _buildSectionHeader(String title, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16.0),
-      child: Row(
+  // ─── Form helpers ────────────────────────────────────────────────────────
+
+  Widget _buildSectionLabel(String tag, String title) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          tag,
+          style: TextStyle(
+            fontSize: 10,
+            letterSpacing: 3,
+            fontWeight: FontWeight.w600,
+            color: Colors.black.withOpacity(0.35),
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+            color: Colors.black87,
+            letterSpacing: -0.5,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFormSection({
+    required IconData icon,
+    required String title,
+    required List<Widget> children,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.black.withOpacity(0.06)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 24, color: Colors.blueGrey[800]),
-          const SizedBox(width: 12),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.blueGrey[800],
+          // Section header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: _kPurpleLight,
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Icon(icon, size: 14, color: _kPurple),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            height: 1,
+            margin: const EdgeInsets.symmetric(horizontal: 18),
+            color: Colors.black.withOpacity(0.05),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: children,
             ),
           ),
         ],
@@ -823,59 +1675,50 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     );
   }
 
-  Widget _buildCard(List<Widget> children) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: Border.all(color: Colors.grey.shade100),
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(children: children),
-    );
-  }
-
-  Widget _buildTextField(
+  Widget _buildField(
     String label,
     TextEditingController controller, {
     int maxLines = 1,
     TextInputType? keyboardType,
     String? hint,
+    bool isLast = false,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 15.0),
+      padding: EdgeInsets.only(bottom: isLast ? 10 : 12),
       child: TextFormField(
         controller: controller,
         maxLines: maxLines,
         keyboardType: keyboardType,
+        style: const TextStyle(
+          fontSize: 14,
+          color: Colors.black87,
+          fontWeight: FontWeight.w500,
+        ),
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
-          labelStyle: TextStyle(color: Colors.grey[600]),
+          labelStyle: TextStyle(
+            color: Colors.black.withOpacity(0.45),
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
           filled: true,
-          fillColor: Colors.grey[50], // Match styling from details
+          fillColor: Colors.black.withOpacity(0.03),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade300),
+            borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade300),
+            borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.black, width: 1.5),
+            borderSide: const BorderSide(color: _kPurple, width: 1.5),
           ),
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 16,
+            horizontal: 16,
+            vertical: 13,
           ),
         ),
       ),
@@ -884,30 +1727,39 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
 
   Widget _buildWardrobeDropdown() {
     final wardrobes = wardrobeStateService.wardrobes;
-
     return Padding(
-      padding: const EdgeInsets.only(bottom: 15.0),
+      padding: const EdgeInsets.only(bottom: 12),
       child: DropdownButtonFormField<String?>(
-        initialValue: _selectedWardrobeId,
+        value: _selectedWardrobeId,
+        style: const TextStyle(
+          fontSize: 14,
+          color: Colors.black87,
+          fontWeight: FontWeight.w500,
+        ),
         decoration: InputDecoration(
           labelText: 'Wardrobe',
+          labelStyle: TextStyle(
+            color: Colors.black.withOpacity(0.45),
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
           filled: true,
-          fillColor: Colors.grey[50], // Match styling from details
+          fillColor: Colors.black.withOpacity(0.03),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade300),
+            borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade300),
+            borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.black, width: 1.5),
+            borderSide: const BorderSide(color: _kPurple, width: 1.5),
           ),
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 16,
+            horizontal: 16,
+            vertical: 13,
           ),
         ),
         items: [
@@ -915,18 +1767,215 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
             value: null,
             child: Text('All Wardrobes'),
           ),
-          ...wardrobes.map((w) {
-            return DropdownMenuItem<String?>(
+          ...wardrobes.map(
+            (w) => DropdownMenuItem<String?>(
               value: w['id'],
               child: Text(w['name']),
-            );
-          }),
+            ),
+          ),
         ],
-        onChanged: (val) {
-          setState(() {
-            _selectedWardrobeId = val;
-          });
-        },
+        onChanged: (val) => setState(() => _selectedWardrobeId = val),
+      ),
+    );
+  }
+}
+
+// ─── Reusable scale-tap button ───────────────────────────────────────────────
+
+class _ScaleButton extends StatefulWidget {
+  final VoidCallback onTap;
+  final Widget child;
+  const _ScaleButton({required this.onTap, required this.child});
+
+  @override
+  State<_ScaleButton> createState() => _ScaleButtonState();
+}
+
+class _ScaleButtonState extends State<_ScaleButton> {
+  double _scale = 1.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _scale = 0.97),
+      onTapUp: (_) {
+        setState(() => _scale = 1.0);
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _scale = 1.0),
+      child: AnimatedScale(
+        scale: _scale,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+// ─── Image source option button ──────────────────────────────────────────────
+
+class _SourceOption extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _SourceOption({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  State<_SourceOption> createState() => _SourceOptionState();
+}
+
+class _SourceOptionState extends State<_SourceOption> {
+  double _scale = 1.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _scale = 0.95),
+      onTapUp: (_) {
+        setState(() => _scale = 1.0);
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _scale = 1.0),
+      child: AnimatedScale(
+        scale: _scale,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 18),
+          decoration: BoxDecoration(
+            color: _kPurpleLight,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: _kPurpleMid.withOpacity(0.25)),
+          ),
+          child: Column(
+            children: [
+              Icon(widget.icon, size: 28, color: _kPurple),
+              const SizedBox(height: 8),
+              Text(
+                widget.label,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Animated Loading Step ────────────────────────────────────────────────────
+
+class _AnimatedLoadingStep extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final Duration delay;
+
+  const _AnimatedLoadingStep({
+    required this.icon,
+    required this.label,
+    required this.delay,
+  });
+
+  @override
+  State<_AnimatedLoadingStep> createState() => _AnimatedLoadingStepState();
+}
+
+class _AnimatedLoadingStepState extends State<_AnimatedLoadingStep>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _opacity;
+  late Animation<Offset> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _opacity = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    _slide = Tween<Offset>(
+      begin: const Offset(0.08, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
+
+    Future.delayed(widget.delay, () {
+      if (mounted) _ctrl.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacity,
+      child: SlideTransition(
+        position: _slide,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.72),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _kPurple.withOpacity(0.15), width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: _kPurple.withOpacity(0.07),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _kPurple.withOpacity(0.10),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(widget.icon, size: 18, color: _kPurple),
+              ),
+              const SizedBox(width: 14),
+              Text(
+                widget.label,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              const Spacer(),
+              SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  color: _kPurple.withOpacity(0.5),
+                  strokeWidth: 1.5,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -525,7 +525,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Full-screen loading — identical pattern to shopping_assistant_screen
+    // Full-screen loading
     if (_isLoading) {
       return Scaffold(
         backgroundColor: _kBg,
@@ -776,7 +776,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     );
   }
 
-  // ─── Upload section ──────────────────────────────────────────────────────
+  // Upload section
 
   Widget _buildUploadSection() {
     return Stack(
@@ -1237,7 +1237,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     );
   }
 
-  // ─── Results view ────────────────────────────────────────────────────────
+  // Results view
 
   Widget _buildResultsView() {
     Widget displayImage;
@@ -1273,7 +1273,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Hero image ──────────────────────────────────────────────────
+        // Hero image
         Container(
           constraints: const BoxConstraints(maxHeight: 420),
           width: double.infinity,
@@ -1393,11 +1393,11 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── Section label ───────────────────────────────────────────────
+              // Section label
               _buildSectionLabel('REVIEW & EDIT', 'Confirm AI details'),
               const SizedBox(height: 16),
 
-              // ── Form sections ───────────────────────────────────────────────
+              // Form sections
               _buildFormSection(
                 icon: CupertinoIcons.info_circle,
                 title: 'Basic Info',
@@ -1491,7 +1491,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
 
               const SizedBox(height: 20),
 
-              // ── Save button ─────────────────────────────────────────────────
+              // Save button
               _ScaleButton(
                 onTap: _saveItem,
                 child: Container(
@@ -1582,7 +1582,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     );
   }
 
-  // ─── Form helpers ────────────────────────────────────────────────────────
+  // Form helpers
 
   Widget _buildSectionLabel(String tag, String title) {
     return Column(
@@ -1780,7 +1780,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
   }
 }
 
-// ─── Reusable scale-tap button ───────────────────────────────────────────────
+// Reusable scale-tap button
 
 class _ScaleButton extends StatefulWidget {
   final VoidCallback onTap;
@@ -1813,7 +1813,7 @@ class _ScaleButtonState extends State<_ScaleButton> {
   }
 }
 
-// ─── Image source option button ──────────────────────────────────────────────
+// Image source option button
 
 class _SourceOption extends StatefulWidget {
   final IconData icon;
@@ -1872,7 +1872,7 @@ class _SourceOptionState extends State<_SourceOption> {
   }
 }
 
-// ─── Animated Loading Step ────────────────────────────────────────────────────
+// Animated Loading Step
 
 class _AnimatedLoadingStep extends StatefulWidget {
   final IconData icon;

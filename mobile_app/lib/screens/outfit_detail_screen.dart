@@ -9,7 +9,7 @@ import '../services/calendar_service.dart';
 import 'virtual_dressing_room_screen.dart';
 import '../utils/outfit_sorting_utils.dart';
 
-// ─── Design tokens ────────────────────────────────────────────────────────────
+// Design tokens
 const _kBg = Color(0xFFF4F3F0);
 const _kPurple = Color(0xFF4F46E5);
 const _kPurpleLight = Color(0xFFEEEDF8);
@@ -612,7 +612,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── Items ───────────────────────────────────────────────
+              // Items
               if (_isLoading)
                 Center(
                   child: Padding(
@@ -650,7 +650,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
 
               const SizedBox(height: 24),
 
-              // ── Edit card ────────────────────────────────────────────
+              // Edit card
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -921,7 +921,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
 
               const SizedBox(height: 20),
 
-              // ── Action buttons ───────────────────────────────────────
+              // Action buttons
               Row(
                 children: [
                   // Log Wear
@@ -1078,7 +1078,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
   }
 }
 
-// ─── Scale button ─────────────────────────────────────────────────────────────
+// Scale button
 
 class _ScaleButton extends StatefulWidget {
   final VoidCallback onTap;
@@ -1111,7 +1111,7 @@ class _ScaleButtonState extends State<_ScaleButton> {
   }
 }
 
-// ─── Dialog button ────────────────────────────────────────────────────────────
+// Dialog button
 
 class _DialogButton extends StatefulWidget {
   final String label;

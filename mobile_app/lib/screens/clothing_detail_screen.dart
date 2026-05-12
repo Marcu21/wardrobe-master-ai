@@ -1,13 +1,18 @@
-import 'dart:convert';
-import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:mobile_app/services/firebase_service.dart';
 import 'package:mobile_app/services/wardrobe_state_service.dart';
 import '../widgets/smart_clothing_image.dart';
 
+// ─── Design tokens ────────────────────────────────────────────────────────────
+const _kBg = Color(0xFFF4F3F0);
+const _kPurple = Color(0xFF4F46E5);
+const _kPurpleLight = Color(0xFFEEEDF8);
+
 class ClothingDetailScreen extends StatefulWidget {
   final Map<String, dynamic> itemData;
-
   const ClothingDetailScreen({super.key, required this.itemData});
 
   @override
@@ -15,13 +20,11 @@ class ClothingDetailScreen extends StatefulWidget {
 }
 
 class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
-  // --- Controllers for ALL fields ---
-
   // Basic Info
   late TextEditingController _categoryController;
   late TextEditingController _subCategoryController;
   late TextEditingController _materialController;
-  late TextEditingController _primaryColorController; // List
+  late TextEditingController _primaryColorController;
   late TextEditingController _patternController;
 
   // Sustainability Info
@@ -35,32 +38,27 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
   late TextEditingController _lengthController;
   late TextEditingController _necklineController;
   late TextEditingController _sleeveLengthController;
-  late TextEditingController _styleOccasionsController; // List
-  late TextEditingController _seasonalityController; // List
+  late TextEditingController _styleOccasionsController;
+  late TextEditingController _seasonalityController;
 
   // Laundry Info
-  late TextEditingController _careInstructionsController; // List
+  late TextEditingController _careInstructionsController;
   late TextEditingController _colorGroupController;
   late TextEditingController _maxTempController;
 
-  bool _isUpdating = false;
-  bool _isDeleting = false;
   String? _currentWardrobeId;
 
   @override
   void initState() {
     super.initState();
-    // Safety: ensure sub-maps exist
     final data = widget.itemData;
     final basic = data['basic_info'] as Map<String, dynamic>? ?? {};
     final sust = data['sustainability_info'] as Map<String, dynamic>? ?? {};
     final style = data['styling_info'] as Map<String, dynamic>? ?? {};
     final laundry = data['laundry_info'] as Map<String, dynamic>? ?? {};
 
-    // --- Initialize Controllers ---
     _currentWardrobeId = data['wardrobe_id'];
 
-    // Basic
     _categoryController = TextEditingController(text: basic['category'] ?? '');
     _subCategoryController = TextEditingController(
       text: basic['sub_category'] ?? '',
@@ -69,7 +67,6 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
     _primaryColorController = _listToController(basic['primary_colors']);
     _patternController = TextEditingController(text: basic['pattern'] ?? '');
 
-    // Sustainability
     _brandController = TextEditingController(text: sust['brand'] ?? '');
     _priceController = TextEditingController(
       text: sust['price']?.toString() ?? '',
@@ -79,7 +76,6 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
       text: sust['purchase_date'] ?? '',
     );
 
-    // Styling
     _fitController = TextEditingController(text: style['fit'] ?? '');
     _lengthController = TextEditingController(text: style['length'] ?? '');
     _necklineController = TextEditingController(text: style['neckline'] ?? '');
@@ -89,7 +85,6 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
     _styleOccasionsController = _listToController(style['style_occasions']);
     _seasonalityController = _listToController(style['seasonality']);
 
-    // Laundry
     _careInstructionsController = _listToController(
       laundry['care_instructions'],
       separator: '\n',
@@ -141,100 +136,60 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
     _materialController.dispose();
     _primaryColorController.dispose();
     _patternController.dispose();
-
     _brandController.dispose();
     _priceController.dispose();
     _currencyController.dispose();
     _purchaseDateController.dispose();
-
     _fitController.dispose();
     _lengthController.dispose();
     _necklineController.dispose();
     _sleeveLengthController.dispose();
     _styleOccasionsController.dispose();
     _seasonalityController.dispose();
-
     _careInstructionsController.dispose();
     _colorGroupController.dispose();
     _maxTempController.dispose();
     super.dispose();
   }
 
-  Future<void> _deleteItem() async {
-    setState(() {
-      _isDeleting = true;
-    });
-
-    try {
-      final String docId = widget.itemData['id'];
-      final String? imageUrl = widget.itemData['imageUrl'];
-      await FirebaseService().deleteItem(docId, imageUrl: imageUrl);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Item deleted successfully"),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context); // Return to gallery
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error deleting item: $e"),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isDeleting = false;
-        });
-      }
-    }
-  }
-
   Future<void> _updateItemWardrobe(String? newWardrobeId) async {
     final oldWardrobeId = _currentWardrobeId;
     if (newWardrobeId == oldWardrobeId) return;
-
-    setState(() {
-      _currentWardrobeId = newWardrobeId;
-    });
-
+    setState(() => _currentWardrobeId = newWardrobeId);
     try {
       await FirebaseService().updateItem(widget.itemData['id'], {
         'wardrobe_id': newWardrobeId,
       });
-
-      String wardrobeName = "All Wardrobes";
+      String wardrobeName = 'All Wardrobes';
       if (newWardrobeId != null) {
         final matches = wardrobeStateService.wardrobes.where(
           (w) => w['id'] == newWardrobeId,
         );
-        if (matches.isNotEmpty) {
-          wardrobeName = matches.first['name'];
-        }
+        if (matches.isNotEmpty) wardrobeName = matches.first['name'];
       }
-
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Item moved to $wardrobeName")));
-      }
-    } catch (e) {
-      // Revert on failure
-      setState(() {
-        _currentWardrobeId = oldWardrobeId;
-      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Error moving item: $e"),
-            backgroundColor: Colors.red,
+            content: Text('Item moved to $wardrobeName'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: const Color(0xFF16A34A),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() => _currentWardrobeId = oldWardrobeId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error moving item: $e'),
+            backgroundColor: const Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
       }
@@ -244,43 +199,377 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
   Future<void> _confirmDelete() async {
     final bool? confirm = await showDialog<bool>(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Delete Item"),
-          content: const Text(
-            "Are you sure you want to delete this item? This action cannot be undone.",
+      barrierColor: Colors.black.withOpacity(0.4),
+      builder: (ctx) => Center(
+        child: Material(
+          type: MaterialType.transparency,
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 40),
+            width: double.infinity,
+            constraints: const BoxConstraints(maxWidth: 340),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(32),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(24, 36, 24, 28),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.90),
+                    borderRadius: BorderRadius.circular(32),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.8),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFDC2626).withOpacity(0.12),
+                        blurRadius: 40,
+                        spreadRadius: 8,
+                        offset: const Offset(0, 12),
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 15,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Icon with ring
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0xFFDC2626).withOpacity(0.08),
+                          border: Border.all(
+                            color: const Color(0xFFDC2626).withOpacity(0.18),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: const Icon(
+                          CupertinoIcons.trash,
+                          color: Color(0xFFDC2626),
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      const Text(
+                        'Delete Item',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black87,
+                          letterSpacing: -0.4,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'This action cannot be undone.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.black.withOpacity(0.5),
+                          fontWeight: FontWeight.w500,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _DialogButton(
+                              label: 'Cancel',
+                              onTap: () => Navigator.pop(ctx, false),
+                              isPrimary: false,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _DialogButton(
+                              label: 'Delete',
+                              onTap: () => Navigator.pop(ctx, true),
+                              isPrimary: true,
+                              isDestructive: true,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text("Cancel"),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text("Delete", style: TextStyle(color: Colors.red)),
-            ),
-          ],
-        );
-      },
+        ),
+      ),
     );
+    if (confirm == true) _deleteItem();
+  }
 
-    if (confirm == true) {
-      _deleteItem();
+  Future<void> _deleteItem() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black.withOpacity(0.4),
+      builder: (_) => Center(
+        child: Material(
+          type: MaterialType.transparency,
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 40),
+            width: double.infinity,
+            constraints: const BoxConstraints(maxWidth: 340),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(32),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(24, 40, 24, 32),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.90),
+                    borderRadius: BorderRadius.circular(32),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.8),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFDC2626).withOpacity(0.15),
+                        blurRadius: 40,
+                        spreadRadius: 10,
+                        offset: const Offset(0, 12),
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 15,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Triple-ring spinner in red
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Container(
+                            width: 72,
+                            height: 72,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: const Color(0xFFDC2626).withOpacity(0.08),
+                              border: Border.all(
+                                color: const Color(
+                                  0xFFDC2626,
+                                ).withOpacity(0.15),
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 52,
+                            height: 52,
+                            child: CircularProgressIndicator(
+                              color: const Color(0xFFDC2626).withOpacity(0.3),
+                              strokeWidth: 2,
+                            ),
+                          ),
+                          const SizedBox(
+                            width: 36,
+                            height: 36,
+                            child: CircularProgressIndicator(
+                              color: Color(0xFFDC2626),
+                              strokeWidth: 2.5,
+                            ),
+                          ),
+                          const Icon(
+                            CupertinoIcons.trash,
+                            color: Color(0xFFDC2626),
+                            size: 15,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Deleting item',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black87,
+                          letterSpacing: -0.4,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Removing from your wardrobe...',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.black.withOpacity(0.5),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    try {
+      final String docId = widget.itemData['id'];
+      final String? imageUrl = widget.itemData['imageUrl'];
+      await FirebaseService().deleteItem(docId, imageUrl: imageUrl);
+      if (mounted) {
+        Navigator.pop(context); // close dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Item deleted successfully'),
+            backgroundColor: const Color(0xFF16A34A),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // close dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting item: $e'),
+            backgroundColor: const Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      }
     }
   }
 
   Future<void> _updateItem() async {
-    setState(() {
-      _isUpdating = true;
-    });
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black.withOpacity(0.4),
+      builder: (_) => Center(
+        child: Material(
+          type: MaterialType.transparency,
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 40),
+            width: double.infinity,
+            constraints: const BoxConstraints(maxWidth: 340),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(32),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(24, 40, 24, 32),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.90),
+                    borderRadius: BorderRadius.circular(32),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.8),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _kPurple.withOpacity(0.15),
+                        blurRadius: 40,
+                        spreadRadius: 10,
+                        offset: const Offset(0, 12),
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 15,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Container(
+                            width: 72,
+                            height: 72,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: _kPurple.withOpacity(0.08),
+                              border: Border.all(
+                                color: _kPurple.withOpacity(0.15),
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 52,
+                            height: 52,
+                            child: CircularProgressIndicator(
+                              color: _kPurple.withOpacity(0.3),
+                              strokeWidth: 2,
+                            ),
+                          ),
+                          const SizedBox(
+                            width: 36,
+                            height: 36,
+                            child: CircularProgressIndicator(
+                              color: _kPurple,
+                              strokeWidth: 2.5,
+                            ),
+                          ),
+                          const Icon(
+                            Icons.auto_awesome,
+                            color: _kPurple,
+                            size: 16,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Saving changes',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black87,
+                          letterSpacing: -0.4,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Updating your wardrobe...',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.black.withOpacity(0.5),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
 
     try {
-      // --- Deep Copy Logic (Manual) ---
-      // We cannot use jsonEncode because widget.itemData contains Firestore Timestamps (createdAt).
-      // Instead, we manually clone the specific sub-maps we want to update.
-      // Map.from creates a shallow copy of the Map structure, which is sufficient here
-      // because we are replacing the nested values (Strings, Lists) with new ones.
-
       final basicInfo = Map<String, dynamic>.from(
         widget.itemData['basic_info'] ?? {},
       );
@@ -294,30 +583,24 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
         widget.itemData['laundry_info'] ?? {},
       );
 
-      // --- Update Basic Info ---
       basicInfo['category'] = _categoryController.text;
       basicInfo['sub_category'] = _subCategoryController.text;
       basicInfo['material'] = _materialController.text;
       basicInfo['primary_colors'] = _controllerToList(_primaryColorController);
       basicInfo['pattern'] = _patternController.text;
 
-      // --- Update Sustainability Info ---
       sustainabilityInfo['brand'] = _brandController.text;
-
-      // Parse Price carefully
       if (_priceController.text.isNotEmpty) {
         final price = double.tryParse(
           _priceController.text.replaceAll(',', '.'),
-        ); // Handle commas
+        );
         sustainabilityInfo['price'] = price ?? _priceController.text;
       } else {
         sustainabilityInfo['price'] = null;
       }
-
       sustainabilityInfo['currency'] = _currencyController.text;
       sustainabilityInfo['purchase_date'] = _purchaseDateController.text;
 
-      // --- Update Styling Info ---
       stylingInfo['fit'] = _fitController.text;
       stylingInfo['length'] = _lengthController.text;
       stylingInfo['neckline'] = _necklineController.text;
@@ -327,14 +610,11 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
       );
       stylingInfo['seasonality'] = _controllerToList(_seasonalityController);
 
-      // --- Update Laundry Info ---
       laundryInfo['care_instructions'] = _controllerToList(
         _careInstructionsController,
         separator: '\n',
       );
       laundryInfo['color_group'] = _colorGroupController.text;
-
-      // Parse Max Temp
       if (_maxTempController.text.isNotEmpty) {
         final temp = int.tryParse(_maxTempController.text);
         laundryInfo['max_temp_celsius'] = temp ?? _maxTempController.text;
@@ -342,33 +622,40 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
         laundryInfo['max_temp_celsius'] = null;
       }
 
-      // --- Prepare Final Update Map ---
-      Map<String, dynamic> updates = {
+      await FirebaseService().updateItem(widget.itemData['id'], {
         'basic_info': basicInfo,
         'sustainability_info': sustainabilityInfo,
         'styling_info': stylingInfo,
         'laundry_info': laundryInfo,
-      };
-
-      await FirebaseService().updateItem(widget.itemData['id'], updates);
+      });
 
       if (mounted) {
+        Navigator.pop(context); // close dialog
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Details updated successfully!")),
+          SnackBar(
+            content: const Text('Details updated successfully!'),
+            backgroundColor: const Color(0xFF16A34A),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
         );
-        Navigator.pop(context); // Return to gallery
+        Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Error updating item: $e")));
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isUpdating = false;
-        });
+        Navigator.pop(context); // close dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating item: $e'),
+            backgroundColor: const Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
       }
     }
   }
@@ -376,159 +663,409 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final imageUrl = widget.itemData['imageUrl'] as String?;
+    final basic = widget.itemData['basic_info'] as Map<String, dynamic>? ?? {};
+    final sust =
+        widget.itemData['sustainability_info'] as Map<String, dynamic>? ?? {};
+    final subCat = basic['sub_category']?.toString() ?? 'Item';
+    final brand = sust['brand']?.toString();
+    final category = basic['category']?.toString() ?? '';
 
     return Scaffold(
-      backgroundColor: Colors.grey[50], // M3 Light Background benefit
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text(
-          "Item Details",
-          style: TextStyle(fontWeight: FontWeight.bold),
+          'Item Details',
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.5,
+          ),
         ),
-        surfaceTintColor: Colors.transparent,
-        backgroundColor: Colors.white,
+        centerTitle: true,
+        backgroundColor: Colors.grey[50]!.withOpacity(0.9),
         elevation: 0,
+        scrolledUnderElevation: 0,
+        foregroundColor: Colors.black87,
+        leading: IconButton(
+          icon: const Icon(CupertinoIcons.back, color: Colors.black87),
+          onPressed: () => Navigator.pop(context),
+        ),
         actions: [
-          _isDeleting
-              ? const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: _ScaleButton(
+              onTap: _confirmDelete,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDC2626).withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFFDC2626).withOpacity(0.18),
+                    width: 1,
                   ),
-                )
-              : IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: _confirmDelete,
                 ),
+                child: const Icon(
+                  CupertinoIcons.trash,
+                  color: Color(0xFFDC2626),
+                  size: 16,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Image Header
-              _buildImageHeader(imageUrl),
-
+              // ── Hero image ─────────────────────────────────────────────
               Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  children: [
-                    _buildSectionHeader("Basic Info", Icons.info_outline),
-                    _buildCard([
-                      _buildWardrobeDropdown(),
-                      const SizedBox(height: 16),
-                      _buildTextField("Category", _categoryController),
-                      _buildTextField("Sub Category", _subCategoryController),
-                      _buildTextField("Material", _materialController),
-                      _buildTextField(
-                        "Colors (comma separated)",
-                        _primaryColorController,
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                child: Container(
+                  constraints: const BoxConstraints(maxHeight: 420),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.10),
+                        blurRadius: 28,
+                        offset: const Offset(0, 8),
                       ),
-                      _buildTextField("Pattern", _patternController),
-                    ]),
-
-                    _buildSectionHeader(
-                      "Sustainability & Purchase",
-                      Icons.eco_outlined,
-                    ),
-                    _buildCard([
-                      _buildTextField("Brand", _brandController),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildTextField(
-                              "Price",
-                              _priceController,
-                              keyboardType: TextInputType.number,
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: Stack(
+                      children: [
+                        // Image
+                        if (imageUrl != null)
+                          CachedNetworkImage(
+                            imageUrl: imageUrl,
+                            width: double.infinity,
+                            fit: BoxFit.contain,
+                            placeholder: (_, __) => const Center(
+                              child: CircularProgressIndicator(
+                                color: _kPurple,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                            errorWidget: (_, __, ___) => const Center(
+                              child: Icon(
+                                CupertinoIcons.photo,
+                                color: Colors.black26,
+                                size: 48,
+                              ),
+                            ),
+                          )
+                        else
+                          const Center(
+                            child: Icon(
+                              CupertinoIcons.photo,
+                              color: Colors.black26,
+                              size: 48,
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildTextField(
-                              "Currency",
-                              _currencyController,
+                        // Gradient
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: Container(
+                            height: 110,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                                colors: [
+                                  Colors.black.withOpacity(0.52),
+                                  Colors.transparent,
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      _buildTextField(
-                        "Purchase Date",
-                        _purchaseDateController,
-                        hint: "YYYY-MM-DD",
-                      ),
-                    ]),
-
-                    _buildSectionHeader("Styling", Icons.style_outlined),
-                    _buildCard([
-                      _buildTextField("Fit", _fitController),
-                      _buildTextField("Length", _lengthController),
-                      _buildTextField("Neckline", _necklineController),
-                      _buildTextField("Sleeve Length", _sleeveLengthController),
-                      _buildTextField(
-                        "Occasions (comma separated)",
-                        _styleOccasionsController,
-                      ),
-                      _buildTextField(
-                        "Seasonality (comma separated)",
-                        _seasonalityController,
-                      ),
-                    ]),
-
-                    _buildSectionHeader(
-                      "Laundry & Care",
-                      Icons.local_laundry_service_outlined,
-                    ),
-                    _buildCard([
-                      _buildTextField(
-                        "Care Instructions (one per line)",
-                        _careInstructionsController,
-                        maxLines: 4,
-                      ),
-                      _buildTextField("Color Group", _colorGroupController),
-                      _buildTextField(
-                        "Max Temp (°C)",
-                        _maxTempController,
-                        keyboardType: TextInputType.number,
-                      ),
-                    ]),
-
-                    const SizedBox(height: 32),
-                    SizedBox(
-                      height: 56,
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isUpdating ? null : _updateItem,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              28,
-                            ), // M3 full round
                           ),
                         ),
-                        child: _isUpdating
-                            ? const SizedBox(
-                                height: 24,
-                                width: 24,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2.5,
+                        // Brand + subcat overlay
+                        Positioned(
+                          bottom: 16,
+                          left: 18,
+                          right: 18,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (brand != null && brand.isNotEmpty)
+                                Text(
+                                  brand.toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    letterSpacing: 4.0,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white.withOpacity(0.75),
+                                  ),
                                 ),
-                              )
-                            : const Text(
-                                "Update Item",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                              const SizedBox(height: 2),
+                              Text(
+                                subCat,
+                                style: const TextStyle(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  letterSpacing: -0.5,
+                                  height: 1.1,
                                 ),
                               ),
+                            ],
+                          ),
+                        ),
+                        // Category badge top-right
+                        if (category.isNotEmpty)
+                          Positioned(
+                            top: 12,
+                            right: 12,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(50),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(
+                                  sigmaX: 12,
+                                  sigmaY: 12,
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.72),
+                                    borderRadius: BorderRadius.circular(50),
+                                    border: Border.all(
+                                      color: Colors.white.withOpacity(0.5),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    category,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // ── Form sections ───────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'DETAILS',
+                      style: TextStyle(
+                        fontSize: 10,
+                        letterSpacing: 3,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black.withOpacity(0.35),
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 3),
+                    const Text(
+                      'Edit item info',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.black87,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    _buildFormSection(
+                      icon: CupertinoIcons.info_circle,
+                      title: 'Basic Info',
+                      children: [
+                        _buildWardrobeDropdown(),
+                        _buildField('Category', _categoryController),
+                        _buildField('Sub Category', _subCategoryController),
+                        _buildField('Material', _materialController),
+                        _buildField(
+                          'Colors (comma separated)',
+                          _primaryColorController,
+                        ),
+                        _buildField(
+                          'Pattern',
+                          _patternController,
+                          isLast: true,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
+                    _buildFormSection(
+                      icon: CupertinoIcons.leaf_arrow_circlepath,
+                      title: 'Sustainability & Purchase',
+                      children: [
+                        _buildField('Brand', _brandController),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildField(
+                                'Price',
+                                _priceController,
+                                keyboardType: TextInputType.number,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _buildField(
+                                'Currency',
+                                _currencyController,
+                                isLast: true,
+                              ),
+                            ),
+                          ],
+                        ),
+                        _buildField(
+                          'Purchase Date',
+                          _purchaseDateController,
+                          hint: 'YYYY-MM-DD',
+                          isLast: true,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
+                    _buildFormSection(
+                      icon: CupertinoIcons.pencil_outline,
+                      title: 'Styling',
+                      children: [
+                        _buildField('Fit', _fitController),
+                        _buildField('Length', _lengthController),
+                        _buildField('Neckline', _necklineController),
+                        _buildField('Sleeve Length', _sleeveLengthController),
+                        _buildField(
+                          'Occasions (comma separated)',
+                          _styleOccasionsController,
+                        ),
+                        _buildField(
+                          'Seasonality (comma separated)',
+                          _seasonalityController,
+                          isLast: true,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
+                    _buildFormSection(
+                      icon: CupertinoIcons.thermometer,
+                      title: 'Laundry & Care',
+                      children: [
+                        _buildField(
+                          'Care Instructions (one per line)',
+                          _careInstructionsController,
+                          maxLines: 4,
+                        ),
+                        _buildField('Color Group', _colorGroupController),
+                        _buildField(
+                          'Max Temp (°C)',
+                          _maxTempController,
+                          keyboardType: TextInputType.number,
+                          isLast: true,
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Update button
+                    _ScaleButton(
+                      onTap: _updateItem,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF5B52F0), Color(0xFF3730C8)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [
+                            BoxShadow(
+                              color: _kPurple.withOpacity(0.35),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(
+                              CupertinoIcons.checkmark_circle,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            SizedBox(width: 10),
+                            Text(
+                              'Save Changes',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                letterSpacing: 0.1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Delete button
+                    _ScaleButton(
+                      onTap: _confirmDelete,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDC2626).withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: const Color(0xFFDC2626).withOpacity(0.25),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(
+                              CupertinoIcons.delete,
+                              color: Color(0xFFDC2626),
+                              size: 17,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Delete Item',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFFDC2626),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -539,19 +1076,64 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16.0),
-      child: Row(
+  // ─── Form helpers ─────────────────────────────────────────────────────────
+
+  Widget _buildFormSection({
+    required IconData icon,
+    required String title,
+    required List<Widget> children,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.black.withOpacity(0.06)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 24, color: Colors.blueGrey[800]),
-          const SizedBox(width: 12),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.blueGrey[800],
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: _kPurpleLight,
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Icon(icon, size: 14, color: _kPurple),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            height: 1,
+            margin: const EdgeInsets.symmetric(horizontal: 18),
+            color: Colors.black.withOpacity(0.05),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: children,
             ),
           ),
         ],
@@ -559,31 +1141,53 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
     );
   }
 
-  Widget _buildCard(List<Widget> children) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+  Widget _buildField(
+    String label,
+    TextEditingController controller, {
+    int maxLines = 1,
+    TextInputType? keyboardType,
+    String? hint,
+    bool isLast = false,
+  }) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: isLast ? 10 : 12),
+      child: TextFormField(
+        controller: controller,
+        maxLines: maxLines,
+        keyboardType: keyboardType,
+        style: const TextStyle(
+          fontSize: 14,
+          color: Colors.black87,
+          fontWeight: FontWeight.w500,
+        ),
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          labelStyle: TextStyle(
+            color: Colors.black.withOpacity(0.45),
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
           ),
-        ],
-        border: Border.all(color: Colors.grey.shade100),
+          filled: true,
+          fillColor: Colors.black.withOpacity(0.03),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: _kPurple, width: 1.5),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 13,
+          ),
+        ),
       ),
-      padding: const EdgeInsets.all(20),
-      child: Column(children: children),
-    );
-  }
-
-  Widget _buildImageHeader(String? imageUrl) {
-    return Container(
-      height: 320,
-      width: double.infinity,
-      color: Colors.white,
-      child: Center(child: SmartClothingImage(imageUrl: imageUrl)),
     );
   }
 
@@ -592,97 +1196,153 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
       animation: wardrobeStateService,
       builder: (context, _) {
         final wardrobes = wardrobeStateService.wardrobes;
-
-        bool isCurrentIdValid =
+        final isValid =
             _currentWardrobeId == null ||
             wardrobes.any((w) => w['id'] == _currentWardrobeId);
-        final dropdownValue = isCurrentIdValid ? _currentWardrobeId : null;
+        final dropdownValue = isValid ? _currentWardrobeId : null;
 
-        return DropdownButtonFormField<String?>(
-          initialValue: dropdownValue,
-          decoration: InputDecoration(
-            labelText: "Location",
-            labelStyle: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 13,
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: DropdownButtonFormField<String?>(
+            value: dropdownValue,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black87,
               fontWeight: FontWeight.w500,
             ),
-            floatingLabelBehavior: FloatingLabelBehavior.always,
-            prefixIcon: const Icon(Icons.location_on, color: Colors.black87),
-            border: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey),
+            decoration: InputDecoration(
+              labelText: 'Wardrobe',
+              labelStyle: TextStyle(
+                color: Colors.black.withOpacity(0.45),
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+              filled: true,
+              fillColor: Colors.black.withOpacity(0.03),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: _kPurple, width: 1.5),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 13,
+              ),
             ),
-            enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            focusedBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.black, width: 1.5),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 0,
-              vertical: 8,
-            ),
+            items: [
+              const DropdownMenuItem<String?>(
+                value: null,
+                child: Text('All Wardrobes'),
+              ),
+              ...wardrobes.map(
+                (w) => DropdownMenuItem<String?>(
+                  value: w['id'],
+                  child: Text(w['name']),
+                ),
+              ),
+            ],
+            onChanged: (val) => _updateItemWardrobe(val),
           ),
-          items: [
-            const DropdownMenuItem<String?>(
-              value: null,
-              child: Text("All Wardrobes"),
-            ),
-            ...wardrobes.map((w) {
-              return DropdownMenuItem<String?>(
-                value: w['id'],
-                child: Text(w['name']),
-              );
-            }),
-          ],
-          onChanged: (newValue) {
-            _updateItemWardrobe(newValue);
-          },
         );
       },
     );
   }
+}
 
-  Widget _buildTextField(
-    String label,
-    TextEditingController controller, {
-    int maxLines = 1,
-    TextInputType? keyboardType,
-    String? hint,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: TextField(
-        controller: controller,
-        maxLines: maxLines,
-        keyboardType: keyboardType,
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          floatingLabelBehavior: FloatingLabelBehavior.always,
-          labelStyle: TextStyle(
-            color: Colors.grey[600],
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
+// ─── Scale button ─────────────────────────────────────────────────────────────
+
+class _ScaleButton extends StatefulWidget {
+  final VoidCallback onTap;
+  final Widget child;
+  const _ScaleButton({required this.onTap, required this.child});
+
+  @override
+  State<_ScaleButton> createState() => _ScaleButtonState();
+}
+
+class _ScaleButtonState extends State<_ScaleButton> {
+  double _scale = 1.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _scale = 0.97),
+      onTapUp: (_) {
+        setState(() => _scale = 1.0);
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _scale = 1.0),
+      child: AnimatedScale(
+        scale: _scale,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+// ─── Dialog button ────────────────────────────────────────────────────────────
+
+class _DialogButton extends StatefulWidget {
+  final String label;
+  final VoidCallback onTap;
+  final bool isPrimary;
+  final bool isDestructive;
+
+  const _DialogButton({
+    required this.label,
+    required this.onTap,
+    required this.isPrimary,
+    this.isDestructive = false,
+  });
+
+  @override
+  State<_DialogButton> createState() => _DialogButtonState();
+}
+
+class _DialogButtonState extends State<_DialogButton> {
+  double _scale = 1.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = widget.isDestructive ? const Color(0xFFDC2626) : _kPurple;
+
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _scale = 0.96),
+      onTapUp: (_) {
+        setState(() => _scale = 1.0);
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _scale = 1.0),
+      child: AnimatedScale(
+        scale: _scale,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 13),
+          decoration: BoxDecoration(
+            color: widget.isPrimary ? color : Colors.black.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(14),
           ),
-          fillColor: Colors.white,
-          filled: true,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 0,
-            vertical: 8,
-          ),
-          isDense: true,
-          border: const UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.grey),
-          ),
-          enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.grey.shade300),
-          ),
-          focusedBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.black, width: 1.5),
+          child: Center(
+            child: Text(
+              widget.label,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: widget.isPrimary ? Colors.white : Colors.black87,
+              ),
+            ),
           ),
         ),
-        style: const TextStyle(fontSize: 15, color: Colors.black87),
       ),
     );
   }

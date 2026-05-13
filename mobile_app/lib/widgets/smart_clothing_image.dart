@@ -26,10 +26,10 @@ class SmartClothingImage extends StatelessWidget {
           child: CachedNetworkImage(
             imageUrl: imageUrl!,
             fit: fit,
-            placeholder: (context, url) => Container(
-              color: Colors.white,
-              child: const Center(
-                child: CircularProgressIndicator(strokeWidth: 2),
+            placeholder: (context, url) => const Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 1.5,
+                color: Colors.black26,
               ),
             ),
             errorWidget: (context, url, error) =>
@@ -76,9 +76,6 @@ class SmartClothingImage extends StatelessWidget {
   }
 
   Widget _buildPlaceholderIcon(IconData icon) {
-    return Container(
-      color: Colors.white,
-      child: Center(child: Icon(icon, size: 48, color: Colors.grey[400])),
-    );
+    return Center(child: Icon(icon, size: 48, color: Colors.black12));
   }
 }

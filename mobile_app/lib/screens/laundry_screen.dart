@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
@@ -10,6 +10,10 @@ import 'package:mobile_app/services/laundry_service.dart';
 import 'package:mobile_app/services/wardrobe_state_service.dart';
 import '../widgets/global_wardrobe_selector.dart';
 import 'package:mobile_app/widgets/smart_clothing_image.dart';
+
+const _kBgColor = Color(0xFFF4F3F0);
+const _kBlob1 = Color(0x384F46E5);
+const _kBlob2 = Color(0x206352D2);
 
 class LaundryScreen extends StatefulWidget {
   const LaundryScreen({super.key});
@@ -408,7 +412,7 @@ class _LaundryScreenState extends State<LaundryScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: _kBgColor,
         appBar: AppBar(
           title: const Text(
             'Smart Laundry',
@@ -419,7 +423,44 @@ class _LaundryScreenState extends State<LaundryScreen> {
           centerTitle: true,
           iconTheme: const IconThemeData(color: Colors.black),
         ),
-        body: Center(
+        body: Stack(
+          children: [
+            Positioned.fill(child: ColoredBox(color: _kBgColor)),
+            Positioned(
+              top: -70,
+              right: -50,
+              child: IgnorePointer(
+                child: ImageFiltered(
+                  imageFilter: ImageFilter.blur(sigmaX: 45, sigmaY: 45),
+                  child: Container(
+                    width: 220,
+                    height: 220,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _kBlob1,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 120,
+              left: -50,
+              child: IgnorePointer(
+                child: ImageFiltered(
+                  imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                  child: Container(
+                    width: 160,
+                    height: 160,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _kBlob2,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -483,12 +524,14 @@ class _LaundryScreenState extends State<LaundryScreen> {
             ],
           ),
         ),
+          ],
+        ),
       );
     }
 
     if (_errorMessage != null) {
       return Scaffold(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: _kBgColor,
         appBar: AppBar(
           title: const Text(
             'Smart Laundry',
@@ -499,11 +542,50 @@ class _LaundryScreenState extends State<LaundryScreen> {
           centerTitle: true,
           iconTheme: const IconThemeData(color: Colors.black),
         ),
-        body: Center(
-          child: Text(
-            _errorMessage!,
-            style: const TextStyle(color: Colors.red),
-          ),
+        body: Stack(
+          children: [
+            Positioned.fill(child: ColoredBox(color: _kBgColor)),
+            Positioned(
+              top: -70,
+              right: -50,
+              child: IgnorePointer(
+                child: ImageFiltered(
+                  imageFilter: ImageFilter.blur(sigmaX: 45, sigmaY: 45),
+                  child: Container(
+                    width: 220,
+                    height: 220,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _kBlob1,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 120,
+              left: -50,
+              child: IgnorePointer(
+                child: ImageFiltered(
+                  imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                  child: Container(
+                    width: 160,
+                    height: 160,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _kBlob2,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Center(
+              child: Text(
+                _errorMessage!,
+                style: const TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -562,9 +644,47 @@ class _LaundryScreenState extends State<LaundryScreen> {
     }).toList();
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
-      body: SafeArea(
-        child: CustomScrollView(
+      backgroundColor: _kBgColor,
+      body: Stack(
+        children: [
+          Positioned.fill(child: ColoredBox(color: _kBgColor)),
+          Positioned(
+            top: -70,
+            right: -50,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 45, sigmaY: 45),
+                child: Container(
+                  width: 220,
+                  height: 220,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob1,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 120,
+            left: -50,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                child: Container(
+                  width: 160,
+                  height: 160,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            top: false,
+            child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
             // 1. Title (scrolls away)
@@ -1013,6 +1133,8 @@ class _LaundryScreenState extends State<LaundryScreen> {
                   ),
           ],
         ),
+          ),
+        ],
       ),
     );
   }
@@ -1351,7 +1473,7 @@ class _StatusHeaderDelegate extends SliverPersistentHeaderDelegate {
     bool overlapsContent,
   ) {
     return Container(
-      color: Colors.grey[50],
+      color: Colors.transparent,
       alignment: Alignment.center,
       child: child,
     );

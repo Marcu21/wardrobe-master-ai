@@ -1,4 +1,4 @@
-import 'dart:ui';
+﻿import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +10,8 @@ import '../widgets/smart_clothing_image.dart';
 const _kBg = Color(0xFFF4F3F0);
 const _kPurple = Color(0xFF4F46E5);
 const _kPurpleLight = Color(0xFFEEEDF8);
+const _kBlob1 = Color(0x38EC4899);
+const _kBlob2 = Color(0x20DB2777);
 
 class ClothingDetailScreen extends StatefulWidget {
   final Map<String, dynamic> itemData;
@@ -671,56 +673,112 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
     final category = basic['category']?.toString() ?? '';
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: const Text(
-          'Item Details',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.w900,
-            letterSpacing: -0.5,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.grey[50]!.withOpacity(0.9),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        foregroundColor: Colors.black87,
-        leading: IconButton(
-          icon: const Icon(CupertinoIcons.back, color: Colors.black87),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: _ScaleButton(
-              onTap: _confirmDelete,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDC2626).withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: const Color(0xFFDC2626).withOpacity(0.18),
-                    width: 1,
+      backgroundColor: _kBg,
+      body: Stack(
+        children: [
+          Positioned.fill(child: ColoredBox(color: _kBg)),
+          Positioned(
+            top: -70,
+            right: -50,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 45, sigmaY: 45),
+                child: Container(
+                  width: 220,
+                  height: 220,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob1,
                   ),
-                ),
-                child: const Icon(
-                  CupertinoIcons.trash,
-                  color: Color(0xFFDC2626),
-                  size: 16,
                 ),
               ),
             ),
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+          Positioned(
+            top: 120,
+            left: -50,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                child: Container(
+                  width: 160,
+                  height: 160,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            top: false,
+            child: Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(
+                    top: MediaQuery.of(context).padding.top + 4,
+                    left: 4,
+                    right: 4,
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          CupertinoIcons.back,
+                          color: Colors.black87,
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      Expanded(
+                        child: Text(
+                          'Item Details',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(
+                            context,
+                          ).textTheme.titleLarge?.copyWith(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 48,
+                        height: 48,
+                        child: Center(
+                          child: _ScaleButton(
+                            onTap: _confirmDelete,
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFDC2626).withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: const Color(
+                                    0xFFDC2626,
+                                  ).withOpacity(0.18),
+                                  width: 1,
+                                ),
+                              ),
+                              child: const Icon(
+                                CupertinoIcons.trash,
+                                color: Color(0xFFDC2626),
+                                size: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
               // ── Hero image ─────────────────────────────────────────────
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
@@ -1072,6 +1130,11 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
             ],
           ),
         ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

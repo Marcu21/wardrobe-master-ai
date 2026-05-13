@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +9,10 @@ import '../widgets/save_outfit_dialog.dart';
 import '../widgets/global_wardrobe_selector.dart';
 import '../services/wardrobe_state_service.dart';
 import '../widgets/smart_clothing_image.dart';
+
+const _kBgColor = Color(0xFFF4F3F0);
+const _kBlob1 = Color(0x38A855F7);
+const _kBlob2 = Color(0x209333EA);
 
 class VirtualDressingRoomScreen extends StatefulWidget {
   final List<String>? initialItemIds;
@@ -390,186 +394,239 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
     double vpShoes = activeLayers <= 3 ? 0.5 : 0.5;
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      extendBodyBehindAppBar: false,
-      appBar: AppBar(
-        title: const GlobalWardrobeSelector(),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        centerTitle: false,
-        iconTheme: const IconThemeData(color: Colors.black87),
-        leading: IconButton(
-          icon: const Icon(CupertinoIcons.back, color: Colors.black87),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          _CircleIconButton(
-            icon: CupertinoIcons.layers_alt,
-            onTap: _openLayersMenu,
+      backgroundColor: _kBgColor,
+      body: Stack(
+        children: [
+          Positioned.fill(child: ColoredBox(color: _kBgColor)),
+          Positioned(
+            top: -70,
+            right: -50,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 45, sigmaY: 45),
+                child: Container(
+                  width: 220,
+                  height: 220,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob1,
+                  ),
+                ),
+              ),
+            ),
           ),
-          const SizedBox(width: 8),
-          _CircleIconButton(
-            icon: CupertinoIcons.checkmark_circle_fill,
-            isPrimary: true,
-            onTap: _saveOutfit,
+          Positioned(
+            top: 120,
+            left: -50,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                child: Container(
+                  width: 160,
+                  height: 160,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob2,
+                  ),
+                ),
+              ),
+            ),
           ),
-          const SizedBox(width: 12),
-        ],
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: _isLoading
-                  ? Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Stack(
-                            alignment: Alignment.center,
+          SafeArea(
+            top: false,
+            child: Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(
+                    top: MediaQuery.of(context).padding.top + 4,
+                    left: 4,
+                    right: 12,
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          CupertinoIcons.back,
+                          color: Colors.black87,
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      const Expanded(child: GlobalWardrobeSelector()),
+                      _CircleIconButton(
+                        icon: CupertinoIcons.layers_alt,
+                        onTap: _openLayersMenu,
+                      ),
+                      const SizedBox(width: 8),
+                      _CircleIconButton(
+                        icon: CupertinoIcons.checkmark_circle_fill,
+                        isPrimary: true,
+                        onTap: _saveOutfit,
+                      ),
+                      const SizedBox(width: 4),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: _isLoading
+                      ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Container(
-                                width: 80,
-                                height: 80,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.deepPurple.withOpacity(0.07),
-                                  border: Border.all(
-                                    color: Colors.deepPurple.withOpacity(0.15),
-                                    width: 1.5,
+                              Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Container(
+                                    width: 80,
+                                    height: 80,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.deepPurple.withOpacity(
+                                        0.07,
+                                      ),
+                                      border: Border.all(
+                                        color: Colors.deepPurple.withOpacity(
+                                          0.15,
+                                        ),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 52,
+                                    height: 52,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.deepPurple.withOpacity(
+                                        0.25,
+                                      ),
+                                      strokeWidth: 1.5,
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    width: 36,
+                                    height: 36,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.deepPurple,
+                                      strokeWidth: 2.5,
+                                    ),
+                                  ),
+                                  const Icon(
+                                    CupertinoIcons.wand_stars,
+                                    color: Colors.deepPurple,
+                                    size: 18,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                              const Text(
+                                'Loading your wardrobe…',
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black87,
+                                  letterSpacing: -0.3,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              const Text(
+                                'Preparing your dressing room',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.black45,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : Stack(
+                          children: [
+                            // LAYER 1: Bottoms & Shoes
+                            Column(
+                              children: [
+                                if (fOuter + fMid + fTop > 0)
+                                  Spacer(flex: fOuter + fMid + fTop),
+                                Expanded(
+                                  flex: fBot,
+                                  child: _ClothingCarouselRowInternal(
+                                    key: ValueKey(vpBottoms),
+                                    items: _bottoms,
+                                    onIndexChanged: (index) =>
+                                        _bottomsIndex = index,
+                                    viewportFraction: vpBottoms,
                                   ),
                                 ),
-                              ),
-                              SizedBox(
-                                width: 52,
-                                height: 52,
-                                child: CircularProgressIndicator(
-                                  color: Colors.deepPurple.withOpacity(0.25),
-                                  strokeWidth: 1.5,
+                                _ClothingCarouselRow(
+                                  key: ValueKey(vpShoes),
+                                  items: _shoes,
+                                  flex: fShoe,
+                                  onIndexChanged: (index) =>
+                                      _shoesIndex = index,
+                                  alignment: Alignment.bottomCenter,
+                                  viewportFraction: vpShoes,
                                 ),
-                              ),
-                              const SizedBox(
-                                width: 36,
-                                height: 36,
-                                child: CircularProgressIndicator(
-                                  color: Colors.deepPurple,
-                                  strokeWidth: 2.5,
-                                ),
-                              ),
-                              const Icon(
-                                CupertinoIcons.wand_stars,
-                                color: Colors.deepPurple,
-                                size: 18,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          const Text(
-                            'Loading your wardrobe…',
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black87,
-                              letterSpacing: -0.3,
+                              ],
                             ),
-                          ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            'Preparing your dressing room',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.black45,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : Stack(
-                      children: [
-                        // LAYER 1: Bottoms & Shoes
-                        Column(
-                          children: [
-                            if (fOuter + fMid + fTop > 0)
-                              Spacer(flex: fOuter + fMid + fTop),
-                            Expanded(
-                              flex: fBot,
-                              child: _ClothingCarouselRowInternal(
-                                key: ValueKey(vpBottoms),
-                                items: _bottoms,
-                                onIndexChanged: (index) =>
-                                    _bottomsIndex = index,
-                                viewportFraction: vpBottoms,
+
+                            // LAYER 2: Tops
+                            if (_showTops)
+                              Column(
+                                children: [
+                                  if (fOuter + fMid > 0)
+                                    Spacer(flex: fOuter + fMid),
+                                  _ClothingCarouselRow(
+                                    key: ValueKey(vpTops),
+                                    items: _tops,
+                                    flex: fTop,
+                                    onIndexChanged: (index) =>
+                                        _topsIndex = index,
+                                    viewportFraction: vpTops,
+                                  ),
+                                  if (fBot + fShoe > 0)
+                                    Spacer(flex: fBot + fShoe),
+                                ],
                               ),
-                            ),
-                            _ClothingCarouselRow(
-                              key: ValueKey(vpShoes),
-                              items: _shoes,
-                              flex: fShoe,
-                              onIndexChanged: (index) => _shoesIndex = index,
-                              alignment: Alignment.bottomCenter,
-                              viewportFraction: vpShoes,
-                            ),
+
+                            // LAYER 3: Midwear
+                            if (_showMidwear)
+                              Column(
+                                children: [
+                                  if (fOuter > 0) Spacer(flex: fOuter),
+                                  _ClothingCarouselRow(
+                                    key: ValueKey(vpMidwear),
+                                    items: _midwear,
+                                    flex: fMid,
+                                    onIndexChanged: (index) =>
+                                        _midwearIndex = index,
+                                    viewportFraction: vpMidwear,
+                                  ),
+                                  if (fTop + fBot + fShoe > 0)
+                                    Spacer(flex: fTop + fBot + fShoe),
+                                ],
+                              ),
+
+                            // LAYER 4: Outerwear
+                            if (_showOuterwear)
+                              Column(
+                                children: [
+                                  _ClothingCarouselRow(
+                                    key: ValueKey(vpOuterwear),
+                                    items: _outerwear,
+                                    flex: fOuter,
+                                    onIndexChanged: (index) =>
+                                        _outerwearIndex = index,
+                                    viewportFraction: vpOuterwear,
+                                  ),
+                                  if (fMid + fTop + fBot + fShoe > 0)
+                                    Spacer(flex: fMid + fTop + fBot + fShoe),
+                                ],
+                              ),
                           ],
                         ),
-
-                        // LAYER 2: Tops
-                        if (_showTops)
-                          Column(
-                            children: [
-                              if (fOuter + fMid > 0)
-                                Spacer(flex: fOuter + fMid),
-                              _ClothingCarouselRow(
-                                key: ValueKey(vpTops),
-                                items: _tops,
-                                flex: fTop,
-                                onIndexChanged: (index) => _topsIndex = index,
-                                viewportFraction: vpTops,
-                              ),
-                              if (fBot + fShoe > 0) Spacer(flex: fBot + fShoe),
-                            ],
-                          ),
-
-                        // LAYER 3: Midwear
-                        if (_showMidwear)
-                          Column(
-                            children: [
-                              if (fOuter > 0) Spacer(flex: fOuter),
-                              _ClothingCarouselRow(
-                                key: ValueKey(vpMidwear),
-                                items: _midwear,
-                                flex: fMid,
-                                onIndexChanged: (index) =>
-                                    _midwearIndex = index,
-                                viewportFraction: vpMidwear,
-                              ),
-                              if (fTop + fBot + fShoe > 0)
-                                Spacer(flex: fTop + fBot + fShoe),
-                            ],
-                          ),
-
-                        // LAYER 4: Outerwear
-                        if (_showOuterwear)
-                          Column(
-                            children: [
-                              _ClothingCarouselRow(
-                                key: ValueKey(vpOuterwear),
-                                items: _outerwear,
-                                flex: fOuter,
-                                onIndexChanged: (index) =>
-                                    _outerwearIndex = index,
-                                viewportFraction: vpOuterwear,
-                              ),
-                              if (fMid + fTop + fBot + fShoe > 0)
-                                Spacer(flex: fMid + fTop + fBot + fShoe),
-                            ],
-                          ),
-                      ],
-                    ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

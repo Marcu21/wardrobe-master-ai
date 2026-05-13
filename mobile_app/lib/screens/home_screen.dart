@@ -869,66 +869,66 @@ class _WeatherSkeletonState extends State<_WeatherSkeleton>
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: Colors.white.withOpacity(0.90)),
                 ),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 10),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 10),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _block(110, 18, hi),
+                                  const SizedBox(height: 7),
+                                  _block(75, 11, lo),
+                                  const SizedBox(height: 5),
+                                  _block(58, 10, vlo),
+                                ],
+                              ),
+                            ),
+                          ),
+                          _block(72, 50, hi, radius: 10),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Container(
+                        height: 72,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.04),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.black.withOpacity(0.06),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: List.generate(
+                            5,
+                            (_) => Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                _block(110, 18, hi),
+                                _block(28, 9, lo, radius: 3),
                                 const SizedBox(height: 7),
-                                _block(75, 11, lo),
-                                const SizedBox(height: 5),
-                                _block(58, 10, vlo),
+                                _block(14, 14, hi, radius: 7),
+                                const SizedBox(height: 7),
+                                _block(22, 11, lo, radius: 3),
                               ],
                             ),
                           ),
                         ),
-                        _block(72, 50, hi, radius: 10),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    Container(
-                      height: 72,
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.04),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: Colors.black.withOpacity(0.06),
-                          width: 1,
-                        ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: List.generate(
-                          5,
-                          (_) => Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _block(28, 9, lo, radius: 3),
-                              const SizedBox(height: 7),
-                              _block(14, 14, hi, radius: 7),
-                              const SizedBox(height: 7),
-                              _block(22, 11, lo, radius: 3),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
         );
       },
     );

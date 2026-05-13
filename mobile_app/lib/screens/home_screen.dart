@@ -11,6 +11,13 @@ import 'shopping_assistant_screen.dart';
 import 'my_trips_screen.dart';
 import 'virtual_dressing_room_screen.dart';
 
+// Design tokens
+const _kBgColor = Color(0xFFF4F3F0);
+const _kPurple = Color(0xFF4F46E5);
+const _kPurpleLight = Color(0xFFEEEDF8);
+const _kBlob1 = Color(0x384F46E5);
+const _kBlob2 = Color(0x206352D2);
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -56,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: _kBgColor,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text(
@@ -67,7 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
             letterSpacing: -0.5,
           ),
         ),
-        backgroundColor: Colors.grey[50]!.withOpacity(0.9),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         flexibleSpace: ClipRect(
@@ -146,186 +153,489 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SizedBox(
-              height: MediaQuery.of(context).padding.top + kToolbarHeight + 10,
-            ),
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Positioned(
-                  top: 10,
-                  right: -10,
-                  child: Container(
-                    width: 180,
-                    height: 180,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFFEADDFF).withOpacity(0.4),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 100,
-                  left: -30,
-                  child: Container(
-                    width: 140,
-                    height: 140,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFFFFCCBC).withOpacity(0.3),
-                    ),
-                  ),
-                ),
-                Positioned.fill(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
-                    child: const SizedBox(),
-                  ),
-                ),
-                TweenAnimationBuilder<double>(
-                  tween: Tween<double>(begin: 0.0, end: 1.0),
-                  duration: const Duration(milliseconds: 1000),
-                  curve: Curves.easeOutCubic,
-                  builder: (context, value, child) {
-                    return Transform.translate(
-                      offset: Offset(0, 20 * (1 - value)),
-                      child: Opacity(opacity: value, child: child),
-                    );
-                  },
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Builder(
-                        builder: (context) {
-                          final now = DateTime.now();
-                          const months = [
-                            'JANUARY',
-                            'FEBRUARY',
-                            'MARCH',
-                            'APRIL',
-                            'MAY',
-                            'JUNE',
-                            'JULY',
-                            'AUGUST',
-                            'SEPTEMBER',
-                            'OCTOBER',
-                            'NOVEMBER',
-                            'DECEMBER',
-                          ];
-                          const weekdays = [
-                            'MONDAY',
-                            'TUESDAY',
-                            'WEDNESDAY',
-                            'THURSDAY',
-                            'FRIDAY',
-                            'SATURDAY',
-                            'SUNDAY',
-                          ];
-                          final dateStr =
-                              '${weekdays[now.weekday - 1]}, ${months[now.month - 1]} ${now.day}';
-                          return Text(
-                            dateStr,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              letterSpacing: 4.0,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black54,
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      StreamBuilder<DocumentSnapshot>(
-                        stream: FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(FirebaseService().currentUser?.uid)
-                            .snapshots(),
-                        builder: (context, snapshot) {
-                          String name = '';
-                          if (snapshot.hasData && snapshot.data!.exists) {
-                            final data =
-                                snapshot.data!.data() as Map<String, dynamic>?;
-                            if (data != null) {
-                              name = data['name'] ?? '';
-                            }
-                          } else if (FirebaseService()
-                                  .currentUser
-                                  ?.displayName !=
-                              null) {
-                            name = FirebaseService().currentUser!.displayName!;
-                          }
+      body: Stack(
+        children: [
+          // Background
+          Positioned.fill(child: ColoredBox(color: _kBgColor)),
 
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "Hello,",
-                                style: TextStyle(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.w200,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              ShaderMask(
-                                blendMode: BlendMode.srcIn,
-                                shaderCallback: (bounds) =>
-                                    const LinearGradient(
-                                      colors: [
-                                        Colors.black,
-                                        Color(0xFF424242),
-                                        Colors.black87,
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ).createShader(bounds),
-                                child: Text(
-                                  name.isNotEmpty ? name : "There",
-                                  style: const TextStyle(
-                                    fontSize: 36,
-                                    fontWeight: FontWeight.w900,
-                                    height: 1.1,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
+          // Blobs
+          Positioned(
+            top: -70,
+            right: -50,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 45, sigmaY: 45),
+                child: Container(
+                  width: 220,
+                  height: 220,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob1,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 120,
+            left: -50,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                child: Container(
+                  width: 160,
+                  height: 160,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Content
+          SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.0, end: 1.0),
+              duration: const Duration(milliseconds: 800),
+              curve: Curves.easeOutCubic,
+              builder: (context, v, child) => Transform.translate(
+                offset: Offset(0, 20 * (1 - v)),
+                child: Opacity(opacity: v, child: child),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(
+                    height:
+                        MediaQuery.of(context).padding.top +
+                        kToolbarHeight +
+                        10,
+                  ),
+                  _buildHeroSection(),
+                  const SizedBox(height: 24),
+                  _buildWeatherCard(),
+                  const SizedBox(height: 16),
+                  _buildAIStylistCard(),
+                  const SizedBox(height: 12),
+                  _buildDressingRoomCard(),
+                  const SizedBox(height: 12),
+                  _buildShoppingCard(),
+                  const SizedBox(height: 12),
+                  _buildSmartPackingCard(),
+                  const SizedBox(height: kBottomNavigationBarHeight + 66),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Builder(
+          builder: (context) {
+            final now = DateTime.now();
+            const months = [
+              'JANUARY',
+              'FEBRUARY',
+              'MARCH',
+              'APRIL',
+              'MAY',
+              'JUNE',
+              'JULY',
+              'AUGUST',
+              'SEPTEMBER',
+              'OCTOBER',
+              'NOVEMBER',
+              'DECEMBER',
+            ];
+            const weekdays = [
+              'MONDAY',
+              'TUESDAY',
+              'WEDNESDAY',
+              'THURSDAY',
+              'FRIDAY',
+              'SATURDAY',
+              'SUNDAY',
+            ];
+            final dateStr =
+                '${weekdays[now.weekday - 1]}, ${months[now.month - 1]} ${now.day}';
+            return Text(
+              dateStr,
+              style: TextStyle(
+                fontSize: 10,
+                letterSpacing: 3.0,
+                fontWeight: FontWeight.w600,
+                color: Colors.black.withOpacity(0.35),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 10),
+        StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(FirebaseService().currentUser?.uid)
+              .snapshots(),
+          builder: (context, snapshot) {
+            String name = '';
+            if (snapshot.hasData && snapshot.data!.exists) {
+              final data = snapshot.data!.data() as Map<String, dynamic>?;
+              if (data != null) name = data['name'] ?? '';
+            } else if (FirebaseService().currentUser?.displayName != null) {
+              name = FirebaseService().currentUser!.displayName!;
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Hello,",
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w300,
+                    color: Colors.black54,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                Text(
+                  name.isNotEmpty ? name : "There",
+                  style: const TextStyle(
+                    fontSize: 40,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black87,
+                    height: 1.05,
+                    letterSpacing: -1.0,
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          "Discover today's aesthetic.",
+          style: TextStyle(
+            fontSize: 14,
+            fontStyle: FontStyle.italic,
+            color: Colors.black45,
+            height: 1.4,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAIStylistCard() {
+    return _HomeCard(
+      shadowColor: const Color(0xFF4F46E5),
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const AiStylistChatScreen()),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4F46E5).withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome,
+                  color: Color(0xFF4F46E5),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "AI Stylist",
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.4,
                       ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        "Discover today's aesthetic.",
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontStyle: FontStyle.italic,
-                          color: Colors.black54,
-                          height: 1.4,
-                        ),
+                    ),
+                    Text(
+                      "Your personal fashion advisor",
+                      style: TextStyle(
+                        color: Colors.black45,
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
                       ),
-                    ],
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                CupertinoIcons.chevron_right,
+                size: 14,
+                color: Colors.black.withOpacity(0.25),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            "Tell me where you're going and I'll build a perfect outfit from your wardrobe.",
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.black.withOpacity(0.52),
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 16),
+          GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const AiStylistChatScreen()),
+            ),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 13),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF4338CA), Color(0xFF6D28D9)],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.auto_awesome, color: Colors.white, size: 18),
+                  SizedBox(width: 8),
+                  Text(
+                    "Generate Outfit",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.1,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDressingRoomCard() {
+    return _HomeCard(
+      shadowColor: const Color(0xFF673AB7),
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const VirtualDressingRoomScreen()),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF673AB7).withOpacity(0.10),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.checkroom,
+              color: Color(0xFF673AB7),
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Dressing Room",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black87,
+                    letterSpacing: -0.4,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                const Text(
+                  "Mix & match pieces from your wardrobe",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.black45,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 24),
-            _buildWeatherCard(),
-            const SizedBox(height: 24),
-            _buildAIStylistCard(),
-            const SizedBox(height: 16),
-            _buildShoppingAssistantCard(),
-            const SizedBox(height: 16),
-            _buildVirtualDressingRoomCard(),
-            _buildMyTripsCard(),
-            const SizedBox(height: kBottomNavigationBarHeight + 66),
-          ],
-        ),
+          ),
+          Icon(
+            CupertinoIcons.chevron_right,
+            size: 14,
+            color: Colors.black.withOpacity(0.25),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildShoppingCard() {
+    return _HomeCard(
+      shadowColor: const Color(0xFF009688),
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ShoppingAssistantScreen()),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF009688).withOpacity(0.10),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              CupertinoIcons.doc_text_search,
+              color: Color(0xFF009688),
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Should I Buy This?",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black87,
+                    letterSpacing: -0.4,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                const Text(
+                  "Scan any item to see if it fits your style",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.black45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            CupertinoIcons.chevron_right,
+            size: 14,
+            color: Colors.black.withOpacity(0.25),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSmartPackingCard() {
+    final uid = FirebaseService().currentUser?.uid;
+    return StreamBuilder<QuerySnapshot>(
+      stream: uid != null
+          ? FirebaseFirestore.instance
+                .collection('trips')
+                .where('user_id', isEqualTo: uid)
+                .snapshots()
+          : const Stream.empty(),
+      builder: (context, snapshot) {
+        return _HomeCard(
+          shadowColor: const Color(0xFF1565C0),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const MyTripsScreen()),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1565C0).withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.luggage_rounded,
+                  color: Color(0xFF1565C0),
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Smart Packing",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.black87,
+                        letterSpacing: -0.4,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    const Text(
+                      "Build the perfect wardrobe for any trip",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.black45,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                CupertinoIcons.chevron_right,
+                size: 14,
+                color: Colors.black.withOpacity(0.25),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildWeatherCard() {
+    return DynamicWeatherCard(
+      weather: _weather,
+      isLoading: _isLoading,
+      error: _error,
+      onRetry: () {
+        setState(() {
+          _isLoading = true;
+          _error = null;
+        });
+        _fetchWeather();
+      },
     );
   }
 
@@ -334,7 +644,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (user == null) {
       return const CircleAvatar(
         radius: 16,
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: _kPurple,
         child: Icon(Icons.person, color: Colors.white, size: 20),
       );
     }
@@ -383,7 +693,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
         return CircleAvatar(
           radius: 16,
-          backgroundColor: Colors.blueAccent,
+          backgroundColor: _kPurple,
           child: Text(
             fallbackLetter,
             style: const TextStyle(
@@ -396,333 +706,236 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
-
-  Widget _buildWeatherCard() {
-    return DynamicWeatherCard(
-      weather: _weather,
-      isLoading: _isLoading,
-      error: _error,
-      onRetry: () {
-        setState(() {
-          _isLoading = true;
-          _error = null;
-        });
-        _fetchWeather();
-      },
-    );
-  }
-
-  Widget _buildAIStylistCard() {
-    return _GlassNavCard(
-      accentColor: Colors.black87,
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const AiStylistChatScreen()),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "AI Stylist",
-                    style: TextStyle(
-                      color: Colors.black87,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    "Ready to pick your outfit?",
-                    style: TextStyle(color: Colors.black54, fontSize: 14),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.07),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.auto_awesome,
-                  color: Colors.black87,
-                  size: 28,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            "Based on the weather and your style, I recommend a layered look today.",
-            style: TextStyle(color: Colors.black54, fontSize: 14),
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AiStylistChatScreen()),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black87,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-              ),
-              child: const Text(
-                "Generate Outfit",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildShoppingAssistantCard() {
-    return _GlassNavCard(
-      accentColor: Colors.teal,
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const ShoppingAssistantScreen()),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Should I Buy This?",
-                  style: TextStyle(
-                    color: Colors.teal,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  "Scan an item in-store to see its Wardrobe Match Score.",
-                  style: TextStyle(color: Colors.teal.shade700, fontSize: 13),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.teal.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.document_scanner_outlined,
-              color: Colors.teal,
-              size: 28,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMyTripsCard() {
-    final uid = FirebaseService().currentUser?.uid;
-    return Padding(
-      padding: const EdgeInsets.only(top: 16),
-      child: StreamBuilder<QuerySnapshot>(
-        stream: uid != null
-            ? FirebaseFirestore.instance
-                  .collection('trips')
-                  .where('user_id', isEqualTo: uid)
-                  .snapshots()
-            : const Stream.empty(),
-        builder: (context, snapshot) {
-          return _GlassNavCard(
-            accentColor: Colors.blueAccent,
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const MyTripsScreen()),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Smart Packing",
-                        style: TextStyle(
-                          color: Colors.blueAccent,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        "Plan your travel outfits with AI-powered capsule wardrobes.",
-                        style: TextStyle(
-                          color: Colors.blueAccent.shade700.withOpacity(0.8),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.blueAccent.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: const Icon(
-                    Icons.luggage_rounded,
-                    color: Colors.blueAccent,
-                    size: 28,
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildVirtualDressingRoomCard() {
-    return _GlassNavCard(
-      accentColor: Colors.purple,
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const VirtualDressingRoomScreen()),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Virtual Dressing Room",
-                  style: TextStyle(
-                    color: Colors.purple,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  "Mix, match, and visualize your outfits on a digital canvas.",
-                  style: TextStyle(
-                    color: Colors.purple.shade700.withOpacity(0.8),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.purple.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: const Icon(Icons.checkroom, color: Colors.purple, size: 28),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
-// ─── Reusable Glass Navigation Card ───────────────────────────────────────────
-class _GlassNavCard extends StatefulWidget {
-  final Color accentColor;
+// Reusable glass card
+
+class _HomeCard extends StatefulWidget {
   final VoidCallback onTap;
   final Widget child;
+  final Color shadowColor;
 
-  const _GlassNavCard({
-    required this.accentColor,
+  const _HomeCard({
     required this.onTap,
     required this.child,
+    this.shadowColor = _kPurple,
   });
 
   @override
-  State<_GlassNavCard> createState() => _GlassNavCardState();
+  State<_HomeCard> createState() => _HomeCardState();
 }
 
-class _GlassNavCardState extends State<_GlassNavCard> {
+class _HomeCardState extends State<_HomeCard> {
   double _scale = 1.0;
 
   @override
   Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 0.92, end: 1.0),
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeOutCubic,
-      builder: (context, value, child) {
-        return Transform.scale(scale: value, child: child);
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _scale = 0.97),
+      onTapUp: (_) {
+        setState(() => _scale = 1.0);
+        widget.onTap();
       },
-      child: GestureDetector(
-        onTapDown: (_) => setState(() => _scale = 0.97),
-        onTapUp: (_) {
-          setState(() => _scale = 1.0);
-          widget.onTap();
-        },
-        onTapCancel: () => setState(() => _scale = 1.0),
-        child: AnimatedScale(
-          scale: _scale,
-          duration: const Duration(milliseconds: 120),
-          curve: Curves.easeOut,
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.72),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: widget.accentColor.withOpacity(0.18),
-                width: 1,
+      onTapCancel: () => setState(() => _scale = 1.0),
+      child: AnimatedScale(
+        scale: _scale,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 10,
+                spreadRadius: 0,
+                offset: const Offset(0, 2),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: widget.accentColor.withOpacity(0.14),
-                  blurRadius: 22,
-                  spreadRadius: 2,
-                  offset: const Offset(0, 6),
+              BoxShadow(
+                color: widget.shadowColor.withOpacity(0.14),
+                blurRadius: 16,
+                spreadRadius: 0,
+                offset: Offset.zero,
+              ),
+              BoxShadow(
+                color: widget.shadowColor.withOpacity(0.07),
+                blurRadius: 32,
+                spreadRadius: 3,
+                offset: Offset.zero,
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(22),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.92),
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: Colors.white, width: 1),
                 ),
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+                child: widget.child,
+              ),
             ),
-            child: widget.child,
           ),
         ),
       ),
     );
   }
 }
+
+// Weather skeleton
+
+class _WeatherSkeleton extends StatefulWidget {
+  const _WeatherSkeleton();
+
+  @override
+  State<_WeatherSkeleton> createState() => _WeatherSkeletonState();
+}
+
+class _WeatherSkeletonState extends State<_WeatherSkeleton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  Widget _block(double w, double h, double opacity, {double radius = 6}) =>
+      Container(
+        width: w,
+        height: h,
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(opacity),
+          borderRadius: BorderRadius.circular(radius),
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (_, __) {
+        final t = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut).value;
+        final hi = 0.08 + t * 0.06;
+        final lo = hi * 0.6;
+        final vlo = hi * 0.4;
+
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 10,
+                spreadRadius: 0,
+                offset: const Offset(0, 2),
+              ),
+              BoxShadow(
+                color: _kPurple.withOpacity(0.08),
+                blurRadius: 20,
+                spreadRadius: 2,
+                offset: Offset.zero,
+              ),
+              BoxShadow(
+                color: _kPurple.withOpacity(0.04),
+                blurRadius: 40,
+                spreadRadius: 4,
+                offset: Offset.zero,
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.80),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.white.withOpacity(0.90)),
+                ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 10),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _block(110, 18, hi),
+                                const SizedBox(height: 7),
+                                _block(75, 11, lo),
+                                const SizedBox(height: 5),
+                                _block(58, 10, vlo),
+                              ],
+                            ),
+                          ),
+                        ),
+                        _block(72, 50, hi, radius: 10),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Container(
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.04),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Colors.black.withOpacity(0.06),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: List.generate(
+                          5,
+                          (_) => Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _block(28, 9, lo, radius: 3),
+                              const SizedBox(height: 7),
+                              _block(14, 14, hi, radius: 7),
+                              const SizedBox(height: 7),
+                              _block(22, 11, lo, radius: 3),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        );
+      },
+    );
+  }
+}
+
+// Weather card
 
 class DynamicWeatherCard extends StatelessWidget {
   final WeatherModel? weather;
@@ -740,122 +953,63 @@ class DynamicWeatherCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return Container(
-        width: double.infinity,
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.fromLTRB(22, 24, 22, 20),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF3F3F3),
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Mimic city name skeleton
-            Container(
-              width: 120,
-              height: 18,
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(6),
-              ),
-            ),
-            const SizedBox(height: 8),
-            // Mimic condition skeleton
-            Container(
-              width: 80,
-              height: 12,
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-            const SizedBox(height: 24),
-            // Mimic hourly strip skeleton
-            Container(
-              height: 76,
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.black.withOpacity(0.25),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      "Checking weather...",
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.black.withOpacity(0.35),
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
+    if (isLoading) return const _WeatherSkeleton();
 
     if (error != null) {
-      return Container(
-        width: double.infinity,
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.fromLTRB(22, 24, 22, 20),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF3F3F3),
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Icon(
-              Icons.cloud_off_outlined,
-              size: 28,
-              color: Colors.black.withOpacity(0.3),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                "Weather unavailable",
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.black.withOpacity(0.45),
-                  fontWeight: FontWeight.w400,
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(22, 16, 14, 16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.75),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: Colors.white.withOpacity(0.9)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
                 ),
-              ),
+              ],
             ),
-            TextButton(
-              onPressed: onRetry,
-              style: TextButton.styleFrom(foregroundColor: Colors.black54),
-              child: const Text("Retry"),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.cloud_off_outlined,
+                  size: 22,
+                  color: Colors.black.withOpacity(0.28),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    "Weather unavailable",
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.black.withOpacity(0.42),
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: onRetry,
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF4F46E5),
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                  ),
+                  child: const Text("Retry"),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       );
     }
@@ -863,134 +1017,181 @@ class DynamicWeatherCard extends StatelessWidget {
     if (weather == null) return const SizedBox.shrink();
 
     final gradient = _getGradient(weather!.condition, weather!.iconCode);
-    final icon = _getIconForCondition(weather!.condition, weather!.iconCode);
+    final bgIcon = _getIconForCondition(weather!.condition, weather!.iconCode);
+    final description = _capitalize(weather!.description);
+
+    int? minTemp;
+    int? maxTemp;
+    if (weather!.forecast.isNotEmpty) {
+      final temps = weather!.forecast.map((f) => f.temperature).toList();
+      minTemp = temps.reduce((a, b) => a < b ? a : b);
+      maxTemp = temps.reduce((a, b) => a > b ? a : b);
+    }
 
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         gradient: gradient,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.18),
+            color: Colors.black.withOpacity(0.20),
             blurRadius: 20,
             spreadRadius: 0,
             offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(22, 24, 22, 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
           children: [
-            // ── Header row ──────────────────────────────────────────
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Left: city + condition
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      weather!.cityName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      weather!.condition,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.70),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                  ],
-                ),
-                // Right: big temperature + icon
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      "${weather!.temperature}\u00b0",
-                      style: const TextStyle(
-                        fontSize: 52,
-                        fontWeight: FontWeight.w200,
-                        color: Colors.white,
-                        height: 1.0,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Icon(icon, size: 32, color: Colors.white70),
-                  ],
-                ),
-              ],
+            // Decorative ghost icon
+            Positioned(
+              right: -10,
+              top: -10,
+              child: Icon(
+                bgIcon,
+                size: 110,
+                color: Colors.white.withOpacity(0.08),
+              ),
             ),
 
-            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header: city+description left, temperature right
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 10),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    CupertinoIcons.location_fill,
+                                    size: 10,
+                                    color: Colors.white.withOpacity(0.70),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    weather!.cityName,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.1,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                description,
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.65),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              if (minTemp != null && maxTemp != null) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  "H:$maxTemp°  L:$minTemp°",
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.45),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                      Text(
+                        "${weather!.temperature}°",
+                        style: const TextStyle(
+                          fontSize: 54,
+                          fontWeight: FontWeight.w200,
+                          color: Colors.white,
+                          height: 1.0,
+                          letterSpacing: -1,
+                        ),
+                      ),
+                    ],
+                  ),
 
-            // ── Hourly forecast strip ──────────────────────────────
-            Container(
-              height: 76,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.14),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.22),
-                  width: 1,
-                ),
-              ),
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                scrollDirection: Axis.horizontal,
-                itemCount: weather!.forecast.length,
-                separatorBuilder: (_, __) => Container(
-                  width: 1,
-                  margin: const EdgeInsets.symmetric(vertical: 16),
-                  color: Colors.white.withOpacity(0.15),
-                ),
-                itemBuilder: (context, index) {
-                  final item = weather!.forecast[index];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          item.timeLabel,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white.withOpacity(0.65),
-                          ),
-                        ),
-                        const SizedBox(height: 5),
-                        Icon(
-                          _getIconForCondition(item.condition, item.iconCode),
-                          size: 18,
-                          color: Colors.white.withOpacity(0.85),
-                        ),
-                        const SizedBox(height: 5),
-                        Text(
-                          "${item.temperature}\u00b0",
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
+                  const SizedBox(height: 14),
+
+                  // Forecast strip
+                  Container(
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.14),
+                        width: 1,
+                      ),
                     ),
-                  );
-                },
+                    child: ListView.separated(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      scrollDirection: Axis.horizontal,
+                      itemCount: weather!.forecast.length,
+                      separatorBuilder: (_, __) => Container(
+                        width: 1,
+                        margin: const EdgeInsets.symmetric(vertical: 14),
+                        color: Colors.white.withOpacity(0.12),
+                      ),
+                      itemBuilder: (context, index) {
+                        final item = weather!.forecast[index];
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                item.timeLabel,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white.withOpacity(0.55),
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              Icon(
+                                _getIconForCondition(
+                                  item.condition,
+                                  item.iconCode,
+                                ),
+                                size: 15,
+                                color: Colors.white.withOpacity(0.88),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                "${item.temperature}°",
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -999,61 +1200,57 @@ class DynamicWeatherCard extends StatelessWidget {
     );
   }
 
-  String _getWeekday(int weekday) {
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return days[weekday - 1];
-  }
-
-  String _getMonth(int month) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return months[month - 1];
+  String _capitalize(String s) {
+    if (s.isEmpty) return s;
+    return s[0].toUpperCase() + s.substring(1);
   }
 
   LinearGradient _getGradient(String condition, String iconCode) {
     condition = condition.toLowerCase();
-    bool isNight = iconCode.endsWith('n');
+    final isNight = iconCode.endsWith('n');
 
     if (condition.contains('clear') || condition.contains('sun')) {
       if (isNight) {
         return const LinearGradient(
-          colors: [Color(0xFF1A237E), Color(0xFF283593)],
+          colors: [Color(0xFF0F1B4D), Color(0xFF1A2B6D), Color(0xFF243B8A)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         );
       }
       return const LinearGradient(
-        colors: [Color(0xFFE65100), Color(0xFFF57C00), Color(0xFFFFB300)],
+        colors: [Color(0xFFD95F02), Color(0xFFF07C00), Color(0xFFFFAA00)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       );
     } else if (condition.contains('cloud')) {
       return const LinearGradient(
-        colors: [Color(0xFF455A64), Color(0xFF607D8B)],
+        colors: [Color(0xFF37474F), Color(0xFF546E7A), Color(0xFF6B8794)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       );
     } else if (condition.contains('rain') || condition.contains('drizzle')) {
       return const LinearGradient(
-        colors: [Color(0xFF0D47A1), Color(0xFF1565C0)],
+        colors: [Color(0xFF0A2E5C), Color(0xFF0D47A1), Color(0xFF1565C0)],
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
       );
     } else if (condition.contains('snow')) {
       return const LinearGradient(
-        colors: [Color(0xFF1E3C72), Color(0xFF2A5298), Color(0xFF00838F)],
+        colors: [Color(0xFF1A3A5C), Color(0xFF1E4D8C), Color(0xFF1A6B8A)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+    } else if (condition.contains('thunder') || condition.contains('storm')) {
+      return const LinearGradient(
+        colors: [Color(0xFF1A0533), Color(0xFF2D1B69), Color(0xFF1A237E)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+    } else if (condition.contains('mist') ||
+        condition.contains('fog') ||
+        condition.contains('haze')) {
+      return const LinearGradient(
+        colors: [Color(0xFF5D6D7E), Color(0xFF7F8C8D)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       );
@@ -1061,12 +1258,12 @@ class DynamicWeatherCard extends StatelessWidget {
 
     return isNight
         ? const LinearGradient(
-            colors: [Color(0xFF1A237E), Color(0xFF283593)],
+            colors: [Color(0xFF0F1B4D), Color(0xFF1A2B6D), Color(0xFF243B8A)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           )
         : const LinearGradient(
-            colors: [Color(0xFF5E35B1), Color(0xFF7E57C2)],
+            colors: [Color(0xFF4527A0), Color(0xFF6A1B9A), Color(0xFF7B1FA2)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           );
@@ -1074,21 +1271,26 @@ class DynamicWeatherCard extends StatelessWidget {
 
   IconData _getIconForCondition(String condition, String iconCode) {
     condition = condition.toLowerCase();
-    bool isNight = iconCode.endsWith('n'); // verificam daca e noapte
+    final isNight = iconCode.endsWith('n');
 
-    if (condition.contains('rain') || condition.contains('drizzle')) {
+    if (condition.contains('thunder') || condition.contains('storm')) {
+      return CupertinoIcons.bolt_fill;
+    } else if (condition.contains('rain') || condition.contains('drizzle')) {
       return CupertinoIcons.drop_fill;
-    } else if (condition.contains('cloud')) {
-      return CupertinoIcons.cloud_fill;
     } else if (condition.contains('snow')) {
       return CupertinoIcons.snow;
+    } else if (condition.contains('mist') ||
+        condition.contains('fog') ||
+        condition.contains('haze')) {
+      return CupertinoIcons.cloud_fog_fill;
+    } else if (condition.contains('cloud')) {
+      return CupertinoIcons.cloud_fill;
     } else if (condition.contains('clear') || condition.contains('sun')) {
       return isNight
           ? CupertinoIcons.moon_stars_fill
           : CupertinoIcons.sun_max_fill;
     }
 
-    // default
     return isNight
         ? CupertinoIcons.moon_stars_fill
         : CupertinoIcons.sun_max_fill;

@@ -1,4 +1,5 @@
-import 'dart:convert';
+﻿import 'dart:convert';
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,6 +10,10 @@ import 'package:mobile_app/screens/clothing_detail_screen.dart';
 import 'package:mobile_app/services/wardrobe_state_service.dart';
 import '../widgets/global_wardrobe_selector.dart';
 import 'package:mobile_app/widgets/smart_clothing_image.dart';
+
+const _kBgColor = Color(0xFFF4F3F0);
+const _kBlob1 = Color(0x384F46E5);
+const _kBlob2 = Color(0x206352D2);
 
 class WardrobeGalleryScreen extends StatefulWidget {
   const WardrobeGalleryScreen({super.key});
@@ -60,15 +65,47 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: const GlobalWardrobeSelector(),
-        backgroundColor: Colors.grey[50],
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        centerTitle: true,
-      ),
-      body: StreamBuilder<QuerySnapshot>(
+      backgroundColor: _kBgColor,
+      body: Stack(
+        children: [
+          Positioned.fill(child: ColoredBox(color: _kBgColor)),
+          Positioned(
+            top: -70,
+            right: -50,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 45, sigmaY: 45),
+                child: Container(
+                  width: 220,
+                  height: 220,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob1,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 120,
+            left: -50,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                child: Container(
+                  width: 160,
+                  height: 160,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            top: false,
+            child: StreamBuilder<QuerySnapshot>(
         stream: _clothingStream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
@@ -283,6 +320,14 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
           return CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
+              const SliverAppBar(
+                pinned: false,
+                floating: false,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                centerTitle: true,
+                title: GlobalWardrobeSelector(),
+              ),
               SliverToBoxAdapter(
                 child: _buildFilterRow(categoryList, _selectedCategory, (val) {
                   setState(() {
@@ -306,6 +351,9 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
             ],
           );
         },
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,10 +1,14 @@
-import 'dart:ui';
+﻿import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'outfit_detail_screen.dart';
 import '../widgets/smart_outfit_card.dart';
+
+const _kBgColor = Color(0xFFF4F3F0);
+const _kBlob1 = Color(0x384F46E5);
+const _kBlob2 = Color(0x206352D2);
 
 class LookbookScreen extends StatelessWidget {
   const LookbookScreen({super.key});
@@ -18,22 +22,47 @@ class LookbookScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: const Text(
-          'My Outfits',
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
-            color: Colors.black87,
-            letterSpacing: -0.5,
+      backgroundColor: _kBgColor,
+      body: Stack(
+        children: [
+          Positioned.fill(child: ColoredBox(color: _kBgColor)),
+          Positioned(
+            top: -70,
+            right: -50,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 45, sigmaY: 45),
+                child: Container(
+                  width: 220,
+                  height: 220,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob1,
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.grey[50],
-        elevation: 0,
-        scrolledUnderElevation: 0,
-      ),
-      body: StreamBuilder<QuerySnapshot>(
+          Positioned(
+            top: 120,
+            left: -50,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                child: Container(
+                  width: 160,
+                  height: 160,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            top: false,
+            child: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('outfits')
             .where('user_id', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
@@ -195,17 +224,35 @@ class LookbookScreen extends StatelessWidget {
             );
           }
 
-          return GridView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 140),
+          return CustomScrollView(
             physics: const BouncingScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 0.35,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-            ),
-            itemCount: snapshot.data!.docs.length,
-            itemBuilder: (context, index) {
+            slivers: [
+              const SliverAppBar(
+                pinned: false,
+                floating: false,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                centerTitle: true,
+                title: Text(
+                  'My Outfits',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black87,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 140),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.35,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
               final doc = snapshot.data!.docs[index];
               final data = doc.data() as Map<String, dynamic>;
 
@@ -335,9 +382,17 @@ class LookbookScreen extends StatelessWidget {
                   ),
                 ),
               );
-            },
+                    },
+                    childCount: snapshot.data!.docs.length,
+                  ),
+                ),
+              ),
+            ],
           );
         },
+            ),
+          ),
+        ],
       ),
     );
   }

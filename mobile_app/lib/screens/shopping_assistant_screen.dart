@@ -1,10 +1,14 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
 import 'match_result_screen.dart';
+
+const _kBgColor = Color(0xFFF4F3F0);
+const _kBlob1 = Color(0x380EA5E9);
+const _kBlob2 = Color(0x200284C7);
 
 class ShoppingAssistantScreen extends StatefulWidget {
   const ShoppingAssistantScreen({super.key});
@@ -104,32 +108,84 @@ class _ShoppingAssistantScreenState extends State<ShoppingAssistantScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.grey[50]!.withOpacity(0.9),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        flexibleSpace: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-            child: Container(color: Colors.transparent),
+      backgroundColor: _kBgColor,
+      body: Stack(
+        children: [
+          Positioned.fill(child: ColoredBox(color: _kBgColor)),
+          Positioned(
+            top: -70,
+            right: -50,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 45, sigmaY: 45),
+                child: Container(
+                  width: 220,
+                  height: 220,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob1,
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
-        leading: IconButton(
-          icon: const Icon(CupertinoIcons.back, color: Colors.black87),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Should I Buy This?',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.w900,
-            letterSpacing: -0.5,
+          Positioned(
+            top: 120,
+            left: -50,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                child: Container(
+                  width: 160,
+                  height: 160,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob2,
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
+          SafeArea(
+            top: false,
+            child: Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(
+                    top: MediaQuery.of(context).padding.top + 4,
+                    left: 4,
+                    right: 4,
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          CupertinoIcons.back,
+                          color: Colors.black87,
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      Expanded(
+                        child: Text(
+                          'Should I Buy This?',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 48),
+                    ],
+                  ),
+                ),
+                Expanded(child: _buildBody()),
+              ],
+            ),
+          ),
+        ],
       ),
-      body: _buildBody(),
     );
   }
 
@@ -384,95 +440,80 @@ class _ShoppingAssistantScreenState extends State<ShoppingAssistantScreen>
   // Preview State
 
   Widget _buildPreviewState() {
-    return Column(
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + kToolbarHeight + 20,
-              left: 20,
-              right: 20,
-              bottom: 16,
-            ),
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.0, end: 1.0),
-              duration: const Duration(milliseconds: 500),
-              curve: Curves.easeOutCubic,
-              builder: (context, value, child) => Transform.translate(
-                offset: Offset(0, 16 * (1 - value)),
-                child: Opacity(opacity: value, child: child),
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.0, end: 1.0),
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeOutCubic,
+        builder: (context, value, child) => Transform.translate(
+          offset: Offset(0, 16 * (1 - value)),
+          child: Opacity(opacity: value, child: child),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Label
+            const Text(
+              "Confirm Photo",
+              style: TextStyle(
+                fontSize: 11,
+                letterSpacing: 4.0,
+                fontWeight: FontWeight.w600,
+                color: Colors.black54,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Label
-                  const Text(
-                    "Confirm Photo",
-                    style: TextStyle(
-                      fontSize: 11,
-                      letterSpacing: 4.0,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black54,
-                    ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              "Looks good?",
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+                color: Colors.black87,
+                letterSpacing: -0.5,
+                height: 1.1,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              "Run the analysis or retake.",
+              style: TextStyle(
+                fontSize: 15,
+                fontStyle: FontStyle.italic,
+                color: Colors.black45,
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Image preview card
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.teal.withOpacity(0.14),
+                    blurRadius: 32,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 12),
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    "Looks good?",
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.black87,
-                      letterSpacing: -0.5,
-                      height: 1.1,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    "Run the analysis or retake.",
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontStyle: FontStyle.italic,
-                      color: Colors.black45,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  // Image preview card
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(28),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.teal.withOpacity(0.14),
-                          blurRadius: 32,
-                          spreadRadius: 2,
-                          offset: const Offset(0, 12),
-                        ),
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.07),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(28),
-                      child: Image.file(
-                        _imageFile!,
-                        fit: BoxFit.contain,
-                        width: double.infinity,
-                      ),
-                    ),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.07),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(28),
+                child: Image.file(
+                  _imageFile!,
+                  fit: BoxFit.contain,
+                  width: double.infinity,
+                ),
+              ),
             ),
-          ),
-        ),
-
-        // Bottom action sheet
-        _buildBottomSheet(
-          children: [
+            const SizedBox(height: 28),
+            // Buttons
             _PrimaryButton(
               label: 'Analyze & Match',
               icon: CupertinoIcons.sparkles,
@@ -488,56 +529,19 @@ class _ShoppingAssistantScreenState extends State<ShoppingAssistantScreen>
             ),
           ],
         ),
-      ],
+      ),
     );
   }
 
   // Shared bottom sheet
 
   Widget _buildBottomSheet({required List<Widget> children}) {
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            16,
-            20,
-            MediaQuery.of(context).padding.bottom + 16,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.88),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border.all(color: Colors.white.withOpacity(0.6), width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 20,
-                offset: const Offset(0, -4),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Drag handle
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.black12,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              ...children,
-            ],
-          ),
-        ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: children,
       ),
     );
   }

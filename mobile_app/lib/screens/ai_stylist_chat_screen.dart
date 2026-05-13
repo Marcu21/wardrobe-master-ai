@@ -1,4 +1,4 @@
-import 'dart:ui';
+﻿import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
@@ -20,8 +20,8 @@ const _kPurpleLight = Color(0xFFEEEDF8);
 const _kPurpleMid = Color(0xFF8B85D4);
 const _kGlass = Color(0xCCFFFFFF); // white 80%
 const _kGlassBorder = Color(0xE5FFFFFF); // white 90%
-const _kBlob1 = Color(0x384F46E5); // indigo blob ~22%
-const _kBlob2 = Color(0x206352D2); // violet accent blob
+const _kBlob1 = Color(0x38C026D3);
+const _kBlob2 = Color(0x20A21CAF);
 
 class ChatMessage {
   final String role;

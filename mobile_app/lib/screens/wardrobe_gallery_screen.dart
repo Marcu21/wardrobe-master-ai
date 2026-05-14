@@ -528,7 +528,7 @@ class _WardrobeCardState extends State<_WardrobeCard> {
         curve: Curves.easeOut,
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Colors.white.withValues(alpha: 0.70),
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(

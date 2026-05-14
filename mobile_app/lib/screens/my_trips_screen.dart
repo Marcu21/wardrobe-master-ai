@@ -1,9 +1,15 @@
+import 'dart:ui';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/firebase_service.dart';
 import 'package:intl/intl.dart';
 import 'trip_view_screen.dart';
 import 'packing_setup_screen.dart';
+
+const _kBgColor = Color(0xFFF4F3F0);
+const _kBlob1 = Color(0x3840C4FF);
+const _kBlob2 = Color(0x1E1565C0);
 
 class MyTripsScreen extends StatelessWidget {
   const MyTripsScreen({super.key});
@@ -18,16 +24,7 @@ class MyTripsScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: const Text(
-          "My Trips",
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
-      ),
+      backgroundColor: _kBgColor,
       // Unique heroTag prevents this FAB from Hero-animating into any other screen's FAB
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'fab_my_trips_plan',
@@ -42,12 +39,84 @@ class MyTripsScreen extends StatelessWidget {
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('trips')
-            .where('user_id', isEqualTo: currentUser.uid)
-            .orderBy('created_at', descending: true)
-            .snapshots(),
+      body: Stack(
+        children: [
+          Positioned.fill(child: ColoredBox(color: _kBgColor)),
+          Positioned(
+            top: -80,
+            right: -60,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+                child: Container(
+                  width: 260,
+                  height: 260,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob1,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 120,
+            left: -60,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                child: Container(
+                  width: 190,
+                  height: 190,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            top: false,
+            child: Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(
+                    top: MediaQuery.of(context).padding.top + 4,
+                    left: 4,
+                    right: 4,
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          CupertinoIcons.back,
+                          color: Colors.black87,
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      Expanded(
+                        child: Text(
+                          'My Trips',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 48),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('trips')
+              .where('user_id', isEqualTo: currentUser.uid)
+              .orderBy('created_at', descending: true)
+              .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -310,6 +379,12 @@ class MyTripsScreen extends StatelessWidget {
             },
           );
         },
+      ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

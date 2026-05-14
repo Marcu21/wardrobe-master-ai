@@ -1,9 +1,15 @@
 import 'dart:async';
+import 'dart:ui';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../widgets/global_wardrobe_selector.dart';
 import 'trip_view_screen.dart';
+
+const _kBgColor = Color(0xFFF4F3F0);
+const _kBlob1 = Color(0x3840C4FF);
+const _kBlob2 = Color(0x1E1565C0);
 
 class PackingSetupScreen extends StatefulWidget {
   const PackingSetupScreen({super.key});
@@ -94,20 +100,79 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        scrolledUnderElevation: 0, // Material 3 transparent fix
-        title: const Text(
-          'Plan Your Trip',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
-        ),
-        iconTheme: const IconThemeData(color: Colors.black87),
-        actions: const [GlobalWardrobeSelector(isActionItem: true)],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
+      backgroundColor: _kBgColor,
+      body: Stack(
+        children: [
+          Positioned.fill(child: ColoredBox(color: _kBgColor)),
+          Positioned(
+            top: -80,
+            right: -60,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+                child: Container(
+                  width: 260,
+                  height: 260,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob1,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 120,
+            left: -60,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                child: Container(
+                  width: 190,
+                  height: 190,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            top: false,
+            child: Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(
+                    top: MediaQuery.of(context).padding.top + 4,
+                    left: 4,
+                    right: 4,
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          CupertinoIcons.back,
+                          color: Colors.black87,
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      Expanded(
+                        child: Text(
+                          'Plan Your Trip',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ),
+                      const GlobalWardrobeSelector(isActionItem: true),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
           padding: const EdgeInsets.all(20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -336,6 +401,11 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
             ],
           ),
         ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

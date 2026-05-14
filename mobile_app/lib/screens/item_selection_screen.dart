@@ -1,11 +1,17 @@
 import 'dart:convert';
 import 'dart:async';
+import 'dart:ui';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../services/wardrobe_state_service.dart';
 import '../widgets/smart_clothing_image.dart';
+
+const _kBgColor = Color(0xFFF4F3F0);
+const _kBlob1 = Color(0x3840C4FF);
+const _kBlob2 = Color(0x1E1565C0);
 
 class ItemSelectionScreen extends StatefulWidget {
   final List<String> initialSelectedIds;
@@ -220,43 +226,110 @@ class _ItemSelectionScreenState extends State<ItemSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Scaffold(
-        backgroundColor: Colors.grey[50],
-        appBar: AppBar(
-          title: const Text(
-            'Select Items',
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+    return Scaffold(
+      backgroundColor: _kBgColor,
+      body: Stack(
+        children: [
+          Positioned.fill(child: ColoredBox(color: _kBgColor)),
+          Positioned(
+            top: -80,
+            right: -60,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+                child: Container(
+                  width: 260,
+                  height: 260,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob1,
+                  ),
+                ),
+              ),
+            ),
           ),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          centerTitle: true,
-          iconTheme: const IconThemeData(color: Colors.black),
-        ),
-        body: const Center(
-          child: CircularProgressIndicator(color: Colors.blueGrey),
-        ),
+          Positioned(
+            bottom: 120,
+            left: -60,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                child: Container(
+                  width: 190,
+                  height: 190,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            top: false,
+            child: Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(
+                    top: MediaQuery.of(context).padding.top + 4,
+                    left: 4,
+                    right: 4,
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          CupertinoIcons.back,
+                          color: Colors.black87,
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      Expanded(
+                        child: Text(
+                          'Select Items',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () =>
+                            Navigator.pop(context, _selectedIds.toList()),
+                        child: Text(
+                          'Done',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(child: _buildContent()),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Colors.blueGrey),
       );
     }
-
     if (_errorMessage != null) {
-      return Scaffold(
-        backgroundColor: Colors.grey[50],
-        appBar: AppBar(
-          title: const Text(
-            'Select Items',
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-          ),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          centerTitle: true,
-          iconTheme: const IconThemeData(color: Colors.black),
-        ),
-        body: Center(
-          child: Text(
-            _errorMessage!,
-            style: const TextStyle(color: Colors.red),
-          ),
+      return Center(
+        child: Text(
+          _errorMessage!,
+          style: const TextStyle(color: Colors.red),
         ),
       );
     }
@@ -264,156 +337,117 @@ class _ItemSelectionScreenState extends State<ItemSelectionScreen> {
     final filteredDocs = _allWardrobeItems.where((doc) {
       final cat = doc['basic_info']?['category'] as String?;
       final sub = doc['basic_info']?['sub_category'] as String?;
-      bool matchCategory =
+      final matchCategory =
           (_selectedCategory == 'All') || (cat == _selectedCategory);
-      bool matchSubCategory =
+      final matchSubCategory =
           (_selectedSubCategory == 'All') || (sub == _selectedSubCategory);
       return matchCategory && matchSubCategory;
     }).toList();
 
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            SliverAppBar(
-              pinned: true,
-              floating: false,
-              backgroundColor: Colors.grey[50],
-              elevation: 0,
-              centerTitle: true,
-              iconTheme: const IconThemeData(color: Colors.black),
-              title: const Text(
-                'Select Items',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context, _selectedIds.toList());
-                  },
-                  child: const Text(
-                    "Done",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blueAccent,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
-            ),
-
-            SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [_buildFiltersWidget(), const SizedBox(height: 16)],
-              ),
-            ),
-
-            filteredDocs.isEmpty
-                ? SliverToBoxAdapter(
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 40.0),
-                        child: Text(
-                          'No available items match the criteria.',
-                          style: TextStyle(
-                            color: Colors.grey.shade500,
-                            fontSize: 14,
-                          ),
-                        ),
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [_buildFiltersWidget(), const SizedBox(height: 16)],
+          ),
+        ),
+        filteredDocs.isEmpty
+            ? SliverToBoxAdapter(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 40.0),
+                    child: Text(
+                      'No available items match the criteria.',
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 14,
                       ),
                     ),
-                  )
-                : SliverPadding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 8.0,
-                    ),
-                    sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            crossAxisSpacing: 4.0,
-                            mainAxisSpacing: 6.0,
-                            childAspectRatio: 0.75,
-                          ),
-                      delegate: SliverChildBuilderDelegate((context, index) {
-                        final item = filteredDocs[index];
-                        final id = item['id'];
-                        final isSelected = _selectedIds.contains(id);
-
-                        return GestureDetector(
-                          onTap: () => _toggleSelection(id),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: isSelected
-                                    ? Colors.blueAccent
-                                    : Colors.transparent,
-                                width: 2.0,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.06),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: Stack(
-                              fit: StackFit.expand,
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(
-                                    14,
-                                  ), // slightly less to fit inside border
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(2.0),
-                                    child: SmartClothingImage(
-                                      imageUrl: item['imageUrl']?.toString(),
-                                    ),
-                                  ),
-                                ),
-                                if (isSelected)
-                                  Positioned(
-                                    top: 6,
-                                    right: 6,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: Colors.blueAccent,
-                                        border: Border.all(
-                                          color: Colors.white,
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                      child: const Icon(
-                                        Icons.check,
-                                        color: Colors.white,
-                                        size: 16,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }, childCount: filteredDocs.length),
-                    ),
                   ),
-            const SliverToBoxAdapter(child: SizedBox(height: 40)),
-          ],
-        ),
-      ),
+                ),
+              )
+            : SliverPadding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                sliver: SliverGrid(
+                  gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 4.0,
+                        mainAxisSpacing: 6.0,
+                        childAspectRatio: 0.75,
+                      ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final item = filteredDocs[index];
+                    final id = item['id'];
+                    final isSelected = _selectedIds.contains(id);
+                    final primaryColor = Theme.of(context).colorScheme.primary;
+
+                    return GestureDetector(
+                      onTap: () => _toggleSelection(id),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isSelected
+                                ? primaryColor
+                                : Colors.transparent,
+                            width: 2.0,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.06),
+                              blurRadius: 6,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(14),
+                              child: Padding(
+                                padding: const EdgeInsets.all(2.0),
+                                child: SmartClothingImage(
+                                  imageUrl: item['imageUrl']?.toString(),
+                                ),
+                              ),
+                            ),
+                            if (isSelected)
+                              Positioned(
+                                top: 6,
+                                right: 6,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: primaryColor,
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: const Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }, childCount: filteredDocs.length),
+                ),
+              ),
+        const SliverToBoxAdapter(child: SizedBox(height: 40)),
+      ],
     );
   }
 }

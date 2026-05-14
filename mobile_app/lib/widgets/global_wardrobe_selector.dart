@@ -354,13 +354,14 @@ class _GlobalWardrobeSelectorState extends State<GlobalWardrobeSelector> {
                   activeName,
                   key: ValueKey(activeName),
                   style: const TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w900,
                     fontSize: 20,
+                    letterSpacing: -0.5,
                   ),
                 ),
               ),
-              const Icon(Icons.keyboard_arrow_down, color: Colors.black),
+              const Icon(Icons.keyboard_arrow_down, color: Colors.black87, size: 28),
             ],
           ),
         );

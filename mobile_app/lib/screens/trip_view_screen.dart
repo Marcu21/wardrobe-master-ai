@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:ui';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -10,6 +12,10 @@ import '../services/firebase_service.dart';
 import 'item_selection_screen.dart';
 import '../utils/outfit_sorting_utils.dart';
 import '../widgets/smart_clothing_image.dart';
+
+const _kBgColor = Color(0xFFF4F3F0);
+const _kBlob1 = Color(0x3840C4FF);
+const _kBlob2 = Color(0x1E1565C0);
 
 class TripViewScreen extends StatefulWidget {
   final String? tripId;
@@ -345,13 +351,37 @@ class _TripViewScreenState extends State<TripViewScreen> {
   Widget _buildSkeletonLoader() {
     return Column(
       children: [
-        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(
+                  strokeWidth: 1.5,
+                  color: Colors.grey[400],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                "Building your capsule wardrobe…",
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey[500],
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+        ),
         Expanded(
           child: Shimmer.fromColors(
             baseColor: Colors.grey[300]!,
             highlightColor: Colors.grey[100]!,
             child: GridView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,
@@ -433,11 +463,46 @@ class _TripViewScreenState extends State<TripViewScreen> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: _kBgColor,
         floatingActionButton: fab,
-        body: _isLoading
-            ? SafeArea(child: _buildSkeletonLoader())
-            : SafeArea(
+        body: Stack(
+          children: [
+            Positioned.fill(child: ColoredBox(color: _kBgColor)),
+            Positioned(
+              top: -80,
+              right: -60,
+              child: IgnorePointer(
+                child: ImageFiltered(
+                  imageFilter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+                  child: Container(
+                    width: 260,
+                    height: 260,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _kBlob1,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 120,
+              left: -60,
+              child: IgnorePointer(
+                child: ImageFiltered(
+                  imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                  child: Container(
+                    width: 190,
+                    height: 190,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _kBlob2,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            SafeArea(
                 top: false,
                 bottom: true,
                 child: NestedScrollView(
@@ -448,32 +513,61 @@ class _TripViewScreenState extends State<TripViewScreen> {
                         pinned: true,
                         toolbarHeight: 80.0,
                         expandedHeight: 130.0,
-                        backgroundColor: Colors.grey[50],
-                        elevation: innerBoxIsScrolled ? 2 : 0,
+                        backgroundColor: Colors.transparent,
+                        elevation: 0,
+                        scrolledUnderElevation: 0,
                         centerTitle: true,
-                        shadowColor: Colors.black.withOpacity(0.3),
-                        iconTheme: const IconThemeData(color: Colors.black87),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              setState(() {
-                                _isEditMode = !_isEditMode;
-                                if (!_isEditMode) {
-                                  _editableItemIds = List<String>.from(
-                                    _lastSyncedItemIds,
-                                  );
-                                  _fetchItems();
-                                }
-                              });
-                            },
-                            child: Text(
-                              _isEditMode ? "Cancel" : "Edit",
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                        leading: IconButton(
+                          icon: const Icon(
+                            CupertinoIcons.back,
+                            color: Colors.black87,
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                        flexibleSpace: Stack(
+                          children: [
+                            Positioned.fill(child: ColoredBox(color: _kBgColor)),
+                            Positioned(
+                              top: -60,
+                              right: -50,
+                              child: IgnorePointer(
+                                child: ImageFiltered(
+                                  imageFilter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+                                  child: Container(
+                                    width: 240,
+                                    height: 240,
+                                    decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: _kBlob1,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
+                          ],
+                        ),
+                        actions: [
+                          if (!_isLoading)
+                            TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  _isEditMode = !_isEditMode;
+                                  if (!_isEditMode) {
+                                    _editableItemIds = List<String>.from(
+                                      _lastSyncedItemIds,
+                                    );
+                                    _fetchItems();
+                                  }
+                                });
+                              },
+                              child: Text(
+                                _isEditMode ? "Cancel" : "Edit",
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
                         ],
                         title: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -521,14 +615,18 @@ class _TripViewScreenState extends State<TripViewScreen> {
                       ),
                     ];
                   },
-                  body: Padding(
-                    padding: const EdgeInsets.only(top: 8.0, bottom: 16.0),
-                    child: TabBarView(
-                      children: [_buildChecklistTab(), _buildOutfitsTab()],
-                    ),
-                  ),
+                  body: _isLoading
+                      ? _buildSkeletonLoader()
+                      : Padding(
+                          padding: const EdgeInsets.only(top: 8.0, bottom: 16.0),
+                          child: TabBarView(
+                            children: [_buildChecklistTab(), _buildOutfitsTab()],
+                          ),
+                        ),
                 ),
               ),
+          ],
+        ),
       ),
     );
   }

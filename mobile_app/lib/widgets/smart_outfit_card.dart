@@ -107,36 +107,25 @@ class _SmartOutfitCardState extends State<SmartOutfitCard> {
   Widget build(BuildContext context) {
     return Card(
       elevation: 4,
+      color: Colors.white.withValues(alpha: 0.80),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: widget.onTap,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Colors.white, Colors.grey.shade50],
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // ── Image area ──────────────────────────────────────────────
-              Expanded(
-                child: Stack(
-                  children: [
-                    Positioned.fill(child: _buildMannequin()),
-                    if (widget.badge != null)
-                      Positioned(top: 8, right: 8, child: widget.badge!),
-                  ],
-                ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: Stack(
+                children: [
+                  Positioned.fill(child: _buildMannequin()),
+                  if (widget.badge != null)
+                    Positioned(top: 8, right: 8, child: widget.badge!),
+                ],
               ),
-              // ── Footer (caller-supplied) ─────────────────────────────
-              widget.footer,
-            ],
-          ),
+            ),
+            widget.footer,
+          ],
         ),
       ),
     );

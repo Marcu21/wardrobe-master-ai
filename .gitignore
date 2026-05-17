@@ -9,3 +9,4 @@ mobile_app/android/app/google-services.json
 mobile_app/lib/screens/codebase.md
 documentation/
 .vs/
+.claude/

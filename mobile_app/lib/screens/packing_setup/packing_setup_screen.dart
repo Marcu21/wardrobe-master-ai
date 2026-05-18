@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_app/widgets/global_wardrobe_selector.dart';
-import 'package:mobile_app/screens/trip_view_screen.dart';
+import 'package:mobile_app/screens/trip_view/trip_view_screen.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import 'widgets/setup_vibe_chips.dart';
 import 'widgets/setup_luggage_selector.dart';

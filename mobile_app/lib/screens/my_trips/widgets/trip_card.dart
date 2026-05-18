@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_app/services/firebase_service.dart';
-import 'package:mobile_app/screens/trip_view_screen.dart';
+import 'package:mobile_app/screens/trip_view/trip_view_screen.dart';
 
 class TripCard extends StatelessWidget {
   final Map<String, dynamic> data;

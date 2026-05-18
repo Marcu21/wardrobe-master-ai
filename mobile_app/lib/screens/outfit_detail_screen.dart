@@ -8,6 +8,7 @@ import '../services/firebase_service.dart';
 import '../services/calendar_service.dart';
 import 'virtual_dressing_room_screen.dart';
 import '../utils/outfit_sorting_utils.dart';
+import '../widgets/scale_button.dart';
 
 // Design tokens
 const _kBg = Color(0xFFF4F3F0);
@@ -583,7 +584,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16),
-            child: _ScaleButton(
+            child: ScaleButton(
               onTap: _deleteOutfit,
               child: Container(
                 padding: const EdgeInsets.all(8),
@@ -926,7 +927,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                 children: [
                   // Log Wear
                   Expanded(
-                    child: _ScaleButton(
+                    child: ScaleButton(
                       onTap: _logWear,
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 15),
@@ -969,7 +970,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                   const SizedBox(width: 12),
                   // Remix
                   Expanded(
-                    child: _ScaleButton(
+                    child: ScaleButton(
                       onTap: () {
                         final List<dynamic> itemIdsDynamic =
                             widget.outfitData['item_ids'] ?? [];
@@ -1029,7 +1030,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
               const SizedBox(height: 12),
 
               // Save changes button
-              _ScaleButton(
+              ScaleButton(
                 onTap: _saveChanges,
                 child: Container(
                   width: double.infinity,
@@ -1073,39 +1074,6 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-// Scale button
-
-class _ScaleButton extends StatefulWidget {
-  final VoidCallback onTap;
-  final Widget child;
-  const _ScaleButton({required this.onTap, required this.child});
-
-  @override
-  State<_ScaleButton> createState() => _ScaleButtonState();
-}
-
-class _ScaleButtonState extends State<_ScaleButton> {
-  double _scale = 1.0;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _scale = 0.97),
-      onTapUp: (_) {
-        setState(() => _scale = 1.0);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _scale = 1.0),
-      child: AnimatedScale(
-        scale: _scale,
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeOut,
-        child: widget.child,
       ),
     );
   }

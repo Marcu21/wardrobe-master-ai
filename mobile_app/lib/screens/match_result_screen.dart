@@ -10,6 +10,7 @@ import '../services/api_service.dart';
 import 'package:http/http.dart' as http;
 import '../utils/outfit_sorting_utils.dart';
 import 'add_clothing_screen.dart';
+import '../widgets/scale_button.dart';
 
 class MatchResultScreen extends StatefulWidget {
   final Map<String, dynamic> scannedItemData;
@@ -847,7 +848,7 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
 
               // Action Buttons
               const SizedBox(height: 32),
-              _ScaleButton(
+              ScaleButton(
                 onTap: () {
                   Navigator.pushReplacement(
                     context,
@@ -896,7 +897,7 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              _ScaleButton(
+              ScaleButton(
                 onTap: () => Navigator.pop(context),
                 child: Container(
                   width: double.infinity,
@@ -942,36 +943,3 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
   }
 }
 
-// Scale Button
-
-class _ScaleButton extends StatefulWidget {
-  final VoidCallback onTap;
-  final Widget child;
-
-  const _ScaleButton({required this.onTap, required this.child});
-
-  @override
-  State<_ScaleButton> createState() => _ScaleButtonState();
-}
-
-class _ScaleButtonState extends State<_ScaleButton> {
-  double _scale = 1.0;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _scale = 0.97),
-      onTapUp: (_) {
-        setState(() => _scale = 1.0);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _scale = 1.0),
-      child: AnimatedScale(
-        scale: _scale,
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeOut,
-        child: widget.child,
-      ),
-    );
-  }
-}

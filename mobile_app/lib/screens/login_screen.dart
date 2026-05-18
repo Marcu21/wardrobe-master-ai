@@ -3,11 +3,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:mobile_app/services/firebase_service.dart';
-
-// ─── Design tokens ────────────────────────────────────────────────────────────
-const _kBg = Color(0xFFF4F3F0);
-const _kPurple = Color(0xFF4F46E5);
-const _kPurpleLight = Color(0xFFEEEDF8);
+import 'package:mobile_app/widgets/scale_button.dart';
+import 'package:mobile_app/theme/app_colors.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -117,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _kBg,
+      backgroundColor: kBgColor,
       body: Stack(
         children: [
           // ── Background blobs ──────────────────────────────────────
@@ -216,7 +213,7 @@ class _LoginScreenState extends State<LoginScreen>
                                     borderRadius: BorderRadius.circular(22),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: _kPurple.withOpacity(0.35),
+                                        color: kPrimary.withOpacity(0.35),
                                         blurRadius: 24,
                                         offset: const Offset(0, 10),
                                       ),
@@ -293,11 +290,11 @@ class _LoginScreenState extends State<LoginScreen>
                                                 height: 64,
                                                 decoration: BoxDecoration(
                                                   shape: BoxShape.circle,
-                                                  color: _kPurple.withOpacity(
+                                                  color: kPrimary.withOpacity(
                                                     0.07,
                                                   ),
                                                   border: Border.all(
-                                                    color: _kPurple.withOpacity(
+                                                    color: kPrimary.withOpacity(
                                                       0.15,
                                                     ),
                                                     width: 1.5,
@@ -309,7 +306,7 @@ class _LoginScreenState extends State<LoginScreen>
                                                 height: 44,
                                                 child:
                                                     CircularProgressIndicator(
-                                                      color: _kPurple
+                                                      color: kPrimary
                                                           .withOpacity(0.25),
                                                       strokeWidth: 1.5,
                                                     ),
@@ -319,13 +316,13 @@ class _LoginScreenState extends State<LoginScreen>
                                                 height: 30,
                                                 child:
                                                     CircularProgressIndicator(
-                                                      color: _kPurple,
+                                                      color: kPrimary,
                                                       strokeWidth: 2.5,
                                                     ),
                                               ),
                                               const Icon(
                                                 CupertinoIcons.lock_shield,
-                                                color: _kPurple,
+                                                color: kPrimary,
                                                 size: 14,
                                               ),
                                             ],
@@ -457,7 +454,7 @@ class _LoginScreenState extends State<LoginScreen>
                                           const SizedBox(height: 24),
 
                                           // Primary button
-                                          _ScaleButton(
+                                          ScaleButton(
                                             onTap: _submitForm,
                                             child: Container(
                                               padding:
@@ -477,7 +474,7 @@ class _LoginScreenState extends State<LoginScreen>
                                                     BorderRadius.circular(16),
                                                 boxShadow: [
                                                   BoxShadow(
-                                                    color: _kPurple.withOpacity(
+                                                    color: kPrimary.withOpacity(
                                                       0.35,
                                                     ),
                                                     blurRadius: 20,
@@ -540,7 +537,7 @@ class _LoginScreenState extends State<LoginScreen>
                                           const SizedBox(height: 20),
 
                                           // Google button
-                                          _ScaleButton(
+                                          ScaleButton(
                                             onTap: _handleGoogleSignIn,
                                             child: Container(
                                               padding:
@@ -648,7 +645,7 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _kPurple, width: 1.5),
+          borderSide: const BorderSide(color: kPrimary, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -716,35 +713,3 @@ class _TabButton extends StatelessWidget {
   }
 }
 
-// ─── Scale button ─────────────────────────────────────────────────────────────
-
-class _ScaleButton extends StatefulWidget {
-  final VoidCallback onTap;
-  final Widget child;
-  const _ScaleButton({required this.onTap, required this.child});
-
-  @override
-  State<_ScaleButton> createState() => _ScaleButtonState();
-}
-
-class _ScaleButtonState extends State<_ScaleButton> {
-  double _scale = 1.0;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _scale = 0.97),
-      onTapUp: (_) {
-        setState(() => _scale = 1.0);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _scale = 1.0),
-      child: AnimatedScale(
-        scale: _scale,
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeOut,
-        child: widget.child,
-      ),
-    );
-  }
-}

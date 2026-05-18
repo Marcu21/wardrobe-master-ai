@@ -12,14 +12,10 @@ import '../widgets/global_wardrobe_selector.dart';
 import '../utils/outfit_sorting_utils.dart';
 import 'virtual_dressing_room_screen.dart';
 import '../widgets/smart_clothing_image.dart';
+import 'package:mobile_app/theme/app_colors.dart';
+import '../widgets/glassmorphism_card.dart';
 
-// Design tokens
-const _kBgColor = Color(0xFFF4F3F0);
-const _kPurple = Color(0xFF4F46E5);
-const _kPurpleLight = Color(0xFFEEEDF8);
-const _kPurpleMid = Color(0xFF8B85D4);
-const _kGlass = Color(0xCCFFFFFF); // white 80%
-const _kGlassBorder = Color(0xE5FFFFFF); // white 90%
+// Per-screen blob colours (fuchsia palette)
 const _kBlob1 = Color(0x38C026D3);
 const _kBlob2 = Color(0x20A21CAF);
 
@@ -209,13 +205,13 @@ class _FeedbackButtonsState extends State<_FeedbackButtons> {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: _kPurpleLight,
+          color: kPrimaryLight,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _kPurpleMid.withOpacity(0.25), width: 1),
+          border: Border.all(color: kPrimaryMid.withOpacity(0.25), width: 1),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: _kPurple),
+            Icon(icon, size: 18, color: kPrimary),
             const SizedBox(width: 12),
             Text(
               label,
@@ -406,7 +402,7 @@ class _AnimatedBlobBgState extends State<_AnimatedBlobBg>
       builder: (context, child) {
         return Stack(
           children: [
-            Positioned.fill(child: ColoredBox(color: _kBgColor)),
+            Positioned.fill(child: ColoredBox(color: kBgColor)),
             // Blobs — CustomPaint needs a child to inherit constraints
             Positioned.fill(
               child: ImageFiltered(
@@ -482,7 +478,7 @@ class _TypingIndicatorState extends State<_TypingIndicator>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.auto_awesome, size: 11, color: _kPurple),
+                const Icon(Icons.auto_awesome, size: 11, color: kPrimary),
                 const SizedBox(width: 4),
                 AnimatedBuilder(
                   animation: _ctrl,
@@ -505,7 +501,7 @@ class _TypingIndicatorState extends State<_TypingIndicator>
                               width: 5,
                               height: 5,
                               decoration: const BoxDecoration(
-                                color: _kPurple,
+                                color: kPrimary,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -622,7 +618,7 @@ class _TruncatedTextState extends State<_TruncatedText> {
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: _kPurple,
+                  color: kPrimary,
                 ),
               ),
             ),
@@ -1058,10 +1054,10 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.80),
                               borderRadius: BorderRadius.circular(18),
-                              border: Border.all(color: _kGlassBorder),
+                              border: Border.all(color: kGlassBorder),
                               boxShadow: [
                                 BoxShadow(
-                                  color: _kPurple.withOpacity(0.20),
+                                  color: kPrimary.withOpacity(0.20),
                                   blurRadius: 20,
                                   offset: const Offset(0, 6),
                                 ),
@@ -1069,7 +1065,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
                             ),
                             child: const Icon(
                               Icons.auto_awesome,
-                              color: _kPurple,
+                              color: kPrimary,
                               size: 26,
                             ),
                           ),
@@ -1124,7 +1120,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: _kPurple.withOpacity(0.07),
+                                        color: kPrimary.withOpacity(0.07),
                                         blurRadius: 10,
                                         offset: const Offset(0, 3),
                                       ),
@@ -1145,7 +1141,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
                                       const Icon(
                                         CupertinoIcons.arrow_right,
                                         size: 11,
-                                        color: _kPurple,
+                                        color: kPrimary,
                                       ),
                                     ],
                                   ),
@@ -1175,13 +1171,13 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
                                     Container(
                                       padding: const EdgeInsets.all(7),
                                       decoration: BoxDecoration(
-                                        color: _kPurpleLight,
+                                        color: kPrimaryLight,
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                       child: const Icon(
                                         CupertinoIcons.cloud_sun,
                                         size: 15,
-                                        color: _kPurple,
+                                        color: kPrimary,
                                       ),
                                     ),
                                     const SizedBox(width: 10),
@@ -1323,32 +1319,27 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
       builder: (context, v, child) => Transform.scale(scale: v, child: child),
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-        child: ClipRRect(
+        child: GlassmorphismCard(
+          sigma: 16,
+          colorOpacity: 0.82,
           borderRadius: BorderRadius.circular(24),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.82),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: _kGlassBorder, width: 1),
-                boxShadow: [
-                  BoxShadow(
-                    color: _kPurple.withOpacity(0.10),
-                    blurRadius: 24,
-                    offset: const Offset(0, 6),
-                  ),
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+          borderColor: kGlassBorder,
+          width: double.infinity,
+          boxShadow: [
+            BoxShadow(
+              color: kPrimary.withOpacity(0.10),
+              blurRadius: 24,
+              offset: const Offset(0, 6),
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
                   // Header
                   Padding(
                     padding: const EdgeInsets.fromLTRB(14, 12, 12, 0),
@@ -1358,12 +1349,12 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
                         Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: _kPurpleLight,
+                            color: kPrimaryLight,
                             borderRadius: BorderRadius.circular(9),
                           ),
                           child: const Icon(
                             Icons.auto_awesome,
-                            color: _kPurple,
+                            color: kPrimary,
                             size: 14,
                           ),
                         ),
@@ -1589,7 +1580,6 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
                   ),
                 ],
               ),
-            ),
           ),
         ),
       ),
@@ -1627,7 +1617,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
           boxShadow: isPrimary
               ? [
                   BoxShadow(
-                    color: _kPurple.withOpacity(0.30),
+                    color: kPrimary.withOpacity(0.30),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -1649,7 +1639,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
                 height: 15,
                 child: CircularProgressIndicator(
                   strokeWidth: 1.5,
-                  color: isPrimary ? Colors.white : _kPurple,
+                  color: isPrimary ? Colors.white : kPrimary,
                 ),
               )
             else
@@ -1700,7 +1690,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
                     borderRadius: BorderRadius.circular(22),
                     border: Border.all(
                       color: _inputFocused
-                          ? _kPurpleMid.withOpacity(0.5)
+                          ? kPrimaryMid.withOpacity(0.5)
                           : Colors.white.withOpacity(0.85),
                       width: 1,
                     ),
@@ -1771,7 +1761,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: _kBgColor,
+      backgroundColor: kBgColor,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text(
@@ -1939,7 +1929,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(32),
-                  border: Border.all(color: _kGlassBorder),
+                  border: Border.all(color: kGlassBorder),
                 ),
                 child: Stack(
                   children: [
@@ -1952,12 +1942,12 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
                               Container(
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
-                                  color: _kPurpleLight,
+                                  color: kPrimaryLight,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: const Icon(
                                   Icons.auto_awesome,
-                                  color: _kPurple,
+                                  color: kPrimary,
                                   size: 14,
                                 ),
                               ),

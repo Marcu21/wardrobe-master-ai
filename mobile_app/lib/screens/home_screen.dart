@@ -10,11 +10,10 @@ import 'sustainability_screen.dart';
 import 'shopping_assistant_screen.dart';
 import 'my_trips_screen.dart';
 import 'virtual_dressing_room_screen.dart';
+import 'package:mobile_app/theme/app_colors.dart';
+import '../widgets/glassmorphism_card.dart';
 
-// Design tokens
-const _kBgColor = Color(0xFFF4F3F0);
-const _kPurple = Color(0xFF4F46E5);
-const _kPurpleLight = Color(0xFFEEEDF8);
+// Per-screen blob colours
 const _kBlob1 = Color(0x384F46E5);
 const _kBlob2 = Color(0x206352D2);
 
@@ -63,7 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _kBgColor,
+      backgroundColor: kBgColor,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text(
@@ -156,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Stack(
         children: [
           // Background
-          Positioned.fill(child: ColoredBox(color: _kBgColor)),
+          Positioned.fill(child: ColoredBox(color: kBgColor)),
 
           // Blobs
           Positioned(
@@ -644,7 +643,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (user == null) {
       return const CircleAvatar(
         radius: 16,
-        backgroundColor: _kPurple,
+        backgroundColor: kPrimary,
         child: Icon(Icons.person, color: Colors.white, size: 20),
       );
     }
@@ -693,7 +692,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
         return CircleAvatar(
           radius: 16,
-          backgroundColor: _kPurple,
+          backgroundColor: kPrimary,
           child: Text(
             fallbackLetter,
             style: const TextStyle(
@@ -718,7 +717,7 @@ class _HomeCard extends StatefulWidget {
   const _HomeCard({
     required this.onTap,
     required this.child,
-    this.shadowColor = _kPurple,
+    this.shadowColor = kPrimary,
   });
 
   @override
@@ -765,20 +764,12 @@ class _HomeCardState extends State<_HomeCard> {
               ),
             ],
           ),
-          child: ClipRRect(
+          child: GlassmorphismCard(
+            sigma: 12,
+            colorOpacity: 0.92,
             borderRadius: BorderRadius.circular(22),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-              child: Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.92),
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: Colors.white, width: 1),
-                ),
-                child: widget.child,
-              ),
-            ),
+            padding: const EdgeInsets.all(18),
+            child: widget.child,
           ),
         ),
       ),
@@ -845,34 +836,29 @@ class _WeatherSkeletonState extends State<_WeatherSkeleton>
                 offset: const Offset(0, 2),
               ),
               BoxShadow(
-                color: _kPurple.withOpacity(0.08),
+                color: kPrimary.withOpacity(0.08),
                 blurRadius: 20,
                 spreadRadius: 2,
                 offset: Offset.zero,
               ),
               BoxShadow(
-                color: _kPurple.withOpacity(0.04),
+                color: kPrimary.withOpacity(0.04),
                 blurRadius: 40,
                 spreadRadius: 4,
                 offset: Offset.zero,
               ),
             ],
           ),
-          child: ClipRRect(
+          child: GlassmorphismCard(
+            sigma: 12,
+            colorOpacity: 0.80,
             borderRadius: BorderRadius.circular(24),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.80),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.white.withOpacity(0.90)),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            borderColor: Colors.white.withOpacity(0.90),
+            width: double.infinity,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
@@ -956,26 +942,21 @@ class DynamicWeatherCard extends StatelessWidget {
     if (isLoading) return const _WeatherSkeleton();
 
     if (error != null) {
-      return ClipRRect(
+      return GlassmorphismCard(
+        sigma: 12,
+        colorOpacity: 0.75,
         borderRadius: BorderRadius.circular(28),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(22, 16, 14, 16),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.75),
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: Colors.white.withOpacity(0.9)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Row(
+        borderColor: Colors.white.withOpacity(0.9),
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(22, 16, 14, 16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+        child: Row(
               children: [
                 Icon(
                   Icons.cloud_off_outlined,
@@ -1009,9 +990,7 @@ class DynamicWeatherCard extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-        ),
-      );
+        );
     }
 
     if (weather == null) return const SizedBox.shrink();

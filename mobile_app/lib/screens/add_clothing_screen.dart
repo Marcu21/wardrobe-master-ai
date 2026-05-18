@@ -7,15 +7,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mobile_app/services/api_service.dart';
 import 'package:mobile_app/services/firebase_service.dart';
 import 'package:mobile_app/services/wardrobe_state_service.dart';
+import 'package:mobile_app/widgets/scale_button.dart';
+import 'package:mobile_app/widgets/animated_loading_step.dart';
+import 'package:mobile_app/theme/app_colors.dart';
+import 'package:mobile_app/widgets/glassmorphism_card.dart';
 import 'dart:convert';
-
-// Design tokens
-const _kBg = Color(0xFFF4F3F0);
-const _kPurple = Color(0xFF4F46E5);
-const _kPurpleLight = Color(0xFFEEEDF8);
-const _kPurpleMid = Color(0xFF8B85D4);
-const _kGlass = Color(0xCCFFFFFF);
-const _kGlassBorder = Color(0xE5FFFFFF);
 
 class AddClothingScreen extends StatefulWidget {
   final Map<String, dynamic>? initialAnalysisResult;
@@ -325,34 +321,27 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
             margin: const EdgeInsets.symmetric(horizontal: 40),
             width: double.infinity,
             constraints: const BoxConstraints(maxWidth: 340),
-            child: ClipRRect(
+            child: GlassmorphismCard(
+              sigma: 24,
+              colorOpacity: 0.90,
               borderRadius: BorderRadius.circular(32),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(24, 40, 24, 32),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.90),
-                    borderRadius: BorderRadius.circular(32),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.8),
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: _kPurple.withOpacity(0.15),
-                        blurRadius: 40,
-                        spreadRadius: 10,
-                        offset: const Offset(0, 12),
-                      ),
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 15,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
+              borderColor: Colors.white.withOpacity(0.8),
+              borderWidth: 1.5,
+              padding: const EdgeInsets.fromLTRB(24, 40, 24, 32),
+              boxShadow: [
+                BoxShadow(
+                  color: kPrimary.withOpacity(0.15),
+                  blurRadius: 40,
+                  spreadRadius: 10,
+                  offset: const Offset(0, 12),
+                ),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 15,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+              child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       // Animated rings and icon
@@ -364,9 +353,9 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                             height: 72,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: _kPurple.withOpacity(0.08),
+                              color: kPrimary.withOpacity(0.08),
                               border: Border.all(
-                                color: _kPurple.withOpacity(0.15),
+                                color: kPrimary.withOpacity(0.15),
                                 width: 1.5,
                               ),
                             ),
@@ -375,7 +364,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                             width: 52,
                             height: 52,
                             child: CircularProgressIndicator(
-                              color: _kPurple.withOpacity(0.3),
+                              color: kPrimary.withOpacity(0.3),
                               strokeWidth: 2,
                             ),
                           ),
@@ -383,13 +372,13 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                             width: 36,
                             height: 36,
                             child: CircularProgressIndicator(
-                              color: _kPurple,
+                              color: kPrimary,
                               strokeWidth: 2.5,
                             ),
                           ),
                           const Icon(
                             Icons.auto_awesome,
-                            color: _kPurple,
+                            color: kPrimary,
                             size: 16,
                           ),
                         ],
@@ -418,8 +407,6 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                     ],
                   ),
                 ),
-              ),
-            ),
           ),
         ),
       ),
@@ -528,7 +515,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     // Full-screen loading
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: _kBg,
+        backgroundColor: kBgColor,
         extendBodyBehindAppBar: true,
         appBar: AppBar(
           title: const Text(
@@ -606,9 +593,9 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                             height: 96,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: _kPurple.withOpacity(0.07),
+                              color: kPrimary.withOpacity(0.07),
                               border: Border.all(
-                                color: _kPurple.withOpacity(0.15),
+                                color: kPrimary.withOpacity(0.15),
                                 width: 1.5,
                               ),
                             ),
@@ -617,7 +604,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                             width: 64,
                             height: 64,
                             child: CircularProgressIndicator(
-                              color: _kPurple.withOpacity(0.25),
+                              color: kPrimary.withOpacity(0.25),
                               strokeWidth: 1.5,
                             ),
                           ),
@@ -625,13 +612,13 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                             width: 44,
                             height: 44,
                             child: CircularProgressIndicator(
-                              color: _kPurple,
+                              color: kPrimary,
                               strokeWidth: 2.5,
                             ),
                           ),
                           const Icon(
                             Icons.auto_awesome,
-                            color: _kPurple,
+                            color: kPrimary,
                             size: 22,
                           ),
                         ],
@@ -662,22 +649,25 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                     const SizedBox(height: 32),
 
                     // Animated steps
-                    _AnimatedLoadingStep(
+                    AnimatedLoadingStep(
                       icon: CupertinoIcons.camera_viewfinder,
                       label: 'Reading the item',
                       delay: const Duration(milliseconds: 200),
+                      color: kPrimary,
                     ),
                     const SizedBox(height: 14),
-                    _AnimatedLoadingStep(
+                    AnimatedLoadingStep(
                       icon: CupertinoIcons.tag,
                       label: 'Identifying category & brand',
                       delay: const Duration(milliseconds: 700),
+                      color: kPrimary,
                     ),
                     const SizedBox(height: 14),
-                    _AnimatedLoadingStep(
+                    AnimatedLoadingStep(
                       icon: CupertinoIcons.color_filter,
                       label: 'Extracting colors & style',
                       delay: const Duration(milliseconds: 1200),
+                      color: kPrimary,
                     ),
                   ],
                 ),
@@ -689,7 +679,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     }
 
     return Scaffold(
-      backgroundColor: _analysisResult == null ? _kBg : Colors.grey[50],
+      backgroundColor: _analysisResult == null ? kBgColor : Colors.grey[50],
       extendBodyBehindAppBar: _analysisResult == null,
       appBar: _analysisResult != null
           ? AppBar(
@@ -1040,7 +1030,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: _kPurple.withOpacity(0.12),
+                      color: kPrimary.withOpacity(0.12),
                       blurRadius: 32,
                       spreadRadius: 2,
                       offset: const Offset(0, 12),
@@ -1156,13 +1146,13 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                       width: 60,
                       height: 60,
                       decoration: const BoxDecoration(
-                        color: _kPurpleLight,
+                        color: kPrimaryLight,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         CupertinoIcons.add_circled,
                         size: 28,
-                        color: _kPurple,
+                        color: kPrimary,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -1196,7 +1186,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
       duration: const Duration(milliseconds: 900),
       curve: Curves.easeOutCubic,
       builder: (_, v, child) => Opacity(opacity: v, child: child),
-      child: _ScaleButton(
+      child: ScaleButton(
         onTap: _analyzeItem,
         child: Container(
           width: double.infinity,
@@ -1210,7 +1200,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
             borderRadius: BorderRadius.circular(18),
             boxShadow: [
               BoxShadow(
-                color: _kPurple.withOpacity(0.35),
+                color: kPrimary.withOpacity(0.35),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
@@ -1492,7 +1482,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
               const SizedBox(height: 20),
 
               // Save button
-              _ScaleButton(
+              ScaleButton(
                 onTap: _saveItem,
                 child: Container(
                   width: double.infinity,
@@ -1506,7 +1496,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                     borderRadius: BorderRadius.circular(18),
                     boxShadow: [
                       BoxShadow(
-                        color: _kPurple.withOpacity(0.35),
+                        color: kPrimary.withOpacity(0.35),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -1537,7 +1527,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
               const SizedBox(height: 12),
 
               // Discard / restart
-              _ScaleButton(
+              ScaleButton(
                 onTap: () => setState(() {
                   _analysisResult = null;
                   _itemImage = null;
@@ -1640,10 +1630,10 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                 Container(
                   padding: const EdgeInsets.all(7),
                   decoration: BoxDecoration(
-                    color: _kPurpleLight,
+                    color: kPrimaryLight,
                     borderRadius: BorderRadius.circular(9),
                   ),
-                  child: Icon(icon, size: 14, color: _kPurple),
+                  child: Icon(icon, size: 14, color: kPrimary),
                 ),
                 const SizedBox(width: 10),
                 Text(
@@ -1714,7 +1704,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: _kPurple, width: 1.5),
+            borderSide: const BorderSide(color: kPrimary, width: 1.5),
           ),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
@@ -1755,7 +1745,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: _kPurple, width: 1.5),
+            borderSide: const BorderSide(color: kPrimary, width: 1.5),
           ),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
@@ -1775,39 +1765,6 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
           ),
         ],
         onChanged: (val) => setState(() => _selectedWardrobeId = val),
-      ),
-    );
-  }
-}
-
-// Reusable scale-tap button
-
-class _ScaleButton extends StatefulWidget {
-  final VoidCallback onTap;
-  final Widget child;
-  const _ScaleButton({required this.onTap, required this.child});
-
-  @override
-  State<_ScaleButton> createState() => _ScaleButtonState();
-}
-
-class _ScaleButtonState extends State<_ScaleButton> {
-  double _scale = 1.0;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _scale = 0.97),
-      onTapUp: (_) {
-        setState(() => _scale = 1.0);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _scale = 1.0),
-      child: AnimatedScale(
-        scale: _scale,
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeOut,
-        child: widget.child,
       ),
     );
   }
@@ -1848,13 +1805,13 @@ class _SourceOptionState extends State<_SourceOption> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 18),
           decoration: BoxDecoration(
-            color: _kPurpleLight,
+            color: kPrimaryLight,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: _kPurpleMid.withOpacity(0.25)),
+            border: Border.all(color: kPrimaryMid.withOpacity(0.25)),
           ),
           child: Column(
             children: [
-              Icon(widget.icon, size: 28, color: _kPurple),
+              Icon(widget.icon, size: 28, color: kPrimary),
               const SizedBox(height: 8),
               Text(
                 widget.label,
@@ -1872,111 +1829,3 @@ class _SourceOptionState extends State<_SourceOption> {
   }
 }
 
-// Animated Loading Step
-
-class _AnimatedLoadingStep extends StatefulWidget {
-  final IconData icon;
-  final String label;
-  final Duration delay;
-
-  const _AnimatedLoadingStep({
-    required this.icon,
-    required this.label,
-    required this.delay,
-  });
-
-  @override
-  State<_AnimatedLoadingStep> createState() => _AnimatedLoadingStepState();
-}
-
-class _AnimatedLoadingStepState extends State<_AnimatedLoadingStep>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  late Animation<double> _opacity;
-  late Animation<Offset> _slide;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
-    );
-    _opacity = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
-    _slide = Tween<Offset>(
-      begin: const Offset(0.08, 0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
-
-    Future.delayed(widget.delay, () {
-      if (mounted) _ctrl.forward();
-    });
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _opacity,
-      child: SlideTransition(
-        position: _slide,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.72),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _kPurple.withOpacity(0.15), width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: _kPurple.withOpacity(0.07),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-              BoxShadow(
-                color: Colors.black.withOpacity(0.03),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _kPurple.withOpacity(0.10),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(widget.icon, size: 18, color: _kPurple),
-              ),
-              const SizedBox(width: 14),
-              Text(
-                widget.label,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                  letterSpacing: -0.2,
-                ),
-              ),
-              const Spacer(),
-              SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  color: _kPurple.withOpacity(0.5),
-                  strokeWidth: 1.5,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

@@ -9,8 +9,9 @@ import '../widgets/save_outfit_dialog.dart';
 import '../widgets/global_wardrobe_selector.dart';
 import '../services/wardrobe_state_service.dart';
 import '../widgets/smart_clothing_image.dart';
+import 'package:mobile_app/theme/app_colors.dart';
 
-const _kBgColor = Color(0xFFF4F3F0);
+// Per-screen blob colours (amethyst palette)
 const _kBlob1 = Color(0x38A855F7);
 const _kBlob2 = Color(0x209333EA);
 
@@ -394,10 +395,10 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
     double vpShoes = activeLayers <= 3 ? 0.5 : 0.5;
 
     return Scaffold(
-      backgroundColor: _kBgColor,
+      backgroundColor: kBgColor,
       body: Stack(
         children: [
-          Positioned.fill(child: ColoredBox(color: _kBgColor)),
+          Positioned.fill(child: ColoredBox(color: kBgColor)),
           Positioned(
             top: -70,
             right: -50,

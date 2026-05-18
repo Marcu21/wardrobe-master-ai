@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_app/services/firebase_service.dart';
 import 'package:mobile_app/services/wardrobe_state_service.dart';
 import '../widgets/smart_clothing_image.dart';
+import '../widgets/scale_button.dart';
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const _kBg = Color(0xFFF4F3F0);
@@ -747,7 +748,7 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
                         width: 48,
                         height: 48,
                         child: Center(
-                          child: _ScaleButton(
+                          child: ScaleButton(
                             onTap: _confirmDelete,
                             child: Container(
                               padding: const EdgeInsets.all(8),
@@ -1046,7 +1047,7 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
                     const SizedBox(height: 20),
 
                     // Update button
-                    _ScaleButton(
+                    ScaleButton(
                       onTap: _updateItem,
                       child: Container(
                         width: double.infinity,
@@ -1091,7 +1092,7 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
                     const SizedBox(height: 12),
 
                     // Delete button
-                    _ScaleButton(
+                    ScaleButton(
                       onTap: _confirmDelete,
                       child: Container(
                         width: double.infinity,
@@ -1315,39 +1316,6 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
           ),
         );
       },
-    );
-  }
-}
-
-// ─── Scale button ─────────────────────────────────────────────────────────────
-
-class _ScaleButton extends StatefulWidget {
-  final VoidCallback onTap;
-  final Widget child;
-  const _ScaleButton({required this.onTap, required this.child});
-
-  @override
-  State<_ScaleButton> createState() => _ScaleButtonState();
-}
-
-class _ScaleButtonState extends State<_ScaleButton> {
-  double _scale = 1.0;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _scale = 0.97),
-      onTapUp: (_) {
-        setState(() => _scale = 1.0);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _scale = 1.0),
-      child: AnimatedScale(
-        scale: _scale,
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeOut,
-        child: widget.child,
-      ),
     );
   }
 }

@@ -1,14 +1,13 @@
-import 'dart:convert';
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import '../services/wardrobe_state_service.dart';
-import '../widgets/smart_clothing_image.dart';
+import 'package:mobile_app/services/wardrobe_state_service.dart';
 import 'package:mobile_app/theme/app_colors.dart';
+import 'widgets/selection_filter_chips.dart';
+import 'widgets/selection_grid_item.dart';
 
 const _kBlob1 = Color(0x3840C4FF);
 const _kBlob2 = Color(0x1E1565C0);
@@ -113,117 +112,6 @@ class _ItemSelectionScreenState extends State<ItemSelectionScreen> {
     });
   }
 
-  Widget _buildFiltersWidget() {
-    final Set<String> categories = {'All'};
-    for (var doc in _allWardrobeItems) {
-      final cat = doc['basic_info']?['category'] as String?;
-      if (cat != null && cat.isNotEmpty) {
-        categories.add(cat);
-      }
-    }
-    final categoryList = categories.toList()..sort();
-    categoryList.remove('All');
-    categoryList.insert(0, 'All');
-
-    if (!categories.contains(_selectedCategory)) {
-      _selectedCategory = 'All';
-    }
-
-    final Set<String> subCategories = {'All'};
-    if (_selectedCategory != 'All') {
-      for (var doc in _allWardrobeItems) {
-        final cat = doc['basic_info']?['category'] as String?;
-        if (cat == _selectedCategory) {
-          final sub = doc['basic_info']?['sub_category'] as String?;
-          if (sub != null && sub.isNotEmpty) {
-            subCategories.add(sub);
-          }
-        }
-      }
-    }
-    final subCategoryList = subCategories.toList()..sort();
-    subCategoryList.remove('All');
-    subCategoryList.insert(0, 'All');
-
-    if (!subCategories.contains(_selectedSubCategory)) {
-      _selectedSubCategory = 'All';
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const SizedBox(height: 12),
-        _buildChoiceChipRow(categoryList, _selectedCategory, (val) {
-          setState(() {
-            _selectedCategory = val;
-            _selectedSubCategory = 'All';
-          });
-        }),
-        if (_selectedCategory != 'All')
-          _buildChoiceChipRow(subCategoryList, _selectedSubCategory, (val) {
-            setState(() {
-              _selectedSubCategory = val;
-            });
-          }, isSecondary: true),
-      ],
-    );
-  }
-
-  Widget _buildChoiceChipRow(
-    List<String> items,
-    String selectedItem,
-    Function(String) onSelected, {
-    bool isSecondary = false,
-  }) {
-    return SizedBox(
-      height: 40,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: items.length,
-        itemBuilder: (context, index) {
-          final item = items[index];
-          final isSelected = selectedItem == item;
-
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: ChoiceChip(
-              label: Text(
-                item,
-                style: TextStyle(
-                  color: isSelected ? Colors.white : Colors.black87,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                  fontSize: isSecondary ? 12 : 13,
-                ),
-              ),
-              selected: isSelected,
-              showCheckmark: false,
-              selectedColor: isSecondary
-                  ? Colors.blueGrey.shade700
-                  : Colors.black,
-              backgroundColor: isSecondary
-                  ? Colors.grey.shade100
-                  : Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(
-                  color: isSelected ? Colors.transparent : Colors.grey.shade300,
-                  width: 1.0,
-                ),
-              ),
-              onSelected: (bool selected) {
-                if (selected) {
-                  onSelected(item);
-                }
-              },
-            ),
-          );
-        },
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -288,7 +176,9 @@ class _ItemSelectionScreenState extends State<ItemSelectionScreen> {
                         child: Text(
                           'Select Items',
                           textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          style: Theme.of(
+                            context,
+                          ).textTheme.titleLarge?.copyWith(
                             color: Colors.black87,
                             fontWeight: FontWeight.w900,
                             letterSpacing: -0.5,
@@ -350,7 +240,21 @@ class _ItemSelectionScreenState extends State<ItemSelectionScreen> {
         SliverToBoxAdapter(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [_buildFiltersWidget(), const SizedBox(height: 16)],
+            children: [
+              SelectionFilterChips(
+                allWardrobeItems: _allWardrobeItems,
+                selectedCategory: _selectedCategory,
+                selectedSubCategory: _selectedSubCategory,
+                onCategoryChanged: (val) => setState(() {
+                  _selectedCategory = val;
+                  _selectedSubCategory = 'All';
+                }),
+                onSubCategoryChanged: (val) => setState(() {
+                  _selectedSubCategory = val;
+                }),
+              ),
+              const SizedBox(height: 16),
+            ],
           ),
         ),
         filteredDocs.isEmpty
@@ -381,69 +285,19 @@ class _ItemSelectionScreenState extends State<ItemSelectionScreen> {
                         mainAxisSpacing: 6.0,
                         childAspectRatio: 0.75,
                       ),
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final item = filteredDocs[index];
-                    final id = item['id'];
-                    final isSelected = _selectedIds.contains(id);
-                    final primaryColor = Theme.of(context).colorScheme.primary;
-
-                    return GestureDetector(
-                      onTap: () => _toggleSelection(id),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: isSelected
-                                ? primaryColor
-                                : Colors.transparent,
-                            width: 2.0,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.06),
-                              blurRadius: 6,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(14),
-                              child: Padding(
-                                padding: const EdgeInsets.all(2.0),
-                                child: SmartClothingImage(
-                                  imageUrl: item['imageUrl']?.toString(),
-                                ),
-                              ),
-                            ),
-                            if (isSelected)
-                              Positioned(
-                                top: 6,
-                                right: 6,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: primaryColor,
-                                    border: Border.all(
-                                      color: Colors.white,
-                                      width: 1.5,
-                                    ),
-                                  ),
-                                  child: const Icon(
-                                    Icons.check,
-                                    color: Colors.white,
-                                    size: 16,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }, childCount: filteredDocs.length),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final item = filteredDocs[index];
+                      final id = item['id'] as String;
+                      return SelectionGridItem(
+                        key: ValueKey(id),
+                        item: item,
+                        isSelected: _selectedIds.contains(id),
+                        onTap: () => _toggleSelection(id),
+                      );
+                    },
+                    childCount: filteredDocs.length,
+                  ),
                 ),
               ),
         const SliverToBoxAdapter(child: SizedBox(height: 40)),

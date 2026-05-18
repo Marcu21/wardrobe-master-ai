@@ -9,7 +9,7 @@ import '../services/packing_service.dart';
 import '../services/weather_service.dart';
 import '../services/wardrobe_state_service.dart';
 import '../services/firebase_service.dart';
-import 'item_selection_screen.dart';
+import 'item_selection/item_selection_screen.dart';
 import '../utils/outfit_sorting_utils.dart';
 import '../widgets/smart_clothing_image.dart';
 import 'package:mobile_app/theme/app_colors.dart';

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mobile_app/services/firebase_service.dart';
 import 'package:mobile_app/services/calendar_service.dart';
-import 'package:mobile_app/screens/virtual_dressing_room_screen.dart';
+import 'package:mobile_app/screens/virtual_dressing_room/virtual_dressing_room_screen.dart';
 import 'package:mobile_app/utils/outfit_sorting_utils.dart';
 import 'package:mobile_app/widgets/scale_button.dart';
 import 'package:mobile_app/theme/app_colors.dart';

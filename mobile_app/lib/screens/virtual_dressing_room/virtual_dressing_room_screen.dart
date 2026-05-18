@@ -1,17 +1,16 @@
-﻿import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import '../widgets/save_outfit_dialog.dart';
-import '../widgets/global_wardrobe_selector.dart';
-import '../services/wardrobe_state_service.dart';
-import '../widgets/smart_clothing_image.dart';
+import 'package:mobile_app/widgets/save_outfit_dialog.dart';
+import 'package:mobile_app/widgets/global_wardrobe_selector.dart';
+import 'package:mobile_app/services/wardrobe_state_service.dart';
 import 'package:mobile_app/theme/app_colors.dart';
+import 'widgets/clothing_carousel_row.dart';
+import 'widgets/circle_icon_button.dart';
+import 'widgets/layer_toggle.dart';
 
-// Per-screen blob colours (amethyst palette)
 const _kBlob1 = Color(0x38A855F7);
 const _kBlob2 = Color(0x209333EA);
 
@@ -25,22 +24,20 @@ class VirtualDressingRoomScreen extends StatefulWidget {
       _VirtualDressingRoomScreenState();
 }
 
-class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
-  // Lists for each category
+class _VirtualDressingRoomScreenState
+    extends State<VirtualDressingRoomScreen> {
   final List<Map<String, dynamic>> _outerwear = [];
   final List<Map<String, dynamic>> _midwear = [];
   final List<Map<String, dynamic>> _tops = [];
   final List<Map<String, dynamic>> _bottoms = [];
   final List<Map<String, dynamic>> _shoes = [];
 
-  // Indices for PageViews - tracked in parent for saving
   int _outerwearIndex = 0;
   int _midwearIndex = 0;
   int _topsIndex = 0;
   int _bottomsIndex = 0;
   int _shoesIndex = 0;
 
-  // Visibility state
   bool _showOuterwear = false;
   bool _showMidwear = false;
   bool _showTops = true;
@@ -79,7 +76,6 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
 
       final snapshot = await query.get();
 
-      // Temporary lists
       final List<Map<String, dynamic>> newOuterwear = [];
       final List<Map<String, dynamic>> newMidwear = [];
       final List<Map<String, dynamic>> newTops = [];
@@ -90,7 +86,6 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
         Map<String, dynamic> data = doc.data();
         data['id'] = doc.id;
 
-        // Extract category and sub_category
         Map<String, dynamic> basicInfo = data['basic_info'] ?? {};
         String category = (basicInfo['category'] ?? '')
             .toString()
@@ -99,7 +94,6 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
             .toString()
             .toLowerCase();
 
-        // Grouping logic
         if (category.contains('shoe') || category.contains('footwear')) {
           newShoes.add(data);
         } else if (category.contains('bottom') ||
@@ -121,29 +115,24 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
             subCategory.contains('t-shirt')) {
           newTops.add(data);
         } else {
-          // Fallback
           newTops.add(data);
         }
       }
 
       if (mounted) {
         setState(() {
-          // Default: maintain zero indices
           _outerwearIndex = 0;
           _midwearIndex = 0;
           _topsIndex = 0;
           _bottomsIndex = 0;
           _shoesIndex = 0;
 
-          // Check if we are in REMIX MODE
           if (widget.initialItemIds != null &&
               widget.initialItemIds!.isNotEmpty) {
-            // 1. Force ALL optional layers to FALSE initially
             _showOuterwear = false;
             _showMidwear = false;
             _showTops = false;
 
-            // 2. ONLY set them to true if the item is physically found in the filtered lists
             int foundOuter = newOuterwear.indexWhere(
               (item) => widget.initialItemIds!.contains(item['id']),
             );
@@ -171,7 +160,6 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
               _showTops = true;
             }
 
-            // Do the same find-and-move for Bottoms and Shoes
             int foundBottom = newBottoms.indexWhere(
               (item) => widget.initialItemIds!.contains(item['id']),
             );
@@ -188,8 +176,7 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
               newShoes.insert(0, item);
             }
           } else {
-            // NORMAL MODE (Not a Remix)
-            _showTops = true; // Default behavior
+            _showTops = true;
             _showOuterwear = false;
             _showMidwear = false;
           }
@@ -210,7 +197,7 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
         });
       }
     } catch (e) {
-      debugPrint("Error fetching clothing: $e");
+      debugPrint('Error fetching clothing: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -231,7 +218,6 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
     if (_showTops && _tops.isNotEmpty) {
       selectedIds.add(_tops[_topsIndex]['id']);
     }
-
     if (_bottoms.isNotEmpty) {
       selectedIds.add(_bottoms[_bottomsIndex]['id']);
     }
@@ -328,7 +314,7 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
                       ),
                       const SizedBox(height: 20),
                       const SizedBox(height: 20),
-                      _LayerToggle(
+                      LayerToggle(
                         icon: CupertinoIcons.umbrella,
                         label: 'Outerwear',
                         subtitle: 'Jackets & Coats',
@@ -339,7 +325,7 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
                         },
                       ),
                       const SizedBox(height: 10),
-                      _LayerToggle(
+                      LayerToggle(
                         icon: CupertinoIcons.thermometer,
                         label: 'Midwear',
                         subtitle: 'Hoodies & Sweaters',
@@ -350,7 +336,7 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
                         },
                       ),
                       const SizedBox(height: 10),
-                      _LayerToggle(
+                      LayerToggle(
                         icon: Icons.dry_cleaning,
                         label: 'Tops',
                         subtitle: 'T-Shirts & Shirts',
@@ -385,13 +371,9 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
     if (_showTops) activeLayers++;
 
     double vpBottoms = activeLayers <= 3 ? 0.75 : 0.60;
-
     double vpTops = activeLayers <= 3 ? 0.65 : 0.50;
-
     double vpMidwear = activeLayers <= 3 ? 0.75 : 0.60;
-
     double vpOuterwear = activeLayers <= 3 ? 0.85 : 0.70;
-
     double vpShoes = activeLayers <= 3 ? 0.5 : 0.5;
 
     return Scaffold(
@@ -453,12 +435,12 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
                         onPressed: () => Navigator.pop(context),
                       ),
                       const Expanded(child: GlobalWardrobeSelector()),
-                      _CircleIconButton(
+                      CircleIconButton(
                         icon: CupertinoIcons.layers_alt,
                         onTap: _openLayersMenu,
                       ),
                       const SizedBox(width: 8),
-                      _CircleIconButton(
+                      CircleIconButton(
                         icon: CupertinoIcons.checkmark_circle_fill,
                         isPrimary: true,
                         onTap: _saveOutfit,
@@ -548,7 +530,7 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
                                   Spacer(flex: fOuter + fMid + fTop),
                                 Expanded(
                                   flex: fBot,
-                                  child: _ClothingCarouselRowInternal(
+                                  child: ClothingCarouselRowInternal(
                                     key: ValueKey(vpBottoms),
                                     items: _bottoms,
                                     onIndexChanged: (index) =>
@@ -556,7 +538,7 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
                                     viewportFraction: vpBottoms,
                                   ),
                                 ),
-                                _ClothingCarouselRow(
+                                ClothingCarouselRow(
                                   key: ValueKey(vpShoes),
                                   items: _shoes,
                                   flex: fShoe,
@@ -574,7 +556,7 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
                                 children: [
                                   if (fOuter + fMid > 0)
                                     Spacer(flex: fOuter + fMid),
-                                  _ClothingCarouselRow(
+                                  ClothingCarouselRow(
                                     key: ValueKey(vpTops),
                                     items: _tops,
                                     flex: fTop,
@@ -592,7 +574,7 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
                               Column(
                                 children: [
                                   if (fOuter > 0) Spacer(flex: fOuter),
-                                  _ClothingCarouselRow(
+                                  ClothingCarouselRow(
                                     key: ValueKey(vpMidwear),
                                     items: _midwear,
                                     flex: fMid,
@@ -609,7 +591,7 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
                             if (_showOuterwear)
                               Column(
                                 children: [
-                                  _ClothingCarouselRow(
+                                  ClothingCarouselRow(
                                     key: ValueKey(vpOuterwear),
                                     items: _outerwear,
                                     flex: fOuter,
@@ -626,255 +608,6 @@ class _VirtualDressingRoomScreenState extends State<VirtualDressingRoomScreen> {
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Wrapper to handle flex in the main column naturally
-class _ClothingCarouselRow extends StatelessWidget {
-  final List<Map<String, dynamic>> items;
-  final int flex;
-  final Function(int) onIndexChanged;
-  final Alignment alignment;
-  final double viewportFraction;
-
-  const _ClothingCarouselRow({
-    super.key,
-    required this.items,
-    required this.flex,
-    required this.onIndexChanged,
-    this.alignment = Alignment.center,
-    this.viewportFraction = 0.6,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      flex: flex,
-      child: _ClothingCarouselRowInternal(
-        items: items,
-        onIndexChanged: onIndexChanged,
-        alignment: alignment,
-        viewportFraction: viewportFraction,
-      ),
-    );
-  }
-}
-
-// The core carousel widget
-class _ClothingCarouselRowInternal extends StatefulWidget {
-  final List<Map<String, dynamic>> items;
-  final Function(int) onIndexChanged;
-  final Alignment alignment;
-  final double viewportFraction;
-
-  const _ClothingCarouselRowInternal({
-    super.key,
-    required this.items,
-    required this.onIndexChanged,
-    this.alignment = Alignment.center,
-    this.viewportFraction = 0.6,
-  });
-
-  @override
-  State<_ClothingCarouselRowInternal> createState() =>
-      _ClothingCarouselRowInternalState();
-}
-
-class _ClothingCarouselRowInternalState
-    extends State<_ClothingCarouselRowInternal> {
-  late PageController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = PageController(viewportFraction: widget.viewportFraction);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (widget.items.isEmpty) {
-      return Container(
-        alignment: Alignment.center,
-        child: Text(
-          "Empty",
-          style: TextStyle(color: Colors.grey[300], fontSize: 12),
-        ),
-      );
-    }
-
-    return PageView.builder(
-      controller: _controller,
-      itemCount: widget.items.length,
-      onPageChanged: widget.onIndexChanged,
-      physics: const BouncingScrollPhysics(),
-      padEnds: true,
-      itemBuilder: (context, index) {
-        return Container(
-          alignment: widget.alignment,
-          width: double.infinity,
-          child: SmartClothingImage(
-            imageUrl: widget.items[index]['imageUrl']?.toString(),
-          ),
-        );
-      },
-    );
-  }
-}
-
-// Circle Icon Button
-
-class _CircleIconButton extends StatefulWidget {
-  final IconData icon;
-  final bool isPrimary;
-  final VoidCallback onTap;
-
-  const _CircleIconButton({
-    required this.icon,
-    required this.onTap,
-    this.isPrimary = false,
-  });
-
-  @override
-  State<_CircleIconButton> createState() => _CircleIconButtonState();
-}
-
-class _CircleIconButtonState extends State<_CircleIconButton> {
-  double _scale = 1.0;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _scale = 0.92),
-      onTapUp: (_) {
-        setState(() => _scale = 1.0);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _scale = 1.0),
-      child: AnimatedScale(
-        scale: _scale,
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeOut,
-        child: Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: widget.isPrimary
-                ? Colors.deepPurple
-                : Colors.white.withOpacity(0.72),
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: widget.isPrimary
-                  ? Colors.transparent
-                  : Colors.black.withOpacity(0.08),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: widget.isPrimary
-                    ? Colors.deepPurple.withOpacity(0.18)
-                    : Colors.black.withOpacity(0.06),
-                blurRadius: widget.isPrimary ? 8 : 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Icon(
-            widget.icon,
-            size: 18,
-            color: widget.isPrimary ? Colors.white : Colors.black87,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Layer Toggle
-
-class _LayerToggle extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String subtitle;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  const _LayerToggle({
-    required this.icon,
-    required this.label,
-    required this.subtitle,
-    required this.value,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: value ? Colors.deepPurple.withOpacity(0.06) : Colors.grey[50],
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: value
-              ? Colors.deepPurple.withOpacity(0.20)
-              : Colors.black.withOpacity(0.06),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: value
-                  ? Colors.deepPurple.withOpacity(0.10)
-                  : Colors.black.withOpacity(0.05),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              size: 16,
-              color: value ? Colors.deepPurple : Colors.black45,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: value ? Colors.deepPurple : Colors.black87,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.black45,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          CupertinoSwitch(
-            value: value,
-            activeColor: Colors.deepPurple,
-            onChanged: onChanged,
           ),
         ],
       ),

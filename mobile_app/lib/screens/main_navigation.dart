@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'home/home_screen.dart';
 import 'add_clothing/add_clothing_screen.dart';
 import 'wardrobe_gallery_screen.dart';
-import 'lookbook_screen.dart';
+import 'lookbook/lookbook_screen.dart';
 import 'laundry/laundry_screen.dart';
 
 class MainNavigation extends StatefulWidget {

@@ -1,16 +1,15 @@
-import 'dart:convert';
-import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import '../services/firebase_service.dart';
-import '../services/calendar_service.dart';
-import 'virtual_dressing_room_screen.dart';
-import '../utils/outfit_sorting_utils.dart';
-import '../widgets/scale_button.dart';
+import 'package:mobile_app/services/firebase_service.dart';
+import 'package:mobile_app/services/calendar_service.dart';
+import 'package:mobile_app/screens/virtual_dressing_room_screen.dart';
+import 'package:mobile_app/utils/outfit_sorting_utils.dart';
+import 'package:mobile_app/widgets/scale_button.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import 'package:mobile_app/widgets/glassmorphism_card.dart';
+import 'widgets/outfit_items_list.dart';
+import 'widgets/outfit_action_bar.dart';
 
 class OutfitDetailScreen extends StatefulWidget {
   final Map<String, dynamic> outfitData;
@@ -94,72 +93,65 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                 offset: const Offset(0, 12),
               ),
             ],
-            padding: const EdgeInsets.symmetric(
-              horizontal: 36,
-              vertical: 32,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 32),
             child: Column(
-                  mainAxisSize: MainAxisSize.min,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Stack(
+                  alignment: Alignment.center,
                   children: [
-                    Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: kPrimary.withOpacity(0.07),
-                            border: Border.all(
-                              color: kPrimary.withOpacity(0.15),
-                              width: 1.5,
-                            ),
-                          ),
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: kPrimary.withOpacity(0.07),
+                        border: Border.all(
+                          color: kPrimary.withOpacity(0.15),
+                          width: 1.5,
                         ),
-                        SizedBox(
-                          width: 44,
-                          height: 44,
-                          child: CircularProgressIndicator(
-                            color: kPrimary.withOpacity(0.25),
-                            strokeWidth: 1.5,
-                          ),
-                        ),
-                        const SizedBox(
-                          width: 30,
-                          height: 30,
-                          child: CircularProgressIndicator(
-                            color: kPrimary,
-                            strokeWidth: 2.5,
-                          ),
-                        ),
-                        const Icon(
-                          Icons.auto_awesome,
-                          color: kPrimary,
-                          size: 14,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Saving changes…',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.black87,
-                        letterSpacing: -0.3,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Just a moment',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.black.withOpacity(0.45),
-                        fontStyle: FontStyle.italic,
+                    SizedBox(
+                      width: 44,
+                      height: 44,
+                      child: CircularProgressIndicator(
+                        color: kPrimary.withOpacity(0.25),
+                        strokeWidth: 1.5,
                       ),
                     ),
+                    const SizedBox(
+                      width: 30,
+                      height: 30,
+                      child: CircularProgressIndicator(
+                        color: kPrimary,
+                        strokeWidth: 2.5,
+                      ),
+                    ),
+                    const Icon(Icons.auto_awesome, color: kPrimary, size: 14),
                   ],
                 ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Saving changes…',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Just a moment',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.black.withOpacity(0.45),
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -225,63 +217,63 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
               ),
             ],
             child: Column(
-                  mainAxisSize: MainAxisSize.min,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDC2626).withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    CupertinoIcons.trash,
+                    color: Color(0xFFDC2626),
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  'Delete Outfit',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black87,
+                    letterSpacing: -0.4,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'This action cannot be undone.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black.withOpacity(0.5),
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFDC2626).withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        CupertinoIcons.trash,
-                        color: Color(0xFFDC2626),
-                        size: 26,
+                    Expanded(
+                      child: _DialogButton(
+                        label: 'Cancel',
+                        onTap: () => Navigator.pop(ctx, false),
+                        isPrimary: false,
                       ),
                     ),
-                    const SizedBox(height: 18),
-                    const Text(
-                      'Delete Outfit',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.black87,
-                        letterSpacing: -0.4,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _DialogButton(
+                        label: 'Delete',
+                        onTap: () => Navigator.pop(ctx, true),
+                        isPrimary: true,
+                        isDestructive: true,
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'This action cannot be undone.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.black.withOpacity(0.5),
-                        height: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _DialogButton(
-                            label: 'Cancel',
-                            onTap: () => Navigator.pop(ctx, false),
-                            isPrimary: false,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _DialogButton(
-                            label: 'Delete',
-                            onTap: () => Navigator.pop(ctx, true),
-                            isPrimary: true,
-                            isDestructive: true,
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ),
+              ],
+            ),
           ),
         ),
       ),
@@ -324,74 +316,71 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
             colorOpacity: 0.88,
             borderRadius: BorderRadius.circular(28),
             borderColor: Colors.white.withOpacity(0.9),
-            padding: const EdgeInsets.symmetric(
-              horizontal: 36,
-              vertical: 32,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 32),
             child: Column(
-                  mainAxisSize: MainAxisSize.min,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Stack(
+                  alignment: Alignment.center,
                   children: [
-                    Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Container(
-                          width: 72,
-                          height: 72,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: kPrimary.withOpacity(0.08),
-                            border: Border.all(
-                              color: kPrimary.withOpacity(0.15),
-                              width: 1.5,
-                            ),
-                          ),
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: kPrimary.withOpacity(0.08),
+                        border: Border.all(
+                          color: kPrimary.withOpacity(0.15),
+                          width: 1.5,
                         ),
-                        SizedBox(
-                          width: 52,
-                          height: 52,
-                          child: CircularProgressIndicator(
-                            color: kPrimary.withOpacity(0.3),
-                            strokeWidth: 2,
-                          ),
-                        ),
-                        const SizedBox(
-                          width: 36,
-                          height: 36,
-                          child: CircularProgressIndicator(
-                            color: kPrimary,
-                            strokeWidth: 2.5,
-                          ),
-                        ),
-                        const Icon(
-                          CupertinoIcons.calendar_badge_plus,
-                          color: kPrimary,
-                          size: 16,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'Logging wear',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.black87,
-                        letterSpacing: -0.4,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Updating your style history…',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.black.withOpacity(0.5),
-                        fontWeight: FontWeight.w500,
+                    SizedBox(
+                      width: 52,
+                      height: 52,
+                      child: CircularProgressIndicator(
+                        color: kPrimary.withOpacity(0.3),
+                        strokeWidth: 2,
                       ),
+                    ),
+                    const SizedBox(
+                      width: 36,
+                      height: 36,
+                      child: CircularProgressIndicator(
+                        color: kPrimary,
+                        strokeWidth: 2.5,
+                      ),
+                    ),
+                    const Icon(
+                      CupertinoIcons.calendar_badge_plus,
+                      color: kPrimary,
+                      size: 16,
                     ),
                   ],
                 ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Logging wear',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black87,
+                    letterSpacing: -0.4,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Updating your style history…',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black.withOpacity(0.5),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -457,78 +446,6 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
     }
   }
 
-  Widget _buildItemImage(Map<String, dynamic> item) {
-    final String rawData = item['imageUrl'] ?? '';
-    final info = item['basic_info'] ?? {};
-    final String cat = (info['category'] ?? '').toString().toLowerCase();
-    final String sub = (info['sub_category'] ?? '').toString().toLowerCase();
-    final String subCat = info['sub_category']?.toString() ?? '';
-
-    double imageHeight = 200.0;
-    if (cat.contains('bottom') ||
-        cat.contains('pant') ||
-        sub.contains('jean') ||
-        sub.contains('skirt') ||
-        sub.contains('dress')) {
-      imageHeight = 340.0;
-    } else if (cat.contains('outerwear') || sub.contains('coat')) {
-      imageHeight = 260.0;
-    } else if (sub.contains('hoodie') ||
-        sub.contains('sweatshirt') ||
-        sub.contains('sweater') ||
-        sub.contains('hanorac') ||
-        sub.contains('pullover') ||
-        sub.contains('jumper')) {
-      imageHeight = 240.0;
-    }
-
-    if (rawData.isEmpty) return const SizedBox.shrink();
-
-    Widget imageWidget;
-    try {
-      if (rawData.startsWith('data:image')) {
-        final String base64String = rawData.split(',').last;
-        imageWidget = Image.memory(
-          base64Decode(base64String),
-          fit: BoxFit.contain,
-          width: double.infinity,
-          errorBuilder: (_, __, ___) =>
-              const Icon(Icons.broken_image, color: Colors.grey),
-        );
-      } else if (rawData.startsWith('http')) {
-        imageWidget = CachedNetworkImage(
-          imageUrl: rawData,
-          fit: BoxFit.contain,
-          width: double.infinity,
-          placeholder: (_, __) => Center(
-            child: CircularProgressIndicator(
-              color: kPrimary.withOpacity(0.5),
-              strokeWidth: 2,
-            ),
-          ),
-          errorWidget: (_, __, ___) =>
-              const Icon(Icons.broken_image, color: Colors.grey),
-        );
-      } else {
-        imageWidget = const Center(
-          child: Icon(CupertinoIcons.checkmark_circle, color: Colors.grey),
-        );
-      }
-    } catch (e) {
-      imageWidget = const Center(child: Icon(Icons.error, color: Colors.grey));
-    }
-
-    return Container(
-      height: imageHeight,
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 12),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: imageWidget,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final bool isAiGenerated = widget.outfitData['is_ai_generated'] ?? false;
@@ -589,41 +506,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Items
-              if (_isLoading)
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 60),
-                    child: Column(
-                      children: [
-                        CircularProgressIndicator(
-                          color: kPrimary,
-                          strokeWidth: 2,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Loading items…',
-                          style: TextStyle(
-                            color: Colors.black.withOpacity(0.45),
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              else if (_items.isEmpty)
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 60),
-                    child: Text(
-                      'No items found for this outfit.',
-                      style: TextStyle(color: Colors.black.withOpacity(0.45)),
-                    ),
-                  ),
-                )
-              else
-                ..._items.map(_buildItemImage),
+              OutfitItemsList(isLoading: _isLoading, items: _items),
 
               const SizedBox(height: 24),
 
@@ -683,7 +566,6 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Name field
                           TextFormField(
                             controller: _nameController,
                             style: const TextStyle(
@@ -726,8 +608,6 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                             ),
                           ),
                           const SizedBox(height: 20),
-
-                          // Rating
                           Text(
                             'Rating',
                             style: TextStyle(
@@ -763,18 +643,14 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                               );
                             }),
                           ),
-
                           const SizedBox(height: 20),
                           Container(
                             height: 1,
                             color: Colors.black.withOpacity(0.05),
                           ),
                           const SizedBox(height: 16),
-
-                          // Metadata row
                           Row(
                             children: [
-                              // AI / User badge
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 10,
@@ -818,11 +694,11 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              // Wear count
                               Builder(
                                 builder: (context) {
-                                  if (_wearCount == 0)
+                                  if (_wearCount == 0) {
                                     return const SizedBox.shrink();
+                                  }
                                   return Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 10,
@@ -857,7 +733,6 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                                 },
                               ),
                               const SizedBox(width: 8),
-                              // Date
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 10,
@@ -898,154 +773,24 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
 
               const SizedBox(height: 20),
 
-              // Action buttons
-              Row(
-                children: [
-                  // Log Wear
-                  Expanded(
-                    child: ScaleButton(
-                      onTap: _logWear,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(
-                            color: Colors.black.withOpacity(0.08),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(
-                              CupertinoIcons.calendar_badge_plus,
-                              size: 17,
-                              color: Colors.black87,
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              'Log Wear',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
-                        ),
+              OutfitActionBar(
+                onLogWear: _logWear,
+                onRemix: () {
+                  final List<dynamic> itemIdsDynamic =
+                      widget.outfitData['item_ids'] ?? [];
+                  final List<String> itemIds = itemIdsDynamic
+                      .map((e) => e.toString())
+                      .toList();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => VirtualDressingRoomScreen(
+                        initialItemIds: itemIds,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Remix
-                  Expanded(
-                    child: ScaleButton(
-                      onTap: () {
-                        final List<dynamic> itemIdsDynamic =
-                            widget.outfitData['item_ids'] ?? [];
-                        final List<String> itemIds = itemIdsDynamic
-                            .map((e) => e.toString())
-                            .toList();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => VirtualDressingRoomScreen(
-                              initialItemIds: itemIds,
-                            ),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(
-                            color: Colors.black.withOpacity(0.08),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(
-                              CupertinoIcons.shuffle,
-                              size: 17,
-                              color: Colors.black87,
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              'Remix',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-
-              // Save changes button
-              ScaleButton(
-                onTap: _saveChanges,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF5B52F0), Color(0xFF3730C8)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: [
-                      BoxShadow(
-                        color: kPrimary.withOpacity(0.35),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(
-                        CupertinoIcons.checkmark_circle,
-                        size: 17,
-                        color: Colors.white,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Save Changes',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                  );
+                },
+                onSave: _saveChanges,
               ),
             ],
           ),
@@ -1054,8 +799,6 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
     );
   }
 }
-
-// Dialog button
 
 class _DialogButton extends StatefulWidget {
   final String label;

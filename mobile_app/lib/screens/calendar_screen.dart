@@ -7,7 +7,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
-import 'outfit_detail_screen.dart';
+import 'outfit_detail/outfit_detail_screen.dart';
 import '../widgets/smart_outfit_card.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 

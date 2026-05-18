@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'outfit_detail_screen.dart';
+import 'outfit_detail/outfit_detail_screen.dart';
 import '../widgets/smart_outfit_card.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
@@ -8,10 +9,11 @@ import 'package:mobile_app/services/api_service.dart';
 import 'package:mobile_app/services/firebase_service.dart';
 import 'package:mobile_app/services/wardrobe_state_service.dart';
 import 'package:mobile_app/widgets/scale_button.dart';
-import 'package:mobile_app/widgets/animated_loading_step.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import 'package:mobile_app/widgets/glassmorphism_card.dart';
-import 'dart:convert';
+import 'widgets/source_picker.dart';
+import 'widgets/analysis_loading_view.dart';
+import 'widgets/analysis_result_view.dart';
 
 const _kBlob1 = Color(0x384F46E5);
 const _kBlob2 = Color(0x206352D2);
@@ -151,88 +153,8 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     }
   }
 
-  void _showImageSourceModal(bool isTag) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        return ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-            child: Container(
-              padding: EdgeInsets.fromLTRB(
-                24,
-                8,
-                24,
-                24 + MediaQuery.of(ctx).padding.bottom,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.92),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(28),
-                ),
-                border: Border.all(color: Colors.white.withOpacity(0.9)),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Drag handle
-                  Container(
-                    width: 36,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 20),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      isTag ? 'Care Tag Photo' : 'Item Photo',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.black87,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _SourceOption(
-                          icon: CupertinoIcons.camera_fill,
-                          label: 'Camera',
-                          onTap: () {
-                            Navigator.pop(ctx);
-                            _pickImage(isTag, ImageSource.camera);
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _SourceOption(
-                          icon: CupertinoIcons.photo_on_rectangle,
-                          label: 'Gallery',
-                          onTap: () {
-                            Navigator.pop(ctx);
-                            _pickImage(isTag, ImageSource.gallery);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
+  void _showImageSourceModal(bool isTag) =>
+      showImageSourceModal(context, isTag, _pickImage);
 
   Future<void> _analyzeItem() async {
     if (_itemImage == null) {
@@ -345,71 +267,70 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                 ),
               ],
               child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Stack(
+                    alignment: Alignment.center,
                     children: [
-                      // Animated rings and icon
-                      Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Container(
-                            width: 72,
-                            height: 72,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: kPrimary.withOpacity(0.08),
-                              border: Border.all(
-                                color: kPrimary.withOpacity(0.15),
-                                width: 1.5,
-                              ),
-                            ),
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: kPrimary.withOpacity(0.08),
+                          border: Border.all(
+                            color: kPrimary.withOpacity(0.15),
+                            width: 1.5,
                           ),
-                          SizedBox(
-                            width: 52,
-                            height: 52,
-                            child: CircularProgressIndicator(
-                              color: kPrimary.withOpacity(0.3),
-                              strokeWidth: 2,
-                            ),
-                          ),
-                          const SizedBox(
-                            width: 36,
-                            height: 36,
-                            child: CircularProgressIndicator(
-                              color: kPrimary,
-                              strokeWidth: 2.5,
-                            ),
-                          ),
-                          const Icon(
-                            Icons.auto_awesome,
-                            color: kPrimary,
-                            size: 16,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      const Text(
-                        'Saving to wardrobe',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.black87,
-                          letterSpacing: -0.4,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Finding the perfect hanger...',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.black.withOpacity(0.5),
-                          fontWeight: FontWeight.w500,
+                      SizedBox(
+                        width: 52,
+                        height: 52,
+                        child: CircularProgressIndicator(
+                          color: kPrimary.withOpacity(0.3),
+                          strokeWidth: 2,
                         ),
+                      ),
+                      const SizedBox(
+                        width: 36,
+                        height: 36,
+                        child: CircularProgressIndicator(
+                          color: kPrimary,
+                          strokeWidth: 2.5,
+                        ),
+                      ),
+                      const Icon(
+                        Icons.auto_awesome,
+                        color: kPrimary,
+                        size: 16,
                       ),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Saving to wardrobe',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black87,
+                      letterSpacing: -0.4,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Finding the perfect hanger...',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.black.withOpacity(0.5),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -515,171 +436,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Full-screen loading
-    if (_isLoading) {
-      return Scaffold(
-        backgroundColor: kBgColor,
-        extendBodyBehindAppBar: true,
-        appBar: AppBar(
-          title: const Text(
-            'Add New Item',
-            style: TextStyle(
-              color: Colors.black87,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.5,
-            ),
-          ),
-          centerTitle: true,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          foregroundColor: Colors.black87,
-          leading: IconButton(
-            icon: const Icon(CupertinoIcons.back, color: Colors.black87),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
-        body: Stack(
-          children: [
-            // Blobs
-            Positioned(
-              top: -60,
-              right: -40,
-              child: IgnorePointer(
-                child: ImageFiltered(
-                  imageFilter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
-                  child: Container(
-                    width: 200,
-                    height: 200,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: _kBlob1,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              top: 80,
-              left: -40,
-              child: IgnorePointer(
-                child: ImageFiltered(
-                  imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
-                  child: Container(
-                    width: 140,
-                    height: 140,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: _kBlob2,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Double ring spinner
-                    TweenAnimationBuilder<double>(
-                      tween: Tween(begin: 0.0, end: 1.0),
-                      duration: const Duration(milliseconds: 500),
-                      curve: Curves.easeOut,
-                      builder: (context, v, child) =>
-                          Opacity(opacity: v, child: child),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Container(
-                            width: 96,
-                            height: 96,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: kPrimary.withOpacity(0.07),
-                              border: Border.all(
-                                color: kPrimary.withOpacity(0.15),
-                                width: 1.5,
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 64,
-                            height: 64,
-                            child: CircularProgressIndicator(
-                              color: kPrimary.withOpacity(0.25),
-                              strokeWidth: 1.5,
-                            ),
-                          ),
-                          const SizedBox(
-                            width: 44,
-                            height: 44,
-                            child: CircularProgressIndicator(
-                              color: kPrimary,
-                              strokeWidth: 2.5,
-                            ),
-                          ),
-                          const Icon(
-                            Icons.auto_awesome,
-                            color: kPrimary,
-                            size: 22,
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 36),
-
-                    // Title
-                    TweenAnimationBuilder<double>(
-                      tween: Tween(begin: 0.0, end: 1.0),
-                      duration: const Duration(milliseconds: 600),
-                      curve: Curves.easeOut,
-                      builder: (context, v, child) =>
-                          Opacity(opacity: v, child: child),
-                      child: const Text(
-                        'Analyzing your item…',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.black87,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Animated steps
-                    AnimatedLoadingStep(
-                      icon: CupertinoIcons.camera_viewfinder,
-                      label: 'Reading the item',
-                      delay: const Duration(milliseconds: 200),
-                      color: kPrimary,
-                    ),
-                    const SizedBox(height: 14),
-                    AnimatedLoadingStep(
-                      icon: CupertinoIcons.tag,
-                      label: 'Identifying category & brand',
-                      delay: const Duration(milliseconds: 700),
-                      color: kPrimary,
-                    ),
-                    const SizedBox(height: 14),
-                    AnimatedLoadingStep(
-                      icon: CupertinoIcons.color_filter,
-                      label: 'Extracting colors & style',
-                      delay: const Duration(milliseconds: 1200),
-                      color: kPrimary,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
+    if (_isLoading) return const AnalysisLoadingView();
 
     return Scaffold(
       backgroundColor: _analysisResult == null ? kBgColor : Colors.grey[50],
@@ -762,20 +519,47 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-                  child: _buildResultsView(),
+                  child: AnalysisResultView(
+                    analysisResult: _analysisResult,
+                    itemImage: _itemImage,
+                    categoryController: _categoryController,
+                    subCategoryController: _subCategoryController,
+                    materialController: _materialController,
+                    primaryColorController: _primaryColorController,
+                    patternController: _patternController,
+                    brandController: _brandController,
+                    priceController: _priceController,
+                    currencyController: _currencyController,
+                    purchaseDateController: _purchaseDateController,
+                    fitController: _fitController,
+                    lengthController: _lengthController,
+                    necklineController: _necklineController,
+                    sleeveLengthController: _sleeveLengthController,
+                    styleOccasionsController: _styleOccasionsController,
+                    seasonalityController: _seasonalityController,
+                    careInstructionsController: _careInstructionsController,
+                    colorGroupController: _colorGroupController,
+                    maxTempController: _maxTempController,
+                    selectedWardrobeId: _selectedWardrobeId,
+                    onSave: _saveItem,
+                    onDiscard: () => setState(() {
+                      _analysisResult = null;
+                      _itemImage = null;
+                      _tagImage = null;
+                    }),
+                    onWardrobeChanged: (val) =>
+                        setState(() => _selectedWardrobeId = val),
+                  ),
                 ),
               ),
             ),
     );
   }
 
-  // Upload section
-
   Widget _buildUploadSection() {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        // Blobs
         Positioned(
           top: -80,
           right: -60,
@@ -810,11 +594,9 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
             ),
           ),
         ),
-        // Content
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Hero upload
             TweenAnimationBuilder<double>(
               tween: Tween(begin: 0.0, end: 1.0),
               duration: const Duration(milliseconds: 700),
@@ -826,7 +608,6 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Label
                   Text(
                     'CLOTHING ITEM',
                     style: TextStyle(
@@ -860,7 +641,6 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
 
             const SizedBox(height: 20),
 
-            // Tag upload (secondary)
             TweenAnimationBuilder<double>(
               tween: Tween(begin: 0.0, end: 1.0),
               duration: const Duration(milliseconds: 800),
@@ -885,7 +665,6 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                 ),
                 child: Row(
                   children: [
-                    // Tag image area
                     GestureDetector(
                       onTap: _tagImage == null
                           ? () => _showImageSourceModal(true)
@@ -1055,7 +834,6 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                         width: double.infinity,
                       ),
                     ),
-                    // Change photo button (bottom left)
                     Positioned(
                       bottom: 14,
                       left: 14,
@@ -1099,7 +877,6 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                         ),
                       ),
                     ),
-                    // Remove button (top right)
                     Positioned(
                       top: 12,
                       right: 12,
@@ -1229,596 +1006,4 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
       ),
     );
   }
-
-  // Results view
-
-  Widget _buildResultsView() {
-    Widget displayImage;
-    if (_analysisResult?['image_base64'] != null) {
-      try {
-        displayImage = Image.memory(
-          base64Decode(_analysisResult!['image_base64']),
-          fit: BoxFit.contain,
-          width: double.infinity,
-        );
-      } catch (_) {
-        displayImage = Image.file(
-          _itemImage!,
-          fit: BoxFit.contain,
-          width: double.infinity,
-        );
-      }
-    } else {
-      displayImage = Image.file(
-        _itemImage!,
-        fit: BoxFit.contain,
-        width: double.infinity,
-      );
-    }
-
-    final subCat = _subCategoryController.text.isNotEmpty
-        ? _subCategoryController.text
-        : 'Item';
-    final brand = _brandController.text.isNotEmpty
-        ? _brandController.text.toUpperCase()
-        : null;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Hero image
-        Container(
-          constraints: const BoxConstraints(maxHeight: 420),
-          width: double.infinity,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.10),
-                blurRadius: 28,
-                spreadRadius: 0,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: Stack(
-              children: [
-                // Photo
-                displayImage,
-
-                // Bottom gradient
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    height: 110,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                        colors: [
-                          Colors.black.withOpacity(0.52),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Brand + subcategory overlay
-                Positioned(
-                  bottom: 16,
-                  left: 18,
-                  right: 18,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (brand != null)
-                        Text(
-                          brand,
-                          style: TextStyle(
-                            fontSize: 11,
-                            letterSpacing: 4.0,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white.withOpacity(0.75),
-                          ),
-                        ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subCat,
-                        style: const TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: -0.5,
-                          height: 1.1,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Category badge top-right
-                if (_categoryController.text.isNotEmpty)
-                  Positioned(
-                    top: 12,
-                    right: 12,
-                    child: GlassmorphismCard(
-                      sigma: 12,
-                      colorOpacity: 0.72,
-                      borderRadius: BorderRadius.circular(50),
-                      borderColor: Colors.white.withOpacity(0.5),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      child: Text(
-                            _categoryController.text,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                              letterSpacing: 0.2,
-                            ),
-                          ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-
-        Padding(
-          padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Section label
-              _buildSectionLabel('REVIEW & EDIT', 'Confirm AI details'),
-              const SizedBox(height: 16),
-
-              // Form sections
-              _buildFormSection(
-                icon: CupertinoIcons.info_circle,
-                title: 'Basic Info',
-                children: [
-                  _buildWardrobeDropdown(),
-                  _buildField('Category', _categoryController),
-                  _buildField('Sub Category', _subCategoryController),
-                  _buildField('Material', _materialController),
-                  _buildField(
-                    'Colors (comma separated)',
-                    _primaryColorController,
-                  ),
-                  _buildField('Pattern', _patternController, isLast: true),
-                ],
-              ),
-              const SizedBox(height: 14),
-
-              _buildFormSection(
-                icon: CupertinoIcons.leaf_arrow_circlepath,
-                title: 'Sustainability & Purchase',
-                children: [
-                  _buildField('Brand', _brandController),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildField(
-                          'Price',
-                          _priceController,
-                          keyboardType: TextInputType.number,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _buildField(
-                          'Currency',
-                          _currencyController,
-                          isLast: true,
-                        ),
-                      ),
-                    ],
-                  ),
-                  _buildField(
-                    'Purchase Date',
-                    _purchaseDateController,
-                    hint: 'YYYY-MM-DD',
-                    isLast: true,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-
-              _buildFormSection(
-                icon: CupertinoIcons.pencil_outline,
-                title: 'Styling',
-                children: [
-                  _buildField('Fit', _fitController),
-                  _buildField('Length', _lengthController),
-                  _buildField('Neckline', _necklineController),
-                  _buildField('Sleeve Length', _sleeveLengthController),
-                  _buildField(
-                    'Occasions (comma separated)',
-                    _styleOccasionsController,
-                  ),
-                  _buildField(
-                    'Seasonality (comma separated)',
-                    _seasonalityController,
-                    isLast: true,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-
-              _buildFormSection(
-                icon: CupertinoIcons.thermometer,
-                title: 'Laundry & Care',
-                children: [
-                  _buildField(
-                    'Care Instructions (one per line)',
-                    _careInstructionsController,
-                    maxLines: 4,
-                  ),
-                  _buildField('Color Group', _colorGroupController),
-                  _buildField(
-                    'Max Temp (°C)',
-                    _maxTempController,
-                    keyboardType: TextInputType.number,
-                    isLast: true,
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              // Save button
-              ScaleButton(
-                onTap: _saveItem,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF5B52F0), Color(0xFF3730C8)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: [
-                      BoxShadow(
-                        color: kPrimary.withOpacity(0.35),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(
-                        CupertinoIcons.checkmark_circle,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                      SizedBox(width: 10),
-                      Text(
-                        'Save to Wardrobe',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          letterSpacing: 0.1,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Discard / restart
-              ScaleButton(
-                onTap: () => setState(() {
-                  _analysisResult = null;
-                  _itemImage = null;
-                  _tagImage = null;
-                }),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.72),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: Colors.black.withOpacity(0.08),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(
-                        CupertinoIcons.arrow_counterclockwise,
-                        color: Colors.black54,
-                        size: 17,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Start over',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  // Form helpers
-
-  Widget _buildSectionLabel(String tag, String title) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          tag,
-          style: TextStyle(
-            fontSize: 10,
-            letterSpacing: 3,
-            fontWeight: FontWeight.w600,
-            color: Colors.black.withOpacity(0.35),
-          ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w900,
-            color: Colors.black87,
-            letterSpacing: -0.5,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFormSection({
-    required IconData icon,
-    required String title,
-    required List<Widget> children,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black.withOpacity(0.06)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Section header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(7),
-                  decoration: BoxDecoration(
-                    color: kPrimaryLight,
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: Icon(icon, size: 14, color: kPrimary),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.black87,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            height: 1,
-            margin: const EdgeInsets.symmetric(horizontal: 18),
-            color: Colors.black.withOpacity(0.05),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 16, 18, 6),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: children,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildField(
-    String label,
-    TextEditingController controller, {
-    int maxLines = 1,
-    TextInputType? keyboardType,
-    String? hint,
-    bool isLast = false,
-  }) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: isLast ? 10 : 12),
-      child: TextFormField(
-        controller: controller,
-        maxLines: maxLines,
-        keyboardType: keyboardType,
-        style: const TextStyle(
-          fontSize: 14,
-          color: Colors.black87,
-          fontWeight: FontWeight.w500,
-        ),
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          labelStyle: TextStyle(
-            color: Colors.black.withOpacity(0.45),
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-          filled: true,
-          fillColor: Colors.black.withOpacity(0.03),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: kPrimary, width: 1.5),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 13,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWardrobeDropdown() {
-    final wardrobes = wardrobeStateService.wardrobes;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: DropdownButtonFormField<String?>(
-        value: _selectedWardrobeId,
-        style: const TextStyle(
-          fontSize: 14,
-          color: Colors.black87,
-          fontWeight: FontWeight.w500,
-        ),
-        decoration: InputDecoration(
-          labelText: 'Wardrobe',
-          labelStyle: TextStyle(
-            color: Colors.black.withOpacity(0.45),
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-          filled: true,
-          fillColor: Colors.black.withOpacity(0.03),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: kPrimary, width: 1.5),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 13,
-          ),
-        ),
-        items: [
-          const DropdownMenuItem<String?>(
-            value: null,
-            child: Text('All Wardrobes'),
-          ),
-          ...wardrobes.map(
-            (w) => DropdownMenuItem<String?>(
-              value: w['id'],
-              child: Text(w['name']),
-            ),
-          ),
-        ],
-        onChanged: (val) => setState(() => _selectedWardrobeId = val),
-      ),
-    );
-  }
 }
-
-// Image source option button
-
-class _SourceOption extends StatefulWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  const _SourceOption({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  State<_SourceOption> createState() => _SourceOptionState();
-}
-
-class _SourceOptionState extends State<_SourceOption> {
-  double _scale = 1.0;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _scale = 0.95),
-      onTapUp: (_) {
-        setState(() => _scale = 1.0);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _scale = 1.0),
-      child: AnimatedScale(
-        scale: _scale,
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeOut,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 18),
-          decoration: BoxDecoration(
-            color: kPrimaryLight,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: kPrimaryMid.withOpacity(0.25)),
-          ),
-          child: Column(
-            children: [
-              Icon(widget.icon, size: 28, color: kPrimary),
-              const SizedBox(height: 8),
-              Text(
-                widget.label,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-

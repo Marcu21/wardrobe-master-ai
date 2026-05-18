@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mobile_app/services/firebase_service.dart';
-import 'package:mobile_app/screens/add_clothing_screen.dart';
 import 'package:mobile_app/screens/clothing_detail_screen.dart';
 import 'package:mobile_app/services/wardrobe_state_service.dart';
 import '../widgets/global_wardrobe_selector.dart';

@@ -9,7 +9,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../services/api_service.dart';
 import 'package:http/http.dart' as http;
 import '../utils/outfit_sorting_utils.dart';
-import 'add_clothing_screen.dart';
+import 'add_clothing/add_clothing_screen.dart';
 import '../widgets/scale_button.dart';
 import 'package:mobile_app/widgets/glassmorphism_card.dart';
 

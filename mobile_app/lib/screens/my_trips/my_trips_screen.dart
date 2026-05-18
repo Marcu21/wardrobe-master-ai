@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mobile_app/services/firebase_service.dart';
-import 'package:mobile_app/screens/packing_setup_screen.dart';
+import 'package:mobile_app/screens/packing_setup/packing_setup_screen.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import 'widgets/my_trips_empty_state.dart';
 import 'widgets/trip_card.dart';

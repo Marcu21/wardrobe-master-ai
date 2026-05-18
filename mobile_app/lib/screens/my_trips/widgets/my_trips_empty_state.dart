@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_app/screens/packing_setup_screen.dart';
+import 'package:mobile_app/screens/packing_setup/packing_setup_screen.dart';
 
 class MyTripsEmptyState extends StatelessWidget {
   const MyTripsEmptyState({super.key});

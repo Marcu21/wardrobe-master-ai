@@ -6,7 +6,7 @@ import '../ai_stylist/ai_stylist_chat_screen.dart';
 import '../calendar/calendar_screen.dart';
 import '../sustainability/sustainability_screen.dart';
 import '../shopping_assistant/shopping_assistant_screen.dart';
-import '../my_trips_screen.dart';
+import '../my_trips/my_trips_screen.dart';
 import '../virtual_dressing_room/virtual_dressing_room_screen.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import 'widgets/weather_card.dart';

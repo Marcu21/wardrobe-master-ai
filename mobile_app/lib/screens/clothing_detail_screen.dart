@@ -6,11 +6,10 @@ import 'package:mobile_app/services/firebase_service.dart';
 import 'package:mobile_app/services/wardrobe_state_service.dart';
 import '../widgets/smart_clothing_image.dart';
 import '../widgets/scale_button.dart';
+import 'package:mobile_app/theme/app_colors.dart';
+import 'package:mobile_app/widgets/glassmorphism_card.dart';
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
-const _kBg = Color(0xFFF4F3F0);
-const _kPurple = Color(0xFF4F46E5);
-const _kPurpleLight = Color(0xFFEEEDF8);
 const _kBlob1 = Color(0x38EC4899);
 const _kBlob2 = Color(0x20DB2777);
 
@@ -210,34 +209,27 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
             margin: const EdgeInsets.symmetric(horizontal: 40),
             width: double.infinity,
             constraints: const BoxConstraints(maxWidth: 340),
-            child: ClipRRect(
+            child: GlassmorphismCard(
+              sigma: 24,
+              colorOpacity: 0.90,
               borderRadius: BorderRadius.circular(32),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(24, 36, 24, 28),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.90),
-                    borderRadius: BorderRadius.circular(32),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.8),
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFDC2626).withOpacity(0.12),
-                        blurRadius: 40,
-                        spreadRadius: 8,
-                        offset: const Offset(0, 12),
-                      ),
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 15,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
+              borderColor: Colors.white.withOpacity(0.8),
+              borderWidth: 1.5,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFDC2626).withOpacity(0.12),
+                  blurRadius: 40,
+                  spreadRadius: 8,
+                  offset: const Offset(0, 12),
+                ),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 15,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+              padding: const EdgeInsets.fromLTRB(24, 36, 24, 28),
+              child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       // Icon with ring
@@ -303,8 +295,6 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
                       ),
                     ],
                   ),
-                ),
-              ),
             ),
           ),
         ),
@@ -325,34 +315,27 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
             margin: const EdgeInsets.symmetric(horizontal: 40),
             width: double.infinity,
             constraints: const BoxConstraints(maxWidth: 340),
-            child: ClipRRect(
+            child: GlassmorphismCard(
+              sigma: 24,
+              colorOpacity: 0.90,
               borderRadius: BorderRadius.circular(32),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(24, 40, 24, 32),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.90),
-                    borderRadius: BorderRadius.circular(32),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.8),
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFDC2626).withOpacity(0.15),
-                        blurRadius: 40,
-                        spreadRadius: 10,
-                        offset: const Offset(0, 12),
-                      ),
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 15,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
+              borderColor: Colors.white.withOpacity(0.8),
+              borderWidth: 1.5,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFDC2626).withOpacity(0.15),
+                  blurRadius: 40,
+                  spreadRadius: 10,
+                  offset: const Offset(0, 12),
+                ),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 15,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+              padding: const EdgeInsets.fromLTRB(24, 40, 24, 32),
+              child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       // Triple-ring spinner in red
@@ -419,8 +402,6 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
                       ),
                     ],
                   ),
-                ),
-              ),
             ),
           ),
         ),
@@ -473,34 +454,27 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
             margin: const EdgeInsets.symmetric(horizontal: 40),
             width: double.infinity,
             constraints: const BoxConstraints(maxWidth: 340),
-            child: ClipRRect(
+            child: GlassmorphismCard(
+              sigma: 24,
+              colorOpacity: 0.90,
               borderRadius: BorderRadius.circular(32),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(24, 40, 24, 32),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.90),
-                    borderRadius: BorderRadius.circular(32),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.8),
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: _kPurple.withOpacity(0.15),
-                        blurRadius: 40,
-                        spreadRadius: 10,
-                        offset: const Offset(0, 12),
-                      ),
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 15,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
+              borderColor: Colors.white.withOpacity(0.8),
+              borderWidth: 1.5,
+              boxShadow: [
+                BoxShadow(
+                  color: kPrimary.withOpacity(0.15),
+                  blurRadius: 40,
+                  spreadRadius: 10,
+                  offset: const Offset(0, 12),
+                ),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 15,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+              padding: const EdgeInsets.fromLTRB(24, 40, 24, 32),
+              child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Stack(
@@ -511,9 +485,9 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
                             height: 72,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: _kPurple.withOpacity(0.08),
+                              color: kPrimary.withOpacity(0.08),
                               border: Border.all(
-                                color: _kPurple.withOpacity(0.15),
+                                color: kPrimary.withOpacity(0.15),
                                 width: 1.5,
                               ),
                             ),
@@ -522,7 +496,7 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
                             width: 52,
                             height: 52,
                             child: CircularProgressIndicator(
-                              color: _kPurple.withOpacity(0.3),
+                              color: kPrimary.withOpacity(0.3),
                               strokeWidth: 2,
                             ),
                           ),
@@ -530,13 +504,13 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
                             width: 36,
                             height: 36,
                             child: CircularProgressIndicator(
-                              color: _kPurple,
+                              color: kPrimary,
                               strokeWidth: 2.5,
                             ),
                           ),
                           const Icon(
                             Icons.auto_awesome,
-                            color: _kPurple,
+                            color: kPrimary,
                             size: 16,
                           ),
                         ],
@@ -564,8 +538,6 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
                       ),
                     ],
                   ),
-                ),
-              ),
             ),
           ),
         ),
@@ -674,10 +646,10 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
     final category = basic['category']?.toString() ?? '';
 
     return Scaffold(
-      backgroundColor: _kBg,
+      backgroundColor: kBgColor,
       body: Stack(
         children: [
-          Positioned.fill(child: ColoredBox(color: _kBg)),
+          Positioned.fill(child: ColoredBox(color: kBgColor)),
           Positioned(
             top: -70,
             right: -50,
@@ -808,7 +780,7 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
                             fit: BoxFit.contain,
                             placeholder: (_, __) => const Center(
                               child: CircularProgressIndicator(
-                                color: _kPurple,
+                                color: kPrimary,
                                 strokeWidth: 2,
                               ),
                             ),
@@ -884,26 +856,16 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
                           Positioned(
                             top: 12,
                             right: 12,
-                            child: ClipRRect(
+                            child: GlassmorphismCard(
+                              sigma: 12,
+                              colorOpacity: 0.72,
                               borderRadius: BorderRadius.circular(50),
-                              child: BackdropFilter(
-                                filter: ImageFilter.blur(
-                                  sigmaX: 12,
-                                  sigmaY: 12,
-                                ),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.72),
-                                    borderRadius: BorderRadius.circular(50),
-                                    border: Border.all(
-                                      color: Colors.white.withOpacity(0.5),
-                                    ),
-                                  ),
-                                  child: Text(
+                              borderColor: Colors.white.withOpacity(0.5),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              child: Text(
                                     category,
                                     style: const TextStyle(
                                       fontSize: 12,
@@ -912,8 +874,6 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
                                       letterSpacing: 0.2,
                                     ),
                                   ),
-                                ),
-                              ),
                             ),
                           ),
                       ],
@@ -1061,7 +1021,7 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
                           borderRadius: BorderRadius.circular(18),
                           boxShadow: [
                             BoxShadow(
-                              color: _kPurple.withOpacity(0.35),
+                              color: kPrimary.withOpacity(0.35),
                               blurRadius: 20,
                               offset: const Offset(0, 8),
                             ),
@@ -1170,10 +1130,10 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
                 Container(
                   padding: const EdgeInsets.all(7),
                   decoration: BoxDecoration(
-                    color: _kPurpleLight,
+                    color: kPrimaryLight,
                     borderRadius: BorderRadius.circular(9),
                   ),
-                  child: Icon(icon, size: 14, color: _kPurple),
+                  child: Icon(icon, size: 14, color: kPrimary),
                 ),
                 const SizedBox(width: 10),
                 Text(
@@ -1244,7 +1204,7 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: _kPurple, width: 1.5),
+            borderSide: const BorderSide(color: kPrimary, width: 1.5),
           ),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
@@ -1293,7 +1253,7 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: _kPurple, width: 1.5),
+                borderSide: const BorderSide(color: kPrimary, width: 1.5),
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
@@ -1344,7 +1304,7 @@ class _DialogButtonState extends State<_DialogButton> {
 
   @override
   Widget build(BuildContext context) {
-    final color = widget.isDestructive ? const Color(0xFFDC2626) : _kPurple;
+    final color = widget.isDestructive ? const Color(0xFFDC2626) : kPrimary;
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _scale = 0.96),

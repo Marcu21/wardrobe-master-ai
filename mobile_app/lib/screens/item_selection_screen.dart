@@ -8,8 +8,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../services/wardrobe_state_service.dart';
 import '../widgets/smart_clothing_image.dart';
+import 'package:mobile_app/theme/app_colors.dart';
 
-const _kBgColor = Color(0xFFF4F3F0);
 const _kBlob1 = Color(0x3840C4FF);
 const _kBlob2 = Color(0x1E1565C0);
 
@@ -227,10 +227,10 @@ class _ItemSelectionScreenState extends State<ItemSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _kBgColor,
+      backgroundColor: kBgColor,
       body: Stack(
         children: [
-          Positioned.fill(child: ColoredBox(color: _kBgColor)),
+          Positioned.fill(child: ColoredBox(color: kBgColor)),
           Positioned(
             top: -80,
             right: -60,

@@ -15,7 +15,9 @@ class GlassmorphismCard extends StatelessWidget {
     this.borderWidth = 1.0,
     this.boxShadow,
     this.padding,
+    this.margin,
     this.width,
+    this.constraints,
   });
 
   final Widget child;
@@ -28,7 +30,9 @@ class GlassmorphismCard extends StatelessWidget {
   final double borderWidth;
   final List<BoxShadow>? boxShadow;
   final EdgeInsetsGeometry? padding;
+  final EdgeInsetsGeometry? margin;
   final double? width;
+  final BoxConstraints? constraints;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +43,9 @@ class GlassmorphismCard extends StatelessWidget {
         filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
         child: Container(
           width: width,
+          constraints: constraints,
           padding: padding,
+          margin: margin,
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(colorOpacity),
             borderRadius: radius,

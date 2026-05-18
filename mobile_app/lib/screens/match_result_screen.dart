@@ -11,6 +11,7 @@ import 'package:http/http.dart' as http;
 import '../utils/outfit_sorting_utils.dart';
 import 'add_clothing_screen.dart';
 import '../widgets/scale_button.dart';
+import 'package:mobile_app/widgets/glassmorphism_card.dart';
 
 class MatchResultScreen extends StatefulWidget {
   final Map<String, dynamic> scannedItemData;
@@ -364,24 +365,16 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
                   Positioned(
                     top: 12,
                     right: 12,
-                    child: ClipRRect(
+                    child: GlassmorphismCard(
+                      sigma: 12,
+                      colorOpacity: 0.72,
                       borderRadius: BorderRadius.circular(50),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.72),
-                            borderRadius: BorderRadius.circular(50),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.5),
-                              width: 1,
-                            ),
-                          ),
-                          child: Text(
+                      borderColor: Colors.white.withOpacity(0.5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      child: Text(
                             category.toString(),
                             style: const TextStyle(
                               fontSize: 12,
@@ -390,8 +383,6 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
                               letterSpacing: 0.2,
                             ),
                           ),
-                        ),
-                      ),
                     ),
                   ),
               ],

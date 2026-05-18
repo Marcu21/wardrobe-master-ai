@@ -1150,23 +1150,16 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
                             }).toList(),
                           ),
                           const SizedBox(height: 28),
-                          ClipRRect(
+                          GlassmorphismCard(
+                            sigma: 12,
+                            colorOpacity: 0.55,
                             borderRadius: BorderRadius.circular(18),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 12,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.55),
-                                  borderRadius: BorderRadius.circular(18),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.85),
-                                  ),
-                                ),
-                                child: Row(
+                            borderColor: Colors.white.withOpacity(0.85),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                            child: Row(
                                   children: [
                                     Container(
                                       padding: const EdgeInsets.all(7),
@@ -1193,8 +1186,6 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
                                     ),
                                   ],
                                 ),
-                              ),
-                            ),
                           ),
                         ],
                       ),
@@ -1278,7 +1269,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
                 boxShadow: isUser
                     ? [
                         BoxShadow(
-                          color: const Color(0xFF4F46E5).withOpacity(0.25),
+                          color: kPrimary.withOpacity(0.25),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -1578,8 +1569,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
                       ],
                     ),
                   ),
-                ],
-              ),
+            ],
           ),
         ),
       ),
@@ -1918,20 +1908,15 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
             horizontal: 48,
             vertical: 32,
           ),
-          child: ClipRRect(
+          child: GlassmorphismCard(
+            sigma: 20,
+            colorOpacity: 0.9,
             borderRadius: BorderRadius.circular(32),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.75,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(32),
-                  border: Border.all(color: kGlassBorder),
-                ),
-                child: Stack(
+            borderColor: kGlassBorder,
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.75,
+            ),
+            child: Stack(
                   children: [
                     Column(
                       children: [
@@ -2018,8 +2003,6 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
                     ),
                   ],
                 ),
-              ),
-            ),
           ),
         );
       },

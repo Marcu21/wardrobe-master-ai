@@ -12,8 +12,8 @@ import '../services/firebase_service.dart';
 import 'item_selection_screen.dart';
 import '../utils/outfit_sorting_utils.dart';
 import '../widgets/smart_clothing_image.dart';
+import 'package:mobile_app/theme/app_colors.dart';
 
-const _kBgColor = Color(0xFFF4F3F0);
 const _kBlob1 = Color(0x3840C4FF);
 const _kBlob2 = Color(0x1E1565C0);
 
@@ -463,11 +463,11 @@ class _TripViewScreenState extends State<TripViewScreen> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: _kBgColor,
+        backgroundColor: kBgColor,
         floatingActionButton: fab,
         body: Stack(
           children: [
-            Positioned.fill(child: ColoredBox(color: _kBgColor)),
+            Positioned.fill(child: ColoredBox(color: kBgColor)),
             Positioned(
               top: -80,
               right: -60,
@@ -526,7 +526,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
                         ),
                         flexibleSpace: Stack(
                           children: [
-                            Positioned.fill(child: ColoredBox(color: _kBgColor)),
+                            Positioned.fill(child: ColoredBox(color: kBgColor)),
                             Positioned(
                               top: -60,
                               right: -50,

@@ -6,8 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
 import '../widgets/animated_loading_step.dart';
 import 'match_result_screen.dart';
+import 'package:mobile_app/theme/app_colors.dart';
 
-const _kBgColor = Color(0xFFF4F3F0);
 const _kBlob1 = Color(0x380EA5E9);
 const _kBlob2 = Color(0x200284C7);
 
@@ -109,10 +109,10 @@ class _ShoppingAssistantScreenState extends State<ShoppingAssistantScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _kBgColor,
+      backgroundColor: kBgColor,
       body: Stack(
         children: [
-          Positioned.fill(child: ColoredBox(color: _kBgColor)),
+          Positioned.fill(child: ColoredBox(color: kBgColor)),
           Positioned(
             top: -70,
             right: -50,

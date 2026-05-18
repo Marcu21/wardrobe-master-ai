@@ -10,8 +10,8 @@ import 'package:mobile_app/services/laundry_service.dart';
 import 'package:mobile_app/services/wardrobe_state_service.dart';
 import '../widgets/global_wardrobe_selector.dart';
 import 'package:mobile_app/widgets/smart_clothing_image.dart';
+import 'package:mobile_app/theme/app_colors.dart';
 
-const _kBgColor = Color(0xFFF4F3F0);
 const _kBlob1 = Color(0x384F46E5);
 const _kBlob2 = Color(0x206352D2);
 
@@ -215,7 +215,7 @@ class _LaundryScreenState extends State<LaundryScreen> {
                                       ),
                                       child: const Icon(
                                         Icons.auto_awesome,
-                                        color: Color(0xFF4F46E5),
+                                        color: kPrimary,
                                         size: 16,
                                       ),
                                     ),
@@ -412,7 +412,7 @@ class _LaundryScreenState extends State<LaundryScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: _kBgColor,
+        backgroundColor: kBgColor,
         appBar: AppBar(
           title: const Text(
             'Smart Laundry',
@@ -425,7 +425,7 @@ class _LaundryScreenState extends State<LaundryScreen> {
         ),
         body: Stack(
           children: [
-            Positioned.fill(child: ColoredBox(color: _kBgColor)),
+            Positioned.fill(child: ColoredBox(color: kBgColor)),
             Positioned(
               top: -70,
               right: -50,
@@ -531,7 +531,7 @@ class _LaundryScreenState extends State<LaundryScreen> {
 
     if (_errorMessage != null) {
       return Scaffold(
-        backgroundColor: _kBgColor,
+        backgroundColor: kBgColor,
         appBar: AppBar(
           title: const Text(
             'Smart Laundry',
@@ -544,7 +544,7 @@ class _LaundryScreenState extends State<LaundryScreen> {
         ),
         body: Stack(
           children: [
-            Positioned.fill(child: ColoredBox(color: _kBgColor)),
+            Positioned.fill(child: ColoredBox(color: kBgColor)),
             Positioned(
               top: -70,
               right: -50,
@@ -644,10 +644,10 @@ class _LaundryScreenState extends State<LaundryScreen> {
     }).toList();
 
     return Scaffold(
-      backgroundColor: _kBgColor,
+      backgroundColor: kBgColor,
       body: Stack(
         children: [
-          Positioned.fill(child: ColoredBox(color: _kBgColor)),
+          Positioned.fill(child: ColoredBox(color: kBgColor)),
           Positioned(
             top: -70,
             right: -50,

@@ -5,8 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'outfit_detail_screen.dart';
 import '../widgets/smart_outfit_card.dart';
+import 'package:mobile_app/theme/app_colors.dart';
 
-const _kBgColor = Color(0xFFF4F3F0);
 const _kBlob1 = Color(0x384F46E5);
 const _kBlob2 = Color(0x206352D2);
 
@@ -22,10 +22,10 @@ class LookbookScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _kBgColor,
+      backgroundColor: kBgColor,
       body: Stack(
         children: [
-          Positioned.fill(child: ColoredBox(color: _kBgColor)),
+          Positioned.fill(child: ColoredBox(color: kBgColor)),
           Positioned(
             top: -70,
             right: -50,

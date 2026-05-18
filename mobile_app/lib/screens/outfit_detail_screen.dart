@@ -9,11 +9,8 @@ import '../services/calendar_service.dart';
 import 'virtual_dressing_room_screen.dart';
 import '../utils/outfit_sorting_utils.dart';
 import '../widgets/scale_button.dart';
-
-// Design tokens
-const _kBg = Color(0xFFF4F3F0);
-const _kPurple = Color(0xFF4F46E5);
-const _kPurpleLight = Color(0xFFEEEDF8);
+import 'package:mobile_app/theme/app_colors.dart';
+import 'package:mobile_app/widgets/glassmorphism_card.dart';
 
 class OutfitDetailScreen extends StatefulWidget {
   final Map<String, dynamic> outfitData;
@@ -85,28 +82,23 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
       builder: (_) => Center(
         child: Material(
           type: MaterialType.transparency,
-          child: ClipRRect(
+          child: GlassmorphismCard(
+            sigma: 20,
+            colorOpacity: 0.88,
             borderRadius: BorderRadius.circular(28),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 36,
-                  vertical: 32,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.88),
-                  borderRadius: BorderRadius.circular(28),
-                  border: Border.all(color: Colors.white.withOpacity(0.9)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _kPurple.withOpacity(0.12),
-                      blurRadius: 40,
-                      offset: const Offset(0, 12),
-                    ),
-                  ],
-                ),
-                child: Column(
+            borderColor: Colors.white.withOpacity(0.9),
+            boxShadow: [
+              BoxShadow(
+                color: kPrimary.withOpacity(0.12),
+                blurRadius: 40,
+                offset: const Offset(0, 12),
+              ),
+            ],
+            padding: const EdgeInsets.symmetric(
+              horizontal: 36,
+              vertical: 32,
+            ),
+            child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Stack(
@@ -117,9 +109,9 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                           height: 64,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: _kPurple.withOpacity(0.07),
+                            color: kPrimary.withOpacity(0.07),
                             border: Border.all(
-                              color: _kPurple.withOpacity(0.15),
+                              color: kPrimary.withOpacity(0.15),
                               width: 1.5,
                             ),
                           ),
@@ -128,7 +120,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                           width: 44,
                           height: 44,
                           child: CircularProgressIndicator(
-                            color: _kPurple.withOpacity(0.25),
+                            color: kPrimary.withOpacity(0.25),
                             strokeWidth: 1.5,
                           ),
                         ),
@@ -136,13 +128,13 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                           width: 30,
                           height: 30,
                           child: CircularProgressIndicator(
-                            color: _kPurple,
+                            color: kPrimary,
                             strokeWidth: 2.5,
                           ),
                         ),
                         const Icon(
                           Icons.auto_awesome,
-                          color: _kPurple,
+                          color: kPrimary,
                           size: 14,
                         ),
                       ],
@@ -168,8 +160,6 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                     ),
                   ],
                 ),
-              ),
-            ),
           ),
         ),
       ),
@@ -220,26 +210,21 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
       builder: (ctx) => Center(
         child: Material(
           type: MaterialType.transparency,
-          child: ClipRRect(
+          child: GlassmorphismCard(
+            sigma: 20,
+            colorOpacity: 0.92,
             borderRadius: BorderRadius.circular(28),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 32),
-                padding: const EdgeInsets.all(28),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.92),
-                  borderRadius: BorderRadius.circular(28),
-                  border: Border.all(color: Colors.white.withOpacity(0.9)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 40,
-                      offset: const Offset(0, 12),
-                    ),
-                  ],
-                ),
-                child: Column(
+            borderColor: Colors.white.withOpacity(0.9),
+            margin: const EdgeInsets.symmetric(horizontal: 32),
+            padding: const EdgeInsets.all(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 40,
+                offset: const Offset(0, 12),
+              ),
+            ],
+            child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
@@ -297,8 +282,6 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                     ),
                   ],
                 ),
-              ),
-            ),
           ),
         ),
       ),
@@ -336,21 +319,16 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
       builder: (_) => Center(
         child: Material(
           type: MaterialType.transparency,
-          child: ClipRRect(
+          child: GlassmorphismCard(
+            sigma: 20,
+            colorOpacity: 0.88,
             borderRadius: BorderRadius.circular(28),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 36,
-                  vertical: 32,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.88),
-                  borderRadius: BorderRadius.circular(28),
-                  border: Border.all(color: Colors.white.withOpacity(0.9)),
-                ),
-                child: Column(
+            borderColor: Colors.white.withOpacity(0.9),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 36,
+              vertical: 32,
+            ),
+            child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Stack(
@@ -361,9 +339,9 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                           height: 72,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: _kPurple.withOpacity(0.08),
+                            color: kPrimary.withOpacity(0.08),
                             border: Border.all(
-                              color: _kPurple.withOpacity(0.15),
+                              color: kPrimary.withOpacity(0.15),
                               width: 1.5,
                             ),
                           ),
@@ -372,7 +350,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                           width: 52,
                           height: 52,
                           child: CircularProgressIndicator(
-                            color: _kPurple.withOpacity(0.3),
+                            color: kPrimary.withOpacity(0.3),
                             strokeWidth: 2,
                           ),
                         ),
@@ -380,13 +358,13 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                           width: 36,
                           height: 36,
                           child: CircularProgressIndicator(
-                            color: _kPurple,
+                            color: kPrimary,
                             strokeWidth: 2.5,
                           ),
                         ),
                         const Icon(
                           CupertinoIcons.calendar_badge_plus,
-                          color: _kPurple,
+                          color: kPrimary,
                           size: 16,
                         ),
                       ],
@@ -414,8 +392,6 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                     ),
                   ],
                 ),
-              ),
-            ),
           ),
         ),
       ),
@@ -526,7 +502,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
           width: double.infinity,
           placeholder: (_, __) => Center(
             child: CircularProgressIndicator(
-              color: _kPurple.withOpacity(0.5),
+              color: kPrimary.withOpacity(0.5),
               strokeWidth: 2,
             ),
           ),
@@ -621,7 +597,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                     child: Column(
                       children: [
                         CircularProgressIndicator(
-                          color: _kPurple,
+                          color: kPrimary,
                           strokeWidth: 2,
                         ),
                         const SizedBox(height: 16),
@@ -675,13 +651,13 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                           Container(
                             padding: const EdgeInsets.all(7),
                             decoration: BoxDecoration(
-                              color: _kPurpleLight,
+                              color: kPrimaryLight,
                               borderRadius: BorderRadius.circular(9),
                             ),
                             child: const Icon(
                               CupertinoIcons.pencil,
                               size: 14,
-                              color: _kPurple,
+                              color: kPrimary,
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -739,7 +715,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: const BorderSide(
-                                  color: _kPurple,
+                                  color: kPrimary,
                                   width: 1.5,
                                 ),
                               ),
@@ -806,12 +782,12 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                                 ),
                                 decoration: BoxDecoration(
                                   color: isAiGenerated
-                                      ? _kPurple.withOpacity(0.08)
+                                      ? kPrimary.withOpacity(0.08)
                                       : Colors.black.withOpacity(0.05),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
                                     color: isAiGenerated
-                                        ? _kPurple.withOpacity(0.20)
+                                        ? kPrimary.withOpacity(0.20)
                                         : Colors.black.withOpacity(0.08),
                                   ),
                                 ),
@@ -824,7 +800,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                                           : CupertinoIcons.person,
                                       size: 12,
                                       color: isAiGenerated
-                                          ? _kPurple
+                                          ? kPrimary
                                           : Colors.black54,
                                     ),
                                     const SizedBox(width: 5),
@@ -834,7 +810,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
                                         color: isAiGenerated
-                                            ? _kPurple
+                                            ? kPrimary
                                             : Colors.black54,
                                       ),
                                     ),
@@ -1044,7 +1020,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                     borderRadius: BorderRadius.circular(18),
                     boxShadow: [
                       BoxShadow(
-                        color: _kPurple.withOpacity(0.35),
+                        color: kPrimary.withOpacity(0.35),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -1103,7 +1079,7 @@ class _DialogButtonState extends State<_DialogButton> {
 
   @override
   Widget build(BuildContext context) {
-    final color = widget.isDestructive ? const Color(0xFFDC2626) : _kPurple;
+    final color = widget.isDestructive ? const Color(0xFFDC2626) : kPrimary;
     return GestureDetector(
       onTapDown: (_) => setState(() => _scale = 0.96),
       onTapUp: (_) {

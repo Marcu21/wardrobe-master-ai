@@ -338,7 +338,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildAIStylistCard() {
     return _HomeCard(
-      shadowColor: const Color(0xFF4F46E5),
+      shadowColor: kPrimary,
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const AiStylistChatScreen()),
@@ -351,12 +351,12 @@ class _HomeScreenState extends State<HomeScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4F46E5).withOpacity(0.10),
+                  color: kPrimary.withOpacity(0.10),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.auto_awesome,
-                  color: Color(0xFF4F46E5),
+                  color: kPrimary,
                   size: 22,
                 ),
               ),
@@ -913,8 +913,6 @@ class _WeatherSkeletonState extends State<_WeatherSkeleton>
                   ),
                 ),
               ),
-            ),
-          ),
         );
       },
     );
@@ -976,7 +974,7 @@ class DynamicWeatherCard extends StatelessWidget {
                 TextButton(
                   onPressed: onRetry,
                   style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF4F46E5),
+                    foregroundColor: kPrimary,
                     textStyle: const TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 13,

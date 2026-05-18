@@ -6,8 +6,8 @@ import 'package:intl/intl.dart';
 
 import '../widgets/global_wardrobe_selector.dart';
 import 'trip_view_screen.dart';
+import 'package:mobile_app/theme/app_colors.dart';
 
-const _kBgColor = Color(0xFFF4F3F0);
 const _kBlob1 = Color(0x3840C4FF);
 const _kBlob2 = Color(0x1E1565C0);
 
@@ -100,10 +100,10 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _kBgColor,
+      backgroundColor: kBgColor,
       body: Stack(
         children: [
-          Positioned.fill(child: ColoredBox(color: _kBgColor)),
+          Positioned.fill(child: ColoredBox(color: kBgColor)),
           Positioned(
             top: -80,
             right: -60,

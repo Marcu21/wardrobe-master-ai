@@ -13,6 +13,9 @@ import 'package:mobile_app/theme/app_colors.dart';
 import 'package:mobile_app/widgets/glassmorphism_card.dart';
 import 'dart:convert';
 
+const _kBlob1 = Color(0x384F46E5);
+const _kBlob2 = Color(0x206352D2);
+
 class AddClothingScreen extends StatefulWidget {
   final Map<String, dynamic>? initialAnalysisResult;
   final File? initialImageFile;
@@ -549,7 +552,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                     height: 200,
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Color(0x384F46E5),
+                      color: _kBlob1,
                     ),
                   ),
                 ),
@@ -566,7 +569,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                     height: 140,
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Color(0x206352D2),
+                      color: _kBlob2,
                     ),
                   ),
                 ),
@@ -784,7 +787,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                 height: 200,
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Color(0x384F46E5),
+                  color: _kBlob1,
                 ),
               ),
             ),
@@ -801,7 +804,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                 height: 140,
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Color(0x206352D2),
+                  color: _kBlob2,
                 ),
               ),
             ),
@@ -1343,24 +1346,16 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                   Positioned(
                     top: 12,
                     right: 12,
-                    child: ClipRRect(
+                    child: GlassmorphismCard(
+                      sigma: 12,
+                      colorOpacity: 0.72,
                       borderRadius: BorderRadius.circular(50),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.72),
-                            borderRadius: BorderRadius.circular(50),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.5),
-                              width: 1,
-                            ),
-                          ),
-                          child: Text(
+                      borderColor: Colors.white.withOpacity(0.5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      child: Text(
                             _categoryController.text,
                             style: const TextStyle(
                               fontSize: 12,
@@ -1369,8 +1364,6 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                               letterSpacing: 0.2,
                             ),
                           ),
-                        ),
-                      ),
                     ),
                   ),
               ],

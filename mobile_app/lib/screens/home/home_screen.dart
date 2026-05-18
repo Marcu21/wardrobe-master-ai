@@ -4,7 +4,7 @@ import '../../services/weather_service.dart';
 import '../../services/firebase_service.dart';
 import '../ai_stylist/ai_stylist_chat_screen.dart';
 import '../calendar_screen.dart';
-import '../sustainability_screen.dart';
+import '../sustainability/sustainability_screen.dart';
 import '../shopping_assistant_screen.dart';
 import '../my_trips_screen.dart';
 import '../virtual_dressing_room_screen.dart';

@@ -1,11 +1,13 @@
-﻿import 'dart:ui';
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mobile_app/screens/clothing_detail/clothing_detail_screen.dart';
-import '../widgets/smart_clothing_image.dart';
 import 'package:mobile_app/theme/app_colors.dart';
+import 'widgets/stat_tile.dart';
+import 'widgets/neglected_card.dart';
+import 'widgets/investment_row.dart';
 
 const _kBlob1 = Color(0x380D9488);
 const _kBlob2 = Color(0x20047857);
@@ -289,10 +291,10 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
                         itemData['daysSinceLastWorn'] = daysSinceLastWorn;
 
                         totalWardrobeValue += price;
-                        if (wearCount > 0 && daysSinceLastWorn <= 180)
+                        if (wearCount > 0 && daysSinceLastWorn <= 180) {
                           activeItemsCount++;
-                        if (daysSinceLastWorn > 180)
-                          neglectedItems.add(itemData);
+                        }
+                        if (daysSinceLastWorn > 180) neglectedItems.add(itemData);
                         if (wearCount > 0) bestInvestments.add(itemData);
                       }
 
@@ -325,7 +327,6 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
                           .take(5)
                           .toList();
 
-                      // UI
                       return SingleChildScrollView(
                         physics: const BouncingScrollPhysics(),
                         padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
@@ -358,20 +359,18 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
                                           ],
                                   ),
                                   border: Border.all(
-                                    color:
-                                        (utilizationPercentage > 50
-                                                ? _green
-                                                : _orange)
-                                            .withOpacity(0.20),
+                                    color: (utilizationPercentage > 50
+                                            ? _green
+                                            : _orange)
+                                        .withOpacity(0.20),
                                     width: 1,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color:
-                                          (utilizationPercentage > 50
-                                                  ? _green
-                                                  : _orange)
-                                              .withOpacity(0.12),
+                                      color: (utilizationPercentage > 50
+                                              ? _green
+                                              : _orange)
+                                          .withOpacity(0.12),
                                       blurRadius: 24,
                                       spreadRadius: 2,
                                       offset: const Offset(0, 8),
@@ -380,17 +379,15 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
                                 ),
                                 child: Column(
                                   children: [
-                                    // Icon + title
                                     Row(
                                       children: [
                                         Container(
                                           padding: const EdgeInsets.all(10),
                                           decoration: BoxDecoration(
-                                            color:
-                                                (utilizationPercentage > 50
-                                                        ? _green
-                                                        : _orange)
-                                                    .withOpacity(0.15),
+                                            color: (utilizationPercentage > 50
+                                                    ? _green
+                                                    : _orange)
+                                                .withOpacity(0.15),
                                             shape: BoxShape.circle,
                                           ),
                                           child: Icon(
@@ -434,11 +431,10 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
                                     ),
                                     const SizedBox(height: 24),
 
-                                    // Stats row
                                     Row(
                                       children: [
                                         Expanded(
-                                          child: _StatTile(
+                                          child: StatTile(
                                             label: 'Total Value',
                                             value:
                                                 '${totalWardrobeValue.toStringAsFixed(0)} RON',
@@ -451,7 +447,7 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
                                           color: Colors.black.withOpacity(0.08),
                                         ),
                                         Expanded(
-                                          child: _StatTile(
+                                          child: StatTile(
                                             label: 'Active Items',
                                             value:
                                                 '$activeItemsCount / $totalItemsCount',
@@ -464,7 +460,7 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
                                           color: Colors.black.withOpacity(0.08),
                                         ),
                                         Expanded(
-                                          child: _StatTile(
+                                          child: StatTile(
                                             label: 'Utilization',
                                             value:
                                                 '${utilizationPercentage.toStringAsFixed(0)}%',
@@ -477,7 +473,6 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
                                     ),
                                     const SizedBox(height: 20),
 
-                                    // Progress bar
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(50),
                                       child: LinearProgressIndicator(
@@ -485,8 +480,8 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
                                             ? activeItemsCount / totalItemsCount
                                             : 0,
                                         minHeight: 6,
-                                        backgroundColor: Colors.black
-                                            .withOpacity(0.07),
+                                        backgroundColor:
+                                            Colors.black.withOpacity(0.07),
                                         color: utilizationPercentage > 50
                                             ? _green
                                             : _orange,
@@ -525,7 +520,6 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
                             ),
                             const SizedBox(height: 32),
 
-                            // Consider Donating
                             if (neglectedItems.isNotEmpty) ...[
                               _SectionHeader(
                                 label: 'NEGLECTED ITEMS',
@@ -544,7 +538,7 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
                                   itemCount: neglectedItems.length,
                                   itemBuilder: (context, index) {
                                     final item = neglectedItems[index];
-                                    return _NeglectedCard(
+                                    return NeglectedCard(
                                       item: item,
                                       accentColor: _orange,
                                       accentBgColor: _orangeLight,
@@ -563,7 +557,6 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
                               const SizedBox(height: 32),
                             ],
 
-                            // Best Investments
                             if (topInvestments.isNotEmpty) ...[
                               _SectionHeader(
                                 label: 'COST PER WEAR',
@@ -578,7 +571,7 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
                                 final item = e.value;
                                 final cpwFormatted =
                                     '${item['ui_currency']}${(item['cpw'] as double).toStringAsFixed(2)}';
-                                return _InvestmentRow(
+                                return InvestmentRow(
                                   item: item,
                                   cpwFormatted: cpwFormatted,
                                   rank: index + 1,
@@ -596,7 +589,6 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
                               const SizedBox(height: 32),
                             ],
 
-                            // Worst Investments
                             if (topWorstInvestments.isNotEmpty) ...[
                               _SectionHeader(
                                 label: 'COST PER WEAR',
@@ -611,7 +603,7 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
                                 final item = e.value;
                                 final cpwFormatted =
                                     '${item['ui_currency']}${(item['cpw'] as double).toStringAsFixed(2)}';
-                                return _InvestmentRow(
+                                return InvestmentRow(
                                   item: item,
                                   cpwFormatted: cpwFormatted,
                                   rank: index + 1,
@@ -641,49 +633,6 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
     );
   }
 }
-
-// Stat Tile
-
-class _StatTile extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-
-  const _StatTile({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w900,
-            color: color,
-            letterSpacing: -0.3,
-          ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 11,
-            color: Colors.black45,
-            fontStyle: FontStyle.italic,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-}
-
-// Section Header
 
 class _SectionHeader extends StatelessWidget {
   final String label;
@@ -732,302 +681,6 @@ class _SectionHeader extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-// Neglected Card
-
-class _NeglectedCard extends StatefulWidget {
-  final Map<String, dynamic> item;
-  final Color accentColor;
-  final Color accentBgColor;
-  final VoidCallback onTap;
-
-  const _NeglectedCard({
-    required this.item,
-    required this.accentColor,
-    required this.accentBgColor,
-    required this.onTap,
-  });
-
-  @override
-  State<_NeglectedCard> createState() => _NeglectedCardState();
-}
-
-class _NeglectedCardState extends State<_NeglectedCard> {
-  double _scale = 1.0;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _scale = 0.97),
-      onTapUp: (_) {
-        setState(() => _scale = 1.0);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _scale = 1.0),
-      child: AnimatedScale(
-        scale: _scale,
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeOut,
-        child: Container(
-          width: 150,
-          margin: const EdgeInsets.only(right: 12),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.75),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: widget.accentColor.withOpacity(0.15),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: widget.accentColor.withOpacity(0.18),
-                blurRadius: 20,
-                spreadRadius: 2,
-                offset: const Offset(0, 6),
-              ),
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: Container(
-                    color: Colors.grey[50],
-                    child: SmartClothingImage(
-                      imageUrl: widget.item['imageUrl']?.toString(),
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.item['ui_brand'],
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 13,
-                          color: Colors.black87,
-                          letterSpacing: -0.2,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: widget.accentBgColor,
-                          borderRadius: BorderRadius.circular(50),
-                        ),
-                        child: Text(
-                          '${widget.item['daysSinceLastWorn']}d ago',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: widget.accentColor,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Investment Row
-
-class _InvestmentRow extends StatefulWidget {
-  final Map<String, dynamic> item;
-  final String cpwFormatted;
-  final int rank;
-  final Color accentColor;
-  final Color accentBgColor;
-  final VoidCallback onTap;
-
-  const _InvestmentRow({
-    required this.item,
-    required this.cpwFormatted,
-    required this.rank,
-    required this.accentColor,
-    required this.accentBgColor,
-    required this.onTap,
-  });
-
-  @override
-  State<_InvestmentRow> createState() => _InvestmentRowState();
-}
-
-class _InvestmentRowState extends State<_InvestmentRow> {
-  double _scale = 1.0;
-
-  String _formatCpw(double cpw) {
-    return cpw.toStringAsFixed(0);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _scale = 0.98),
-      onTapUp: (_) {
-        setState(() => _scale = 1.0);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _scale = 1.0),
-      child: AnimatedScale(
-        scale: _scale,
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeOut,
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.75),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: widget.accentColor.withOpacity(0.12),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: widget.accentColor.withOpacity(0.15),
-                blurRadius: 18,
-                spreadRadius: 1,
-                offset: const Offset(0, 5),
-              ),
-              BoxShadow(
-                color: Colors.black.withOpacity(0.03),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              // Rank
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: widget.accentColor.withOpacity(0.10),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    '${widget.rank}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: widget.accentColor,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Image
-              ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: Container(
-                  width: 72,
-                  height: 72,
-                  color: Colors.grey[50],
-                  child: SmartClothingImage(
-                    imageUrl: widget.item['imageUrl']?.toString(),
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 14),
-              // Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.item['ui_brand'],
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                        color: Colors.black87,
-                        letterSpacing: -0.2,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      '${widget.item['ui_wearCount']} wears',
-                      style: const TextStyle(
-                        color: Colors.black45,
-                        fontSize: 12,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // CPW
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: _formatCpw(widget.item['cpw'] as double),
-                          style: TextStyle(
-                            color: widget.accentColor,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 18,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        TextSpan(
-                          text: ' ${widget.item['ui_currency']}',
-                          style: TextStyle(
-                            color: widget.accentColor.withOpacity(0.65),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Text(
-                    'per wear',
-                    style: TextStyle(
-                      color: widget.accentColor.withOpacity(0.55),
-                      fontSize: 10,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

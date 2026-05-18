@@ -4,7 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_app/services/api_service.dart';
-import 'package:mobile_app/screens/match_result_screen.dart';
+import 'package:mobile_app/screens/match_result/match_result_screen.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import 'widgets/shopping_initial_view.dart';
 import 'widgets/shopping_preview_view.dart';

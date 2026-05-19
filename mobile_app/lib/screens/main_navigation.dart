@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:mobile_app/theme/app_colors.dart';
 import 'home/home_screen.dart';
 import 'add_clothing/add_clothing_screen.dart';
 import 'wardrobe_gallery/wardrobe_gallery_screen.dart';
@@ -52,10 +53,10 @@ class _MainNavigationState extends State<MainNavigation> {
             bottom: MediaQuery.of(context).padding.bottom,
           ),
           decoration: BoxDecoration(
-            color: Colors.grey[50]!.withOpacity(0.9),
+            color: kGlass,
             border: Border(
               top: BorderSide(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withOpacity(0.06),
                 width: 0.5,
               ),
             ),
@@ -99,7 +100,6 @@ class _MainNavigationState extends State<MainNavigation> {
     String label,
   ) {
     final isSelected = _selectedIndex == index;
-    final color = isSelected ? Colors.black : Colors.black45;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -111,20 +111,27 @@ class _MainNavigationState extends State<MainNavigation> {
           children: [
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? Colors.black.withOpacity(0.06)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(20),
+              ),
               child: Icon(
                 isSelected ? selectedIcon : icon,
-                color: color,
-                size: isSelected ? 26 : 24,
+                color: isSelected ? Colors.black87 : Colors.black38,
+                size: isSelected ? 25 : 23,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             Text(
               label,
               style: TextStyle(
-                color: color,
+                color: isSelected ? Colors.black87 : Colors.black38,
                 fontSize: 10,
                 fontWeight: isSelected ? FontWeight.w900 : FontWeight.w500,
-                letterSpacing: 0.2,
+                letterSpacing: isSelected ? -0.2 : 0.2,
               ),
             ),
           ],

@@ -9,6 +9,7 @@ import 'package:mobile_app/theme/app_colors.dart';
 import 'widgets/shopping_initial_view.dart';
 import 'widgets/shopping_preview_view.dart';
 import 'widgets/shopping_loading_view.dart';
+import 'widgets/shopping_error_view.dart';
 
 const _kBlob1 = Color(0x380EA5E9);
 const _kBlob2 = Color(0x200284C7);
@@ -28,6 +29,7 @@ class _ShoppingAssistantScreenState extends State<ShoppingAssistantScreen>
 
   File? _imageFile;
   bool _isLoading = false;
+  String? _errorMessage;
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
@@ -66,6 +68,7 @@ class _ShoppingAssistantScreenState extends State<ShoppingAssistantScreen>
     if (_imageFile == null) return;
     setState(() {
       _isLoading = true;
+      _errorMessage = null;
     });
 
     try {
@@ -83,8 +86,10 @@ class _ShoppingAssistantScreenState extends State<ShoppingAssistantScreen>
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
-        _showSnack('Analysis failed: $e', isError: true);
+        setState(() {
+          _isLoading = false;
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        });
       }
     }
   }
@@ -94,6 +99,7 @@ class _ShoppingAssistantScreenState extends State<ShoppingAssistantScreen>
     setState(() {
       _imageFile = null;
       _isLoading = false;
+      _errorMessage = null;
     });
   }
 
@@ -110,6 +116,13 @@ class _ShoppingAssistantScreenState extends State<ShoppingAssistantScreen>
 
   Widget _buildBody() {
     if (_isLoading) return const ShoppingLoadingView();
+    if (_errorMessage != null) {
+      return ShoppingErrorView(
+        message: _errorMessage!,
+        onRetry: _startAIAnalysis,
+        onStartOver: _resetScanner,
+      );
+    }
     if (_imageFile != null) {
       return ShoppingPreviewView(
         imageFile: _imageFile!,

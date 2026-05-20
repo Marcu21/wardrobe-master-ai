@@ -13,6 +13,7 @@ import 'package:mobile_app/theme/app_colors.dart';
 import 'package:mobile_app/widgets/glassmorphism_card.dart';
 import 'widgets/source_picker.dart';
 import 'widgets/analysis_loading_view.dart';
+import 'widgets/analysis_error_view.dart';
 import 'widgets/analysis_result_view.dart';
 
 const _kBlob1 = Color(0x384F46E5);
@@ -39,6 +40,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
   File? _itemImage;
   File? _tagImage;
   bool _isLoading = false;
+  String? _errorMessage;
   Map<String, dynamic>? _analysisResult;
   String? _selectedWardrobeId;
 
@@ -163,7 +165,10 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
       );
       return;
     }
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
     try {
       final result = await _apiService.processItem(
         _itemImage!,
@@ -177,9 +182,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Analysis failed: $e')));
+        setState(() => _errorMessage = e.toString().replaceFirst('Exception: ', ''));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -437,6 +440,14 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) return const AnalysisLoadingView();
+
+    if (_errorMessage != null) {
+      return AnalysisErrorView(
+        message: _errorMessage!,
+        onRetry: _analyzeItem,
+        onBack: () => setState(() => _errorMessage = null),
+      );
+    }
 
     return Scaffold(
       backgroundColor: kBgColor,

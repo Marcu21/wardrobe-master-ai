@@ -47,6 +47,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
   List<Map<String, dynamic>> _clothingItems = [];
   List<String> _editableItemIds = [];
   bool _isLoading = true;
+  String? _errorMessage;
   bool _isSyncing = false;
   bool _isEditMode = false;
   CapsuleWardrobe? _wardrobe;
@@ -127,10 +128,10 @@ class _TripViewScreenState extends State<TripViewScreen> {
         _fetchItems();
       }
     } catch (e) {
-      print('Error generating wardrobe: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
         });
       }
     }
@@ -156,10 +157,10 @@ class _TripViewScreenState extends State<TripViewScreen> {
         });
       }
     } catch (e) {
-      print("Error fetching items: $e");
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
         });
       }
     }
@@ -726,7 +727,9 @@ class _TripViewScreenState extends State<TripViewScreen> {
                 },
                 body: _isLoading
                     ? const TripSkeletonLoader()
-                    : Padding(
+                    : _errorMessage != null
+                        ? _buildErrorBody()
+                        : Padding(
                         padding: const EdgeInsets.only(
                           top: 8.0,
                           bottom: 16.0,
@@ -756,6 +759,112 @@ class _TripViewScreenState extends State<TripViewScreen> {
                           ],
                         ),
                       ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorBody() {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeOut,
+      builder: (context, v, child) =>
+          Opacity(opacity: v, child: Transform.translate(offset: Offset(0, 20 * (1 - v)), child: child)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: 96,
+                  height: 96,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFFDC2626).withOpacity(0.06),
+                    border: Border.all(
+                      color: const Color(0xFFDC2626).withOpacity(0.14),
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 66,
+                  height: 66,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFFDC2626).withOpacity(0.08),
+                  ),
+                ),
+                const Icon(
+                  CupertinoIcons.xmark_circle,
+                  color: Color(0xFFDC2626),
+                  size: 34,
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+            const Text(
+              'Could not generate packing list',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: Colors.black87,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _errorMessage!,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.black.withOpacity(0.45),
+                height: 1.55,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+            const SizedBox(height: 40),
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _isLoading = true;
+                  _errorMessage = null;
+                });
+                _generateWardrobe();
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF40C4FF).withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: const Color(0xFF40C4FF).withOpacity(0.35),
+                    width: 1.5,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(CupertinoIcons.arrow_clockwise, color: Color(0xFF1565C0), size: 17),
+                    SizedBox(width: 8),
+                    Text(
+                      'Try Again',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1565C0),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

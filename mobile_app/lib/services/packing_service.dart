@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -77,21 +78,23 @@ class PackingService {
     final uri = Uri.parse('$baseUrl/generate-packing/');
 
     try {
-      final response = await http.post(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'destination': destination,
-          'days': days,
-          'vibe': vibe,
-          'weather_forecast': weatherForecast,
-          'user_id': FirebaseService().currentUser?.uid ?? 'unknown_user',
-          if (wardrobeId != null) 'wardrobe_id': wardrobeId,
-          if (itemIdsOverride != null) 'item_ids_override': itemIdsOverride,
-          if (tripPlans != null) 'trip_plans': tripPlans,
-          if (luggageSize != null) 'luggage_size': luggageSize,
-        }),
-      );
+      final response = await http
+          .post(
+            uri,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'destination': destination,
+              'days': days,
+              'vibe': vibe,
+              'weather_forecast': weatherForecast,
+              'user_id': FirebaseService().currentUser?.uid ?? 'unknown_user',
+              if (wardrobeId != null) 'wardrobe_id': wardrobeId,
+              if (itemIdsOverride != null) 'item_ids_override': itemIdsOverride,
+              if (tripPlans != null) 'trip_plans': tripPlans,
+              if (luggageSize != null) 'luggage_size': luggageSize,
+            }),
+          )
+          .timeout(const Duration(seconds: 90));
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body) as Map<String, dynamic>;
@@ -101,6 +104,10 @@ class PackingService {
           'Failed to generate packing list: ${response.statusCode} - ${response.body}',
         );
       }
+    } on TimeoutException {
+      throw Exception(
+        'Packing list generation is taking too long. Please check your connection and try again.',
+      );
     } catch (e) {
       print('Network error generating packing list: $e');
       throw Exception('Failed to connect to backend: $e');
@@ -120,22 +127,24 @@ class PackingService {
     final uri = Uri.parse('$baseUrl/generate-trip-outfit/');
 
     try {
-      final response = await http.post(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'destination': destination,
-          'vibe': vibe,
-          'weather_forecast': weatherForecast,
-          'suitcase_item_ids': suitcaseItemIds,
-          'user_context': userContext,
-          'user_id': FirebaseService().currentUser?.uid ?? 'unknown_user',
-          if (existingOutfits != null) 'existing_outfits': existingOutfits,
-          if (feedback != null) 'feedback': feedback,
-          if (currentOutfitItemIds != null)
-            'current_outfit_item_ids': currentOutfitItemIds,
-        }),
-      );
+      final response = await http
+          .post(
+            uri,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'destination': destination,
+              'vibe': vibe,
+              'weather_forecast': weatherForecast,
+              'suitcase_item_ids': suitcaseItemIds,
+              'user_context': userContext,
+              'user_id': FirebaseService().currentUser?.uid ?? 'unknown_user',
+              if (existingOutfits != null) 'existing_outfits': existingOutfits,
+              if (feedback != null) 'feedback': feedback,
+              if (currentOutfitItemIds != null)
+                'current_outfit_item_ids': currentOutfitItemIds,
+            }),
+          )
+          .timeout(const Duration(seconds: 90));
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body) as Map<String, dynamic>;
@@ -145,6 +154,10 @@ class PackingService {
           'Failed to generate trip outfit: ${response.statusCode} - ${response.body}',
         );
       }
+    } on TimeoutException {
+      throw Exception(
+        'Outfit generation is taking too long. Please check your connection and try again.',
+      );
     } catch (e) {
       print('Network error generating trip outfit: $e');
       throw Exception('Failed to connect to backend: $e');

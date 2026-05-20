@@ -439,8 +439,8 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     if (_isLoading) return const AnalysisLoadingView();
 
     return Scaffold(
-      backgroundColor: _analysisResult == null ? kBgColor : Colors.grey[50],
-      extendBodyBehindAppBar: _analysisResult == null,
+      backgroundColor: kBgColor,
+      extendBodyBehindAppBar: true,
       appBar: _analysisResult != null
           ? AppBar(
               title: const Text(
@@ -452,7 +452,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                 ),
               ),
               centerTitle: true,
-              backgroundColor: Colors.grey[50]!.withOpacity(0.9),
+              backgroundColor: Colors.transparent,
               elevation: 0,
               scrolledUnderElevation: 0,
               foregroundColor: Colors.black87,
@@ -463,9 +463,45 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
             )
           : null,
       body: _analysisResult == null
-          ? SafeArea(
-              top: false,
-              child: CustomScrollView(
+          ? Stack(
+              children: [
+                Positioned(
+                  top: -60,
+                  right: -40,
+                  child: IgnorePointer(
+                    child: ImageFiltered(
+                      imageFilter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+                      child: Container(
+                        width: 200,
+                        height: 200,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _kBlob1,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 80,
+                  left: -40,
+                  child: IgnorePointer(
+                    child: ImageFiltered(
+                      imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                      child: Container(
+                        width: 140,
+                        height: 140,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _kBlob2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SafeArea(
+                  top: false,
+                  child: CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
                   SliverAppBar(
@@ -503,20 +539,58 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                   ),
                 ],
               ),
+                ),
+              ],
             )
-          : SafeArea(
-              child: TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 600),
-                curve: Curves.easeOutCubic,
-                builder: (context, v, child) => Opacity(
-                  opacity: v,
-                  child: Transform.translate(
-                    offset: Offset(0, 24 * (1 - v)),
-                    child: child,
+          : Stack(
+              children: [
+                Positioned(
+                  top: -60,
+                  right: -40,
+                  child: IgnorePointer(
+                    child: ImageFiltered(
+                      imageFilter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+                      child: Container(
+                        width: 200,
+                        height: 200,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _kBlob1,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                child: SingleChildScrollView(
+                Positioned(
+                  top: 80,
+                  left: -40,
+                  child: IgnorePointer(
+                    child: ImageFiltered(
+                      imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                      child: Container(
+                        width: 140,
+                        height: 140,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _kBlob2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SafeArea(
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    duration: const Duration(milliseconds: 600),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, v, child) => Opacity(
+                      opacity: v,
+                      child: Transform.translate(
+                        offset: Offset(0, 24 * (1 - v)),
+                        child: child,
+                      ),
+                    ),
+                    child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
                   child: AnalysisResultView(
@@ -553,48 +627,13 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                 ),
               ),
             ),
+              ],
+            ),
     );
   }
 
   Widget _buildUploadSection() {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Positioned(
-          top: -80,
-          right: -60,
-          child: IgnorePointer(
-            child: ImageFiltered(
-              imageFilter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _kBlob1,
-                ),
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          top: 60,
-          left: -50,
-          child: IgnorePointer(
-            child: ImageFiltered(
-              imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
-              child: Container(
-                width: 140,
-                height: 140,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _kBlob2,
-                ),
-              ),
-            ),
-          ),
-        ),
-        Column(
+    return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TweenAnimationBuilder<double>(
@@ -780,8 +819,6 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
               ),
             ),
           ],
-        ),
-      ],
     );
   }
 

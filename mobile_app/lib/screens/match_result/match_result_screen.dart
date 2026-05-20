@@ -8,11 +8,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mobile_app/services/api_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:mobile_app/screens/add_clothing/add_clothing_screen.dart';
+import 'package:mobile_app/theme/app_colors.dart';
 import 'package:mobile_app/widgets/scale_button.dart';
 import 'widgets/match_result_header.dart';
 import 'widgets/match_score_card.dart';
 import 'widgets/match_analysis_box.dart';
 import 'widgets/match_outfits_list.dart';
+
+const _kBlob1 = Color(0x380EA5E9);
+const _kBlob2 = Color(0x200284C7);
 
 class MatchResultScreen extends StatefulWidget {
   final Map<String, dynamic> scannedItemData;
@@ -169,7 +173,7 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: kBgColor,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text(
@@ -180,23 +184,53 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
             letterSpacing: -0.5,
           ),
         ),
-        backgroundColor: Colors.grey[50]!.withOpacity(0.9),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         foregroundColor: Colors.black87,
-        flexibleSpace: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-            child: Container(color: Colors.transparent),
-          ),
-        ),
         leading: IconButton(
           icon: const Icon(CupertinoIcons.back, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
+      body: Stack(
+        children: [
+          Positioned(
+            top: -70,
+            right: -50,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 45, sigmaY: 45),
+                child: Container(
+                  width: 220,
+                  height: 220,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob1,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 120,
+            left: -50,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                child: Container(
+                  width: 160,
+                  height: 160,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(24.0, 16.0, 24.0, 16.0),
           child: Column(
@@ -410,6 +444,8 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
             ],
           ),
         ),
+          ),
+        ],
       ),
     );
   }

@@ -306,22 +306,14 @@ class LaundryService {
       );
     }
 
-    if (darks.isNotEmpty) {
+    final darksAndColors = [...darks, ...colors];
+    if (darksAndColors.isNotEmpty) {
       suggestions.add(
         LaundryLoadSuggestion(
-          title: 'Darks Load',
-          reason: 'Dark items can bleed; keep them separated from lights.',
-          items: darks,
-        ),
-      );
-    }
-
-    if (colors.isNotEmpty) {
-      suggestions.add(
-        LaundryLoadSuggestion(
-          title: 'Colors Load',
-          reason: 'Wash colored items together to maintain vibrancy.',
-          items: colors,
+          title: 'Darks & Colors Load',
+          reason:
+              'Dark and colored items are safe to wash together — keep them away from lights only.',
+          items: darksAndColors,
         ),
       );
     }

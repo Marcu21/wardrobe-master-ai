@@ -76,18 +76,22 @@ class PackingService {
     String? luggageSize,
   }) async {
     final uri = Uri.parse('$baseUrl/generate-packing/');
+    final token = await FirebaseService().currentUser?.getIdToken();
+    if (token == null) throw Exception('Not authenticated');
 
     try {
       final response = await http
           .post(
             uri,
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
             body: jsonEncode({
               'destination': destination,
               'days': days,
               'vibe': vibe,
               'weather_forecast': weatherForecast,
-              'user_id': FirebaseService().currentUser?.uid ?? 'unknown_user',
               if (wardrobeId != null) 'wardrobe_id': wardrobeId,
               if (itemIdsOverride != null) 'item_ids_override': itemIdsOverride,
               if (tripPlans != null) 'trip_plans': tripPlans,
@@ -125,19 +129,23 @@ class PackingService {
     List<String>? currentOutfitItemIds,
   }) async {
     final uri = Uri.parse('$baseUrl/generate-trip-outfit/');
+    final token = await FirebaseService().currentUser?.getIdToken();
+    if (token == null) throw Exception('Not authenticated');
 
     try {
       final response = await http
           .post(
             uri,
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
             body: jsonEncode({
               'destination': destination,
               'vibe': vibe,
               'weather_forecast': weatherForecast,
               'suitcase_item_ids': suitcaseItemIds,
               'user_context': userContext,
-              'user_id': FirebaseService().currentUser?.uid ?? 'unknown_user',
               if (existingOutfits != null) 'existing_outfits': existingOutfits,
               if (feedback != null) 'feedback': feedback,
               if (currentOutfitItemIds != null)

@@ -1,6 +1,6 @@
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta, timezone
-from fastapi import FastAPI, File, UploadFile, HTTPException, Body
+from fastapi import FastAPI, File, UploadFile, HTTPException, Body, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from fastapi.concurrency import run_in_threadpool
@@ -10,12 +10,13 @@ import io
 import os
 import base64
 import json
+import re
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 from pydantic import BaseModel
 import firebase_admin
-from firebase_admin import credentials, firestore
+from firebase_admin import credentials, firestore, auth
 from google.cloud.firestore_v1.base_query import FieldFilter
 
 # Load environment variables
@@ -44,6 +45,26 @@ db = firestore.client() if firebase_admin._apps else None
 
 app = FastAPI()
 
+def parse_gemini_response(response) -> dict:
+    if hasattr(response, 'parsed') and response.parsed:
+        return response.parsed
+    text = response.text.strip()
+    fence_match = re.search(r'```(?:json)?\s*([\s\S]*?)\s*```', text)
+    if fence_match:
+        text = fence_match.group(1).strip()
+    return json.loads(text)
+
+
+async def get_verified_uid(authorization: str = Header(None)) -> str:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+    token = authorization[7:]
+    try:
+        decoded = auth.verify_id_token(token)
+        return decoded["uid"]
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Invalid or expired token: {e}")
+
 # Add CORS Middleware to allow requests from any origin
 app.add_middleware(
     CORSMiddleware,
@@ -58,7 +79,6 @@ class OutfitRequest(BaseModel):
     user_prompt: str
     current_weather: str
     hourly_forecast: str
-    user_id: str
     wardrobe_id: Optional[str] = None
 
 class OutfitResponse(BaseModel):
@@ -82,7 +102,6 @@ class PackingRequest(BaseModel):
     days: int
     vibe: str
     weather_forecast: str
-    user_id: str
     wardrobe_id: Optional[str] = None
     item_ids_override: Optional[List[str]] = None
     trip_plans: Optional[str] = None
@@ -94,7 +113,6 @@ class TripOutfitRequest(BaseModel):
     weather_forecast: str
     suitcase_item_ids: List[str]
     user_context: str
-    user_id: str
     existing_outfits: Optional[List[Dict[str, Any]]] = None
     feedback: Optional[str] = None
     current_outfit_item_ids: Optional[List[str]] = None
@@ -264,7 +282,7 @@ async def process_item(file: UploadFile = File(...), tag_file: Optional[UploadFi
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/generate-outfit/")
-async def generate_outfit(request: OutfitRequest):
+async def generate_outfit(request: OutfitRequest, uid: str = Depends(get_verified_uid)):
     if not client:
         raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
     
@@ -276,15 +294,15 @@ async def generate_outfit(request: OutfitRequest):
         seven_days_ago = now - timedelta(days=7)
 
         # 1. Fetch Clothing Items from Firestore
-        clothing_ref = db.collection('clothing').where(filter=FieldFilter('userId', '==', request.user_id))
+        clothing_ref = db.collection('clothing').where(filter=FieldFilter('userId', '==', uid))
         if request.wardrobe_id:
             clothing_ref = clothing_ref.where(filter=FieldFilter('wardrobe_id', '==', request.wardrobe_id))
         docs = clothing_ref.stream()
-        
+
         clothing_items = []
         for doc in docs:
             data = doc.to_dict()
-            
+
             category = data.get('basic_info', {}).get('category')
             sub_category = data.get('basic_info', {}).get('sub_category')
             
@@ -331,7 +349,7 @@ async def generate_outfit(request: OutfitRequest):
         clothing_json = json.dumps(clothing_items)
         
         # 2. Fetch Recent Outfits
-        recent_outfits_stream = db.collection('outfits').where(filter=FieldFilter('user_id', '==', request.user_id)).stream()
+        recent_outfits_stream = db.collection('outfits').where(filter=FieldFilter('user_id', '==', uid)).stream()
         recent_outfit_ids = []
         for outfit_doc in recent_outfits_stream:
             outfit_data = outfit_doc.to_dict()
@@ -365,7 +383,7 @@ async def generate_outfit(request: OutfitRequest):
         # 3. Fetch Outfit Feedback
         try:
             feedback_ref = db.collection('outfit_feedback').where(
-                filter=FieldFilter('user_id', '==', request.user_id)
+                filter=FieldFilter('user_id', '==', uid)
             ).order_by('created_at', direction=firestore.Query.DESCENDING).limit(15)
             
             feedback_docs = feedback_ref.stream()
@@ -451,13 +469,7 @@ async def generate_outfit(request: OutfitRequest):
             )
         )
         
-        # 4. Return Parsed Response
-        if hasattr(response, 'parsed') and response.parsed:
-             result = response.parsed
-        else:
-             result = json.loads(response.text)
-             
-        return result
+        return parse_gemini_response(response)
 
     except Exception as e:
         import traceback
@@ -543,13 +555,8 @@ async def generate_outfits(request: OutfitGenerationRequest):
                 response_mime_type='application/json'
             )
         )
-        
-        if hasattr(response, 'parsed') and response.parsed:
-             result = response.parsed
-        else:
-             result = json.loads(response.text)
-             
-        return result
+
+        return parse_gemini_response(response)
 
     except Exception as e:
         import traceback
@@ -557,7 +564,7 @@ async def generate_outfits(request: OutfitGenerationRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/generate-packing/")
-async def generate_packing(request: PackingRequest):
+async def generate_packing(request: PackingRequest, uid: str = Depends(get_verified_uid)):
     if not client:
         raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
     
@@ -566,11 +573,11 @@ async def generate_packing(request: PackingRequest):
 
     try:
         # 1. Fetch Clothing Items from Firestore
-        clothing_ref = db.collection('clothing').where(filter=FieldFilter('userId', '==', request.user_id))
+        clothing_ref = db.collection('clothing').where(filter=FieldFilter('userId', '==', uid))
         if request.wardrobe_id:
             clothing_ref = clothing_ref.where(filter=FieldFilter('wardrobe_id', '==', request.wardrobe_id))
         docs = clothing_ref.stream()
-        
+
         clothing_items = []
         for doc in docs:
             if request.item_ids_override is not None and doc.id not in request.item_ids_override:
@@ -666,13 +673,8 @@ async def generate_packing(request: PackingRequest):
                 response_mime_type='application/json'
             )
         )
-        
-        if hasattr(response, 'parsed') and response.parsed:
-             result = response.parsed
-        else:
-             result = json.loads(response.text)
-             
-        return result
+
+        return parse_gemini_response(response)
 
     except Exception as e:
         import traceback
@@ -680,7 +682,7 @@ async def generate_packing(request: PackingRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/generate-trip-outfit/")
-async def generate_trip_outfit(request: TripOutfitRequest):
+async def generate_trip_outfit(request: TripOutfitRequest, uid: str = Depends(get_verified_uid)):
     if not client:
         raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
     
@@ -692,9 +694,9 @@ async def generate_trip_outfit(request: TripOutfitRequest):
             raise HTTPException(status_code=400, detail="suitcase_item_ids cannot be empty")
 
         # 1. Fetch Clothing Items from Firestore
-        clothing_ref = db.collection('clothing').where(filter=FieldFilter('userId', '==', request.user_id))
+        clothing_ref = db.collection('clothing').where(filter=FieldFilter('userId', '==', uid))
         docs = clothing_ref.stream()
-        
+
         clothing_items = []
         for doc in docs:
             if doc.id not in request.suitcase_item_ids:
@@ -772,13 +774,8 @@ async def generate_trip_outfit(request: TripOutfitRequest):
                 response_mime_type='application/json'
             )
         )
-        
-        if hasattr(response, 'parsed') and response.parsed:
-             result = response.parsed
-        else:
-             result = json.loads(response.text)
-             
-        return result
+
+        return parse_gemini_response(response)
 
     except Exception as e:
         import traceback

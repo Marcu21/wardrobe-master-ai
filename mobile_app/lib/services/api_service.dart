@@ -74,22 +74,24 @@ class ApiService {
     required String userPrompt,
     required String currentWeather,
     required String hourlyForecast,
-    String? userId,
     String? wardrobeId,
   }) async {
     final uri = Uri.parse('$baseUrl/generate-outfit/');
+    final token = await FirebaseService().currentUser?.getIdToken();
+    if (token == null) throw Exception('Not authenticated');
 
     try {
       final response = await http
           .post(
             uri,
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
             body: jsonEncode({
               'user_prompt': userPrompt,
               'current_weather': currentWeather,
               'hourly_forecast': hourlyForecast,
-              'user_id':
-                  userId ?? FirebaseService().currentUser?.uid ?? 'unknown_user',
               if (wardrobeId != null) 'wardrobe_id': wardrobeId,
             }),
           )

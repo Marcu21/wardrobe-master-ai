@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -10,6 +11,9 @@ import 'package:mobile_app/theme/app_colors.dart';
 import 'package:mobile_app/widgets/glassmorphism_card.dart';
 import 'widgets/outfit_items_list.dart';
 import 'widgets/outfit_action_bar.dart';
+
+const _kBlob1 = Color(0x384F46E5);
+const _kBlob2 = Color(0x206352D2);
 
 class OutfitDetailScreen extends StatefulWidget {
   final Map<String, dynamic> outfitData;
@@ -455,7 +459,8 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
         : 'Unknown date';
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: kBgColor,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text(
           'Outfit Details',
@@ -466,7 +471,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.grey[50]!.withOpacity(0.9),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         foregroundColor: Colors.black87,
@@ -499,10 +504,46 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+      body: Stack(
+        children: [
+          Positioned(
+            top: -60,
+            right: -40,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+                child: Container(
+                  width: 200,
+                  height: 200,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob1,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 80,
+            left: -40,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                child: Container(
+                  width: 140,
+                  height: 140,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -795,6 +836,8 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
             ],
           ),
         ),
+          ),
+        ],
       ),
     );
   }

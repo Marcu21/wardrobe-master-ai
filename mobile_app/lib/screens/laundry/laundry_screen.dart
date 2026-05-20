@@ -156,7 +156,6 @@ class _LaundryScreenState extends State<LaundryScreen> {
   Widget _buildBlobBackground() {
     return Stack(
       children: [
-        Positioned.fill(child: ColoredBox(color: kBgColor)),
         Positioned(
           top: -70,
           right: -50,
@@ -200,6 +199,7 @@ class _LaundryScreenState extends State<LaundryScreen> {
     if (_isLoading) {
       return Scaffold(
         backgroundColor: kBgColor,
+        extendBodyBehindAppBar: true,
         appBar: AppBar(
           title: const Text(
             'Smart Laundry',
@@ -285,6 +285,7 @@ class _LaundryScreenState extends State<LaundryScreen> {
     if (_errorMessage != null) {
       return Scaffold(
         backgroundColor: kBgColor,
+        extendBodyBehindAppBar: true,
         appBar: AppBar(
           title: const Text(
             'Smart Laundry',
@@ -368,7 +369,6 @@ class _LaundryScreenState extends State<LaundryScreen> {
         children: [
           _buildBlobBackground(),
           SafeArea(
-            top: false,
             child: CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [

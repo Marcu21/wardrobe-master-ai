@@ -1,16 +1,14 @@
-import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:mobile_app/services/api_service.dart';
-import 'package:mobile_app/services/firebase_service.dart';
-import 'package:mobile_app/services/wardrobe_state_service.dart';
-import 'package:mobile_app/widgets/scale_button.dart';
+import 'package:provider/provider.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import 'package:mobile_app/widgets/glassmorphism_card.dart';
+import 'package:mobile_app/widgets/scale_button.dart';
+import 'package:mobile_app/services/wardrobe_state_service.dart';
+import 'add_clothing_view_model.dart';
 import 'widgets/source_picker.dart';
 import 'widgets/analysis_loading_view.dart';
 import 'widgets/analysis_error_view.dart';
@@ -19,7 +17,7 @@ import 'widgets/analysis_result_view.dart';
 const _kBlob1 = Color(0x384F46E5);
 const _kBlob2 = Color(0x206352D2);
 
-class AddClothingScreen extends StatefulWidget {
+class AddClothingScreen extends StatelessWidget {
   final Map<String, dynamic>? initialAnalysisResult;
   final File? initialImageFile;
 
@@ -30,214 +28,84 @@ class AddClothingScreen extends StatefulWidget {
   });
 
   @override
-  State<AddClothingScreen> createState() => _AddClothingScreenState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider<AddClothingViewModel>(
+      create: (_) => AddClothingViewModel(
+        initialAnalysisResult: initialAnalysisResult,
+        initialImageFile: initialImageFile,
+        wardrobeId: wardrobeStateService.activeWardrobeId,
+      ),
+      child: const _AddClothingBody(),
+    );
+  }
 }
 
-class _AddClothingScreenState extends State<AddClothingScreen> {
-  final ApiService _apiService = ApiService();
-  final ImagePicker _picker = ImagePicker();
+class _AddClothingBody extends StatelessWidget {
+  const _AddClothingBody();
 
-  File? _itemImage;
-  File? _tagImage;
-  bool _isLoading = false;
-  String? _errorMessage;
-  Map<String, dynamic>? _analysisResult;
-  String? _selectedWardrobeId;
-
-  // Basic Info Controllers
-  final TextEditingController _categoryController = TextEditingController();
-  final TextEditingController _subCategoryController = TextEditingController();
-  final TextEditingController _materialController = TextEditingController();
-  final TextEditingController _primaryColorController = TextEditingController();
-  final TextEditingController _patternController = TextEditingController();
-
-  // Sustainability Info Controllers
-  final TextEditingController _brandController = TextEditingController();
-  final TextEditingController _priceController = TextEditingController();
-  final TextEditingController _currencyController = TextEditingController();
-  final TextEditingController _purchaseDateController = TextEditingController();
-
-  // Styling Info Controllers
-  final TextEditingController _fitController = TextEditingController();
-  final TextEditingController _lengthController = TextEditingController();
-  final TextEditingController _necklineController = TextEditingController();
-  final TextEditingController _sleeveLengthController = TextEditingController();
-  final TextEditingController _styleOccasionsController =
-      TextEditingController();
-  final TextEditingController _seasonalityController = TextEditingController();
-
-  // Laundry Info Controllers
-  final TextEditingController _careInstructionsController =
-      TextEditingController();
-  final TextEditingController _colorGroupController = TextEditingController();
-  final TextEditingController _maxTempController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedWardrobeId = wardrobeStateService.activeWardrobeId;
-
-    if (widget.initialAnalysisResult != null &&
-        widget.initialImageFile != null) {
-      _analysisResult = widget.initialAnalysisResult;
-      _itemImage = widget.initialImageFile;
-      if (_analysisResult!['metadata'] != null) {
-        _populateForm(_analysisResult!['metadata']);
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _categoryController.dispose();
-    _subCategoryController.dispose();
-    _materialController.dispose();
-    _primaryColorController.dispose();
-    _patternController.dispose();
-    _brandController.dispose();
-    _priceController.dispose();
-    _currencyController.dispose();
-    _purchaseDateController.dispose();
-    _fitController.dispose();
-    _lengthController.dispose();
-    _necklineController.dispose();
-    _sleeveLengthController.dispose();
-    _styleOccasionsController.dispose();
-    _seasonalityController.dispose();
-    _careInstructionsController.dispose();
-    _colorGroupController.dispose();
-    _maxTempController.dispose();
-    super.dispose();
-  }
-
-  List<String> _controllerToList(
-    TextEditingController controller, {
-    String separator = ',',
-  }) {
-    if (controller.text.isEmpty) return [];
-    if (separator == '\n') {
-      return controller.text
-          .split('\n')
-          .map((e) => e.trim())
-          .where((e) => e.isNotEmpty)
-          .toList();
-    }
-    return controller.text
-        .split(separator)
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toList();
-  }
-
-  Future<void> _pickImage(bool isTag, ImageSource source) async {
-    try {
-      final XFile? pickedFile = await _picker.pickImage(
-        source: source,
-        maxWidth: 1920,
-        maxHeight: 1920,
-        imageQuality: 95,
-      );
-      if (pickedFile != null) {
-        setState(() {
-          if (isTag) {
-            _tagImage = File(pickedFile.path);
-          } else {
-            _itemImage = File(pickedFile.path);
+  void _showImageSourceModal(BuildContext context, bool isTag) {
+    final vm = context.read<AddClothingViewModel>();
+    showImageSourceModal(
+      context,
+      isTag,
+      (bool isTag, ImageSource source) async {
+        try {
+          await vm.pickImage(isTag, source);
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error picking image: $e')),
+            );
           }
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
-      }
-    }
+        }
+      },
+    );
   }
 
-  void _showImageSourceModal(bool isTag) =>
-      showImageSourceModal(context, isTag, _pickImage);
-
-  Future<void> _analyzeItem() async {
-    if (_itemImage == null) {
+  Future<void> _onAnalyzePressed(BuildContext context) async {
+    final vm = context.read<AddClothingViewModel>();
+    if (vm.itemImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please upload an item image first.')),
       );
       return;
     }
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-    try {
-      final result = await _apiService.processItem(
-        _itemImage!,
-        tagFile: _tagImage,
+    await vm.analyzeItem();
+  }
+
+  Future<void> _onSavePressed(BuildContext context) async {
+    final vm = context.read<AddClothingViewModel>();
+    _showSavingDialog(context);
+    final String? error = await vm.saveItem();
+    if (!context.mounted) return;
+    Navigator.pop(context); // dismiss saving dialog
+    if (error == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Item saved to Wardrobe!'),
+          backgroundColor: const Color(0xFF16A34A),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
       );
-      if (result != null && result['metadata'] != null) {
-        setState(() {
-          _analysisResult = result;
-          _populateForm(result['metadata']);
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _errorMessage = e.toString().replaceFirst('Exception: ', ''));
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to save: $error'),
+          backgroundColor: const Color(0xFFDC2626),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
     }
   }
 
-  void _populateForm(Map<String, dynamic> metadata) {
-    if (metadata['basic_info'] != null) {
-      _categoryController.text = metadata['basic_info']['category'] ?? '';
-      _subCategoryController.text =
-          metadata['basic_info']['sub_category'] ?? '';
-      _materialController.text = metadata['basic_info']['material'] ?? '';
-      _patternController.text = metadata['basic_info']['pattern'] ?? '';
-      if (metadata['basic_info']['primary_colors'] != null) {
-        _primaryColorController.text =
-            (metadata['basic_info']['primary_colors'] as List).join(', ');
-      }
-    }
-    if (metadata['styling_info'] != null) {
-      _fitController.text = metadata['styling_info']['fit'] ?? '';
-      _lengthController.text = metadata['styling_info']['length'] ?? '';
-      _necklineController.text = metadata['styling_info']['neckline'] ?? '';
-      _sleeveLengthController.text =
-          metadata['styling_info']['sleeve_length'] ?? '';
-      if (metadata['styling_info']['style_occasions'] != null) {
-        _styleOccasionsController.text =
-            (metadata['styling_info']['style_occasions'] as List).join(', ');
-      }
-      if (metadata['styling_info']['seasonality'] != null) {
-        _seasonalityController.text =
-            (metadata['styling_info']['seasonality'] as List).join(', ');
-      }
-    }
-    if (metadata['laundry_info'] != null) {
-      if (metadata['laundry_info']['care_instructions'] != null) {
-        _careInstructionsController.text =
-            (metadata['laundry_info']['care_instructions'] as List).join('\n');
-      }
-      _colorGroupController.text =
-          metadata['laundry_info']['color_group'] ?? '';
-      _maxTempController.text =
-          metadata['laundry_info']['max_temp_celsius']?.toString() ?? '';
-    }
-    if (metadata['sustainability_info'] != null) {
-      _brandController.text = metadata['sustainability_info']['brand'] ?? '';
-      _priceController.text =
-          metadata['sustainability_info']['price']?.toString() ?? '';
-      _currencyController.text =
-          metadata['sustainability_info']['currency'] ?? '';
-      _purchaseDateController.text =
-          metadata['sustainability_info']['purchase_date'] ?? '';
-    }
-  }
-
-  Future<void> _saveItem() async {
+  void _showSavingDialog(BuildContext context) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -303,11 +171,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                           strokeWidth: 2.5,
                         ),
                       ),
-                      const Icon(
-                        Icons.auto_awesome,
-                        color: kPrimary,
-                        size: 16,
-                      ),
+                      const Icon(Icons.auto_awesome, color: kPrimary, size: 16),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -338,121 +202,26 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
         ),
       ),
     );
-    try {
-      Map<String, dynamic> finalMetadata = jsonDecode(
-        jsonEncode(_analysisResult!['metadata'] ?? {}),
-      );
-
-      finalMetadata['basic_info'] = finalMetadata['basic_info'] ?? {};
-      finalMetadata['basic_info']['category'] = _categoryController.text;
-      finalMetadata['basic_info']['sub_category'] = _subCategoryController.text;
-      finalMetadata['basic_info']['material'] = _materialController.text;
-      finalMetadata['basic_info']['pattern'] = _patternController.text;
-      finalMetadata['basic_info']['primary_colors'] = _controllerToList(
-        _primaryColorController,
-      );
-
-      finalMetadata['sustainability_info'] =
-          finalMetadata['sustainability_info'] ?? {};
-      finalMetadata['sustainability_info']['brand'] = _brandController.text;
-      final price = double.tryParse(_priceController.text.replaceAll(',', '.'));
-      finalMetadata['sustainability_info']['price'] =
-          price ??
-          (_priceController.text.isEmpty ? null : _priceController.text);
-      finalMetadata['sustainability_info']['currency'] =
-          _currencyController.text;
-      finalMetadata['sustainability_info']['purchase_date'] =
-          _purchaseDateController.text;
-
-      finalMetadata['styling_info'] = finalMetadata['styling_info'] ?? {};
-      finalMetadata['styling_info']['fit'] = _fitController.text;
-      finalMetadata['styling_info']['length'] = _lengthController.text;
-      finalMetadata['styling_info']['neckline'] = _necklineController.text;
-      finalMetadata['styling_info']['sleeve_length'] =
-          _sleeveLengthController.text;
-      finalMetadata['styling_info']['style_occasions'] = _controllerToList(
-        _styleOccasionsController,
-      );
-      finalMetadata['styling_info']['seasonality'] = _controllerToList(
-        _seasonalityController,
-      );
-
-      finalMetadata['laundry_info'] = finalMetadata['laundry_info'] ?? {};
-      finalMetadata['laundry_info']['care_instructions'] = _controllerToList(
-        _careInstructionsController,
-        separator: '\n',
-      );
-      finalMetadata['laundry_info']['color_group'] = _colorGroupController.text;
-      final temp = int.tryParse(_maxTempController.text);
-      finalMetadata['laundry_info']['max_temp_celsius'] =
-          temp ??
-          (_maxTempController.text.isEmpty ? null : _maxTempController.text);
-
-      final Uint8List imageBytes = base64Decode(
-        _analysisResult!['image_base64'],
-      );
-      final String? downloadUrl = await FirebaseService().uploadImageToStorage(
-        imageBytes,
-        'items',
-      );
-
-      if (downloadUrl == null) {
-        throw Exception('Failed to upload image to storage.');
-      }
-
-      await FirebaseService().saveItem(
-        imageUrl: downloadUrl,
-        metadata: finalMetadata,
-        wardrobeId: _selectedWardrobeId,
-      );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Item saved to Wardrobe!'),
-            backgroundColor: const Color(0xFF16A34A),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save: $e'),
-            backgroundColor: const Color(0xFFDC2626),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) Navigator.pop(context);
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) return const AnalysisLoadingView();
+    final vm = context.watch<AddClothingViewModel>();
 
-    if (_errorMessage != null) {
+    if (vm.isAnalyzing) return const AnalysisLoadingView();
+
+    if (vm.errorMessage != null) {
       return AnalysisErrorView(
-        message: _errorMessage!,
-        onRetry: _analyzeItem,
-        onBack: () => setState(() => _errorMessage = null),
+        message: vm.errorMessage!,
+        onRetry: () => vm.analyzeItem(),
+        onBack: vm.clearError,
       );
     }
 
     return Scaffold(
       backgroundColor: kBgColor,
       extendBodyBehindAppBar: true,
-      appBar: _analysisResult != null
+      appBar: vm.analysisResult != null
           ? AppBar(
               title: const Text(
                 'Review & Save',
@@ -473,122 +242,56 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
               ),
             )
           : null,
-      body: _analysisResult == null
+      body: vm.analysisResult == null
           ? Stack(
               children: [
-                Positioned(
-                  top: -60,
-                  right: -40,
-                  child: IgnorePointer(
-                    child: ImageFiltered(
-                      imageFilter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
-                      child: Container(
-                        width: 200,
-                        height: 200,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _kBlob1,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 80,
-                  left: -40,
-                  child: IgnorePointer(
-                    child: ImageFiltered(
-                      imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
-                      child: Container(
-                        width: 140,
-                        height: 140,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _kBlob2,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+                ..._buildBlobs(),
                 SafeArea(
                   top: false,
                   child: CustomScrollView(
-                physics: const BouncingScrollPhysics(),
-                slivers: [
-                  SliverAppBar(
-                    pinned: false,
-                    floating: false,
-                    backgroundColor: Colors.transparent,
-                    elevation: 0,
-                    foregroundColor: Colors.black87,
-                    leading: IconButton(
-                      icon: const Icon(
-                        CupertinoIcons.back,
-                        color: Colors.black87,
+                    physics: const BouncingScrollPhysics(),
+                    slivers: [
+                      SliverAppBar(
+                        pinned: false,
+                        floating: false,
+                        backgroundColor: Colors.transparent,
+                        elevation: 0,
+                        foregroundColor: Colors.black87,
+                        leading: IconButton(
+                          icon: const Icon(
+                            CupertinoIcons.back,
+                            color: Colors.black87,
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                        title: const Text(
+                          'Add New Item',
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        centerTitle: true,
                       ),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    title: const Text(
-                      'Add New Item',
-                      style: TextStyle(
-                        color: Colors.black87,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.5,
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                        sliver: SliverList(
+                          delegate: SliverChildListDelegate([
+                            _buildUploadSection(context, vm),
+                            const SizedBox(height: 24),
+                            _buildAnalyzeButton(context),
+                          ]),
+                        ),
                       ),
-                    ),
-                    centerTitle: true,
+                    ],
                   ),
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate([
-                        _buildUploadSection(),
-                        const SizedBox(height: 24),
-                        _buildAnalyzeButton(),
-                      ]),
-                    ),
-                  ),
-                ],
-              ),
                 ),
               ],
             )
           : Stack(
               children: [
-                Positioned(
-                  top: -60,
-                  right: -40,
-                  child: IgnorePointer(
-                    child: ImageFiltered(
-                      imageFilter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
-                      child: Container(
-                        width: 200,
-                        height: 200,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _kBlob1,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 80,
-                  left: -40,
-                  child: IgnorePointer(
-                    child: ImageFiltered(
-                      imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
-                      child: Container(
-                        width: 140,
-                        height: 140,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _kBlob2,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+                ..._buildBlobs(),
                 SafeArea(
                   child: TweenAnimationBuilder<double>(
                     tween: Tween(begin: 0.0, end: 1.0),
@@ -602,238 +305,275 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                       ),
                     ),
                     child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-                  child: AnalysisResultView(
-                    analysisResult: _analysisResult,
-                    itemImage: _itemImage,
-                    categoryController: _categoryController,
-                    subCategoryController: _subCategoryController,
-                    materialController: _materialController,
-                    primaryColorController: _primaryColorController,
-                    patternController: _patternController,
-                    brandController: _brandController,
-                    priceController: _priceController,
-                    currencyController: _currencyController,
-                    purchaseDateController: _purchaseDateController,
-                    fitController: _fitController,
-                    lengthController: _lengthController,
-                    necklineController: _necklineController,
-                    sleeveLengthController: _sleeveLengthController,
-                    styleOccasionsController: _styleOccasionsController,
-                    seasonalityController: _seasonalityController,
-                    careInstructionsController: _careInstructionsController,
-                    colorGroupController: _colorGroupController,
-                    maxTempController: _maxTempController,
-                    selectedWardrobeId: _selectedWardrobeId,
-                    onSave: _saveItem,
-                    onDiscard: () => setState(() {
-                      _analysisResult = null;
-                      _itemImage = null;
-                      _tagImage = null;
-                    }),
-                    onWardrobeChanged: (val) =>
-                        setState(() => _selectedWardrobeId = val),
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                      child: AnalysisResultView(
+                        analysisResult: vm.analysisResult,
+                        itemImage: vm.itemImage,
+                        categoryController: vm.categoryController,
+                        subCategoryController: vm.subCategoryController,
+                        materialController: vm.materialController,
+                        primaryColorController: vm.primaryColorController,
+                        patternController: vm.patternController,
+                        brandController: vm.brandController,
+                        priceController: vm.priceController,
+                        currencyController: vm.currencyController,
+                        purchaseDateController: vm.purchaseDateController,
+                        fitController: vm.fitController,
+                        lengthController: vm.lengthController,
+                        necklineController: vm.necklineController,
+                        sleeveLengthController: vm.sleeveLengthController,
+                        styleOccasionsController: vm.styleOccasionsController,
+                        seasonalityController: vm.seasonalityController,
+                        careInstructionsController:
+                            vm.careInstructionsController,
+                        colorGroupController: vm.colorGroupController,
+                        maxTempController: vm.maxTempController,
+                        selectedWardrobeId: vm.selectedWardrobeId,
+                        onSave: () => _onSavePressed(context),
+                        onDiscard: vm.resetAnalysis,
+                        onWardrobeChanged: vm.setWardrobeId,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
               ],
             ),
     );
   }
 
-  Widget _buildUploadSection() {
+  List<Widget> _buildBlobs() {
+    return [
+      Positioned(
+        top: -60,
+        right: -40,
+        child: IgnorePointer(
+          child: ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: _kBlob1,
+              ),
+            ),
+          ),
+        ),
+      ),
+      Positioned(
+        top: 80,
+        left: -40,
+        child: IgnorePointer(
+          child: ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+            child: Container(
+              width: 140,
+              height: 140,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: _kBlob2,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ];
+  }
+
+  Widget _buildUploadSection(
+    BuildContext context,
+    AddClothingViewModel vm,
+  ) {
     return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.0, end: 1.0),
-              duration: const Duration(milliseconds: 700),
-              curve: Curves.easeOutCubic,
-              builder: (_, v, child) => Transform.translate(
-                offset: Offset(0, 20 * (1 - v)),
-                child: Opacity(opacity: v, child: child),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'CLOTHING ITEM',
-                    style: TextStyle(
-                      fontSize: 10,
-                      letterSpacing: 3,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black.withOpacity(0.35),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Add a photo\nto get started.',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.black87,
-                      height: 1.15,
-                      letterSpacing: -0.7,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildUploadCard(
-                    image: _itemImage,
-                    isMain: true,
-                    onTap: () => _showImageSourceModal(false),
-                    onClear: () => setState(() => _itemImage = null),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.0, end: 1.0),
-              duration: const Duration(milliseconds: 800),
-              curve: Curves.easeOutCubic,
-              builder: (_, v, child) => Transform.translate(
-                offset: Offset(0, 16 * (1 - v)),
-                child: Opacity(opacity: v, child: child),
-              ),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.black.withOpacity(0.06)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: const Duration(milliseconds: 700),
+          curve: Curves.easeOutCubic,
+          builder: (_, v, child) => Transform.translate(
+            offset: Offset(0, 20 * (1 - v)),
+            child: Opacity(opacity: v, child: child),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'CLOTHING ITEM',
+                style: TextStyle(
+                  fontSize: 10,
+                  letterSpacing: 3,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black.withOpacity(0.35),
                 ),
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: _tagImage == null
-                          ? () => _showImageSourceModal(true)
-                          : null,
-                      child: Container(
-                        width: 72,
-                        height: 72,
-                        decoration: BoxDecoration(
-                          color: _tagImage != null
-                              ? Colors.transparent
-                              : Colors.black.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: Colors.black.withOpacity(0.08),
-                          ),
-                        ),
-                        child: _tagImage != null
-                            ? Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(14),
-                                    child: Image.file(
-                                      _tagImage!,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                  Positioned(
-                                    top: 4,
-                                    right: 4,
-                                    child: GestureDetector(
-                                      onTap: () =>
-                                          setState(() => _tagImage = null),
-                                      child: Container(
-                                        width: 20,
-                                        height: 20,
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withOpacity(0.55),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(
-                                          Icons.close,
-                                          size: 12,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : const Icon(
-                                CupertinoIcons.tag,
-                                size: 26,
-                                color: Colors.black38,
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Add a photo\nto get started.',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black87,
+                  height: 1.15,
+                  letterSpacing: -0.7,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildUploadCard(
+                context: context,
+                image: vm.itemImage,
+                isMain: true,
+                onTap: () => _showImageSourceModal(context, false),
+                onClear: vm.clearItemImage,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.easeOutCubic,
+          builder: (_, v, child) => Transform.translate(
+            offset: Offset(0, 16 * (1 - v)),
+            child: Opacity(opacity: v, child: child),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.black.withOpacity(0.06)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: vm.tagImage == null
+                      ? () => _showImageSourceModal(context, true)
+                      : null,
+                  child: Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: vm.tagImage != null
+                          ? Colors.transparent
+                          : Colors.black.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: Colors.black.withOpacity(0.08),
+                      ),
+                    ),
+                    child: vm.tagImage != null
+                        ? Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(14),
+                                child: Image.file(
+                                  vm.tagImage!,
+                                  fit: BoxFit.cover,
+                                ),
                               ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Care Tag',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.black87,
-                              letterSpacing: -0.2,
-                            ),
+                              Positioned(
+                                top: 4,
+                                right: 4,
+                                child: GestureDetector(
+                                  onTap: vm.clearTagImage,
+                                  child: Container(
+                                    width: 20,
+                                    height: 20,
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.55),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.close,
+                                      size: 12,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : const Icon(
+                            CupertinoIcons.tag,
+                            size: 26,
+                            color: Colors.black38,
                           ),
-                          const SizedBox(height: 3),
-                          Text(
-                            'Optional — helps AI read laundry instructions accurately.',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.black.withOpacity(0.45),
-                              height: 1.4,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    if (_tagImage == null)
-                      GestureDetector(
-                        onTap: () => _showImageSourceModal(true),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 9,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.80),
-                            borderRadius: BorderRadius.circular(22),
-                            border: Border.all(
-                              color: Colors.black.withOpacity(0.10),
-                            ),
-                          ),
-                          child: const Text(
-                            'Add',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                          ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Care Tag',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.black87,
+                          letterSpacing: -0.2,
                         ),
                       ),
-                  ],
+                      const SizedBox(height: 3),
+                      Text(
+                        'Optional — helps AI read laundry instructions accurately.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.black.withOpacity(0.45),
+                          height: 1.4,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+                const SizedBox(width: 12),
+                if (vm.tagImage == null)
+                  GestureDetector(
+                    onTap: () => _showImageSourceModal(context, true),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 9,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.80),
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(
+                          color: Colors.black.withOpacity(0.10),
+                        ),
+                      ),
+                      child: const Text(
+                        'Add',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
-          ],
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildUploadCard({
+    required BuildContext context,
     required File? image,
     required bool isMain,
     required VoidCallback onTap,
@@ -1008,14 +748,14 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     );
   }
 
-  Widget _buildAnalyzeButton() {
+  Widget _buildAnalyzeButton(BuildContext context) {
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
       duration: const Duration(milliseconds: 900),
       curve: Curves.easeOutCubic,
       builder: (_, v, child) => Opacity(opacity: v, child: child),
       child: ScaleButton(
-        onTap: _analyzeItem,
+        onTap: () => _onAnalyzePressed(context),
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 16),

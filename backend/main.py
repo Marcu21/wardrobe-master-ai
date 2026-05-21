@@ -45,14 +45,61 @@ db = firestore.client() if firebase_admin._apps else None
 
 app = FastAPI()
 
+def _fix_json_control_chars(text: str) -> str:
+    """Escape literal control characters that appear inside JSON string values.
+
+    Gemini occasionally emits raw newlines / tabs inside string values instead
+    of the \\n / \\t escape sequences, producing invalid JSON.  This scanner
+    walks the text character-by-character, tracking whether we are inside a
+    quoted string, and replaces any bare control character it finds there.
+    """
+    result = []
+    in_string = False
+    i = 0
+    while i < len(text):
+        ch = text[i]
+        if in_string:
+            if ch == '\\' and i + 1 < len(text):
+                # Keep existing escape sequences intact.
+                result.append(ch)
+                result.append(text[i + 1])
+                i += 2
+                continue
+            elif ch == '"':
+                result.append(ch)
+                in_string = False
+            elif ch == '\n':
+                result.append('\\n')
+            elif ch == '\r':
+                result.append('\\r')
+            elif ch == '\t':
+                result.append('\\t')
+            else:
+                result.append(ch)
+        else:
+            if ch == '"':
+                in_string = True
+            result.append(ch)
+        i += 1
+    return ''.join(result)
+
+
 def parse_gemini_response(response) -> dict:
-    if hasattr(response, 'parsed') and response.parsed:
-        return response.parsed
+    if hasattr(response, 'parsed') and response.parsed is not None:
+        parsed = response.parsed
+        # Pydantic model → dict so callers always get a plain dict.
+        return parsed.model_dump() if hasattr(parsed, 'model_dump') else parsed
     text = response.text.strip()
+    # Strip markdown code fences if the model wrapped the JSON.
     fence_match = re.search(r'```(?:json)?\s*([\s\S]*?)\s*```', text)
     if fence_match:
         text = fence_match.group(1).strip()
-    return json.loads(text)
+    # Fast path: well-formed JSON.
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        # Slow path: fix literal control chars inside string values and retry.
+        return json.loads(_fix_json_control_chars(text))
 
 
 async def get_verified_uid(authorization: str = Header(None)) -> str:
@@ -462,13 +509,37 @@ async def generate_outfit(request: OutfitRequest, uid: str = Depends(get_verifie
         
         # 3. Call Gemini
         response = client.models.generate_content(
-            model='gemini-flash-latest', 
+            model='gemini-flash-latest',
             contents=prompt,
             config=types.GenerateContentConfig(
-                response_mime_type='application/json'
-            )
+                response_mime_type='application/json',
+                response_schema={
+                    'type': 'OBJECT',
+                    'properties': {
+                        'selected_item_ids': {
+                            'type': 'ARRAY',
+                            'items': {'type': 'STRING'},
+                        },
+                        'overall_score': {'type': 'INTEGER'},
+                        'scores': {
+                            'type': 'OBJECT',
+                            'properties': {
+                                'style_match':   {'type': 'INTEGER'},
+                                'weather_match': {'type': 'INTEGER'},
+                                'context_match': {'type': 'INTEGER'},
+                                'color_harmony': {'type': 'INTEGER'},
+                            },
+                        },
+                        'explanation': {'type': 'STRING'},
+                    },
+                    'required': [
+                        'selected_item_ids', 'overall_score',
+                        'scores', 'explanation',
+                    ],
+                },
+            ),
         )
-        
+
         return parse_gemini_response(response)
 
     except Exception as e:

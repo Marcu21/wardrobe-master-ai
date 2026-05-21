@@ -1,203 +1,66 @@
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:mobile_app/services/firebase_service.dart';
-import 'package:mobile_app/services/wardrobe_state_service.dart';
+import 'package:provider/provider.dart';
 import 'package:mobile_app/widgets/scale_button.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import 'package:mobile_app/widgets/glassmorphism_card.dart';
 import 'widgets/clothing_image_header.dart';
 import 'widgets/clothing_detail_form.dart';
+import 'clothing_detail_view_model.dart';
 
 const _kBlob1 = Color(0x38EC4899);
 const _kBlob2 = Color(0x20DB2777);
 
-class ClothingDetailScreen extends StatefulWidget {
+class ClothingDetailScreen extends StatelessWidget {
   final Map<String, dynamic> itemData;
   const ClothingDetailScreen({super.key, required this.itemData});
 
   @override
-  State<ClothingDetailScreen> createState() => _ClothingDetailScreenState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => ClothingDetailViewModel(itemData: itemData),
+      child: const _ClothingDetailBody(),
+    );
+  }
 }
 
-class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
-  // Basic Info
-  late TextEditingController _categoryController;
-  late TextEditingController _subCategoryController;
-  late TextEditingController _materialController;
-  late TextEditingController _primaryColorController;
-  late TextEditingController _patternController;
+class _ClothingDetailBody extends StatelessWidget {
+  const _ClothingDetailBody();
 
-  // Sustainability Info
-  late TextEditingController _brandController;
-  late TextEditingController _priceController;
-  late TextEditingController _currencyController;
-  late TextEditingController _purchaseDateController;
-
-  // Styling Info
-  late TextEditingController _fitController;
-  late TextEditingController _lengthController;
-  late TextEditingController _necklineController;
-  late TextEditingController _sleeveLengthController;
-  late TextEditingController _styleOccasionsController;
-  late TextEditingController _seasonalityController;
-
-  // Laundry Info
-  late TextEditingController _careInstructionsController;
-  late TextEditingController _colorGroupController;
-  late TextEditingController _maxTempController;
-
-  String? _currentWardrobeId;
-
-  @override
-  void initState() {
-    super.initState();
-    final data = widget.itemData;
-    final basic = data['basic_info'] as Map<String, dynamic>? ?? {};
-    final sust = data['sustainability_info'] as Map<String, dynamic>? ?? {};
-    final style = data['styling_info'] as Map<String, dynamic>? ?? {};
-    final laundry = data['laundry_info'] as Map<String, dynamic>? ?? {};
-
-    _currentWardrobeId = data['wardrobe_id'];
-
-    _categoryController = TextEditingController(text: basic['category'] ?? '');
-    _subCategoryController = TextEditingController(
-      text: basic['sub_category'] ?? '',
-    );
-    _materialController = TextEditingController(text: basic['material'] ?? '');
-    _primaryColorController = _listToController(basic['primary_colors']);
-    _patternController = TextEditingController(text: basic['pattern'] ?? '');
-
-    _brandController = TextEditingController(text: sust['brand'] ?? '');
-    _priceController = TextEditingController(
-      text: sust['price']?.toString() ?? '',
-    );
-    _currencyController = TextEditingController(text: sust['currency'] ?? '');
-    _purchaseDateController = TextEditingController(
-      text: sust['purchase_date'] ?? '',
-    );
-
-    _fitController = TextEditingController(text: style['fit'] ?? '');
-    _lengthController = TextEditingController(text: style['length'] ?? '');
-    _necklineController = TextEditingController(text: style['neckline'] ?? '');
-    _sleeveLengthController = TextEditingController(
-      text: style['sleeve_length'] ?? '',
-    );
-    _styleOccasionsController = _listToController(style['style_occasions']);
-    _seasonalityController = _listToController(style['seasonality']);
-
-    _careInstructionsController = _listToController(
-      laundry['care_instructions'],
-      separator: '\n',
-    );
-    _colorGroupController = TextEditingController(
-      text: laundry['color_group'] ?? '',
-    );
-    _maxTempController = TextEditingController(
-      text: laundry['max_temp_celsius']?.toString() ?? '',
-    );
-  }
-
-  TextEditingController _listToController(
-    dynamic listVal, {
-    String separator = ', ',
-  }) {
-    if (listVal is List) {
-      if (listVal.isEmpty) return TextEditingController(text: '');
-      return TextEditingController(
-        text: listVal.map((e) => e.toString()).join(separator),
+  Future<void> _updateItemWardrobe(
+    BuildContext context,
+    String? newWardrobeId,
+  ) async {
+    final vm = context.read<ClothingDetailViewModel>();
+    final error = await vm.updateItemWardrobe(newWardrobeId);
+    if (!context.mounted) return;
+    if (error == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Item moved to ${vm.currentWardrobeName}'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF16A34A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error moving item: $error'),
+          backgroundColor: const Color(0xFFDC2626),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
       );
     }
-    return TextEditingController(text: listVal?.toString() ?? '');
   }
 
-  List<String> _controllerToList(
-    TextEditingController controller, {
-    String separator = ',',
-  }) {
-    if (controller.text.isEmpty) return [];
-    if (separator == '\n') {
-      return controller.text
-          .split('\n')
-          .map((e) => e.trim())
-          .where((e) => e.isNotEmpty)
-          .toList();
-    }
-    return controller.text
-        .split(separator)
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toList();
-  }
-
-  @override
-  void dispose() {
-    _categoryController.dispose();
-    _subCategoryController.dispose();
-    _materialController.dispose();
-    _primaryColorController.dispose();
-    _patternController.dispose();
-    _brandController.dispose();
-    _priceController.dispose();
-    _currencyController.dispose();
-    _purchaseDateController.dispose();
-    _fitController.dispose();
-    _lengthController.dispose();
-    _necklineController.dispose();
-    _sleeveLengthController.dispose();
-    _styleOccasionsController.dispose();
-    _seasonalityController.dispose();
-    _careInstructionsController.dispose();
-    _colorGroupController.dispose();
-    _maxTempController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _updateItemWardrobe(String? newWardrobeId) async {
-    final oldWardrobeId = _currentWardrobeId;
-    if (newWardrobeId == oldWardrobeId) return;
-    setState(() => _currentWardrobeId = newWardrobeId);
-    try {
-      await FirebaseService().updateItem(widget.itemData['id'], {
-        'wardrobe_id': newWardrobeId,
-      });
-      String wardrobeName = 'All Wardrobes';
-      if (newWardrobeId != null) {
-        final matches = wardrobeStateService.wardrobes.where(
-          (w) => w['id'] == newWardrobeId,
-        );
-        if (matches.isNotEmpty) wardrobeName = matches.first['name'];
-      }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Item moved to $wardrobeName'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: const Color(0xFF16A34A),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      setState(() => _currentWardrobeId = oldWardrobeId);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error moving item: $e'),
-            backgroundColor: const Color(0xFFDC2626),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _confirmDelete() async {
+  Future<void> _confirmDelete(BuildContext context) async {
     final bool? confirm = await showDialog<bool>(
       context: context,
       barrierColor: Colors.black.withOpacity(0.4),
@@ -298,10 +161,10 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
         ),
       ),
     );
-    if (confirm == true) _deleteItem();
+    if (confirm == true && context.mounted) _deleteItem(context);
   }
 
-  Future<void> _deleteItem() async {
+  Future<void> _deleteItem(BuildContext context) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -402,42 +265,33 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
         ),
       ),
     );
-    try {
-      final String docId = widget.itemData['id'];
-      final String? imageUrl = widget.itemData['imageUrl'];
-      await FirebaseService().deleteItem(docId, imageUrl: imageUrl);
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Item deleted successfully'),
-            backgroundColor: const Color(0xFF16A34A),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error deleting item: $e'),
-            backgroundColor: const Color(0xFFDC2626),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-      }
+    final vm = context.read<ClothingDetailViewModel>();
+    final error = await vm.deleteItem();
+    if (!context.mounted) return;
+    Navigator.pop(context);
+    if (error == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Item deleted successfully'),
+          backgroundColor: const Color(0xFF16A34A),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error deleting item: $error'),
+          backgroundColor: const Color(0xFFDC2626),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
     }
   }
 
-  Future<void> _updateItem() async {
+  Future<void> _updateItem(BuildContext context) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -503,11 +357,7 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
                           strokeWidth: 2.5,
                         ),
                       ),
-                      const Icon(
-                        Icons.auto_awesome,
-                        color: kPrimary,
-                        size: 16,
-                      ),
+                      const Icon(Icons.auto_awesome, color: kPrimary, size: 16),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -538,104 +388,40 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
         ),
       ),
     );
-
-    try {
-      final basicInfo = Map<String, dynamic>.from(
-        widget.itemData['basic_info'] ?? {},
+    final vm = context.read<ClothingDetailViewModel>();
+    final error = await vm.updateItem();
+    if (!context.mounted) return;
+    Navigator.pop(context);
+    if (error == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Details updated successfully!'),
+          backgroundColor: const Color(0xFF16A34A),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
       );
-      final sustainabilityInfo = Map<String, dynamic>.from(
-        widget.itemData['sustainability_info'] ?? {},
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error updating item: $error'),
+          backgroundColor: const Color(0xFFDC2626),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
       );
-      final stylingInfo = Map<String, dynamic>.from(
-        widget.itemData['styling_info'] ?? {},
-      );
-      final laundryInfo = Map<String, dynamic>.from(
-        widget.itemData['laundry_info'] ?? {},
-      );
-
-      basicInfo['category'] = _categoryController.text;
-      basicInfo['sub_category'] = _subCategoryController.text;
-      basicInfo['material'] = _materialController.text;
-      basicInfo['primary_colors'] = _controllerToList(_primaryColorController);
-      basicInfo['pattern'] = _patternController.text;
-
-      sustainabilityInfo['brand'] = _brandController.text;
-      if (_priceController.text.isNotEmpty) {
-        final price = double.tryParse(
-          _priceController.text.replaceAll(',', '.'),
-        );
-        sustainabilityInfo['price'] = price ?? _priceController.text;
-      } else {
-        sustainabilityInfo['price'] = null;
-      }
-      sustainabilityInfo['currency'] = _currencyController.text;
-      sustainabilityInfo['purchase_date'] = _purchaseDateController.text;
-
-      stylingInfo['fit'] = _fitController.text;
-      stylingInfo['length'] = _lengthController.text;
-      stylingInfo['neckline'] = _necklineController.text;
-      stylingInfo['sleeve_length'] = _sleeveLengthController.text;
-      stylingInfo['style_occasions'] = _controllerToList(
-        _styleOccasionsController,
-      );
-      stylingInfo['seasonality'] = _controllerToList(_seasonalityController);
-
-      laundryInfo['care_instructions'] = _controllerToList(
-        _careInstructionsController,
-        separator: '\n',
-      );
-      laundryInfo['color_group'] = _colorGroupController.text;
-      if (_maxTempController.text.isNotEmpty) {
-        final temp = int.tryParse(_maxTempController.text);
-        laundryInfo['max_temp_celsius'] = temp ?? _maxTempController.text;
-      } else {
-        laundryInfo['max_temp_celsius'] = null;
-      }
-
-      await FirebaseService().updateItem(widget.itemData['id'], {
-        'basic_info': basicInfo,
-        'sustainability_info': sustainabilityInfo,
-        'styling_info': stylingInfo,
-        'laundry_info': laundryInfo,
-      });
-
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Details updated successfully!'),
-            backgroundColor: const Color(0xFF16A34A),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error updating item: $e'),
-            backgroundColor: const Color(0xFFDC2626),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = widget.itemData['imageUrl'] as String?;
-    final basic = widget.itemData['basic_info'] as Map<String, dynamic>? ?? {};
+    final vm = context.watch<ClothingDetailViewModel>();
+    final imageUrl = vm.itemData['imageUrl'] as String?;
+    final basic =
+        vm.itemData['basic_info'] as Map<String, dynamic>? ?? {};
     final sust =
-        widget.itemData['sustainability_info'] as Map<String, dynamic>? ?? {};
+        vm.itemData['sustainability_info'] as Map<String, dynamic>? ?? {};
     final subCat = basic['sub_category']?.toString() ?? 'Item';
     final brand = sust['brand']?.toString();
     final category = basic['category']?.toString() ?? '';
@@ -716,11 +502,13 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
                         height: 48,
                         child: Center(
                           child: ScaleButton(
-                            onTap: _confirmDelete,
+                            onTap: () => _confirmDelete(context),
                             child: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFDC2626).withOpacity(0.08),
+                                color: const Color(
+                                  0xFFDC2626,
+                                ).withOpacity(0.08),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
                                   color: const Color(
@@ -754,29 +542,30 @@ class _ClothingDetailScreenState extends State<ClothingDetailScreen> {
                           category: category,
                         ),
                         ClothingDetailForm(
-                          categoryController: _categoryController,
-                          subCategoryController: _subCategoryController,
-                          materialController: _materialController,
-                          primaryColorController: _primaryColorController,
-                          patternController: _patternController,
-                          brandController: _brandController,
-                          priceController: _priceController,
-                          currencyController: _currencyController,
-                          purchaseDateController: _purchaseDateController,
-                          fitController: _fitController,
-                          lengthController: _lengthController,
-                          necklineController: _necklineController,
-                          sleeveLengthController: _sleeveLengthController,
-                          styleOccasionsController: _styleOccasionsController,
-                          seasonalityController: _seasonalityController,
+                          categoryController: vm.categoryController,
+                          subCategoryController: vm.subCategoryController,
+                          materialController: vm.materialController,
+                          primaryColorController: vm.primaryColorController,
+                          patternController: vm.patternController,
+                          brandController: vm.brandController,
+                          priceController: vm.priceController,
+                          currencyController: vm.currencyController,
+                          purchaseDateController: vm.purchaseDateController,
+                          fitController: vm.fitController,
+                          lengthController: vm.lengthController,
+                          necklineController: vm.necklineController,
+                          sleeveLengthController: vm.sleeveLengthController,
+                          styleOccasionsController: vm.styleOccasionsController,
+                          seasonalityController: vm.seasonalityController,
                           careInstructionsController:
-                              _careInstructionsController,
-                          colorGroupController: _colorGroupController,
-                          maxTempController: _maxTempController,
-                          currentWardrobeId: _currentWardrobeId,
-                          onWardrobeChanged: _updateItemWardrobe,
-                          onSave: _updateItem,
-                          onDelete: _confirmDelete,
+                              vm.careInstructionsController,
+                          colorGroupController: vm.colorGroupController,
+                          maxTempController: vm.maxTempController,
+                          currentWardrobeId: vm.currentWardrobeId,
+                          onWardrobeChanged: (id) =>
+                              _updateItemWardrobe(context, id),
+                          onSave: () => _updateItem(context),
+                          onDelete: () => _confirmDelete(context),
                         ),
                       ],
                     ),

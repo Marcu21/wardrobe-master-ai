@@ -1,71 +1,35 @@
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mobile_app/theme/app_colors.dart';
+import 'calendar_view_model.dart';
 import 'widgets/calendar_header.dart';
 import 'widgets/calendar_outfit_carousel.dart';
 
 const _kBlob1 = Color(0x380EA5E9);
 const _kBlob2 = Color(0x200284C7);
 
-class CalendarScreen extends StatefulWidget {
+class CalendarScreen extends StatelessWidget {
   const CalendarScreen({super.key});
 
   @override
-  State<CalendarScreen> createState() => _CalendarScreenState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => CalendarViewModel(),
+      child: const _CalendarBody(),
+    );
+  }
 }
 
-class _CalendarScreenState extends State<CalendarScreen> {
-  DateTime _focusedDay = DateTime.now();
-  DateTime? _selectedDay;
-  late Stream<QuerySnapshot> _outfitsStream;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedDay = _focusedDay;
-    _outfitsStream = FirebaseFirestore.instance
-        .collection('outfits')
-        .where('user_id', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
-        .where('wear_count', isGreaterThan: 0)
-        .snapshots();
-  }
-
-  bool _isSameDay(DateTime? a, DateTime? b) {
-    if (a == null || b == null) return false;
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
-
-  DateTime _normalizeDate(DateTime date) {
-    return DateTime.utc(date.year, date.month, date.day);
-  }
-
-  DateTime? _getWearDateTime(Map<String, dynamic> data, DateTime targetDate) {
-    final List<dynamic> dates = data['wear_dates'] ?? [];
-    try {
-      final timestamp = dates.firstWhere((d) {
-        if (d is Timestamp) {
-          final dt = d.toDate();
-          return dt.year == targetDate.year &&
-              dt.month == targetDate.month &&
-              dt.day == targetDate.day;
-        }
-        return false;
-      }, orElse: () => null);
-      if (timestamp != null && timestamp is Timestamp) {
-        return timestamp.toDate();
-      }
-    } catch (e) {
-      // ignore
-    }
-    return null;
-  }
+class _CalendarBody extends StatelessWidget {
+  const _CalendarBody();
 
   @override
   Widget build(BuildContext context) {
+    final vm = context.watch<CalendarViewModel>();
     return Scaffold(
       backgroundColor: kBgColor,
       body: Stack(
@@ -108,7 +72,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           SafeArea(
             top: false,
             child: StreamBuilder<QuerySnapshot>(
-              stream: _outfitsStream,
+              stream: vm.outfitsStream,
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   debugPrint('Calendar Error: ${snapshot.error}');
@@ -184,18 +148,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   );
                 }
 
-                final Map<DateTime, List<Map<String, dynamic>>> groupedOutfits =
-                    {};
+                final Map<DateTime, List<Map<String, dynamic>>>
+                    groupedOutfits = {};
 
                 if (snapshot.hasData) {
                   for (var doc in snapshot.data!.docs) {
                     final data = doc.data() as Map<String, dynamic>;
-                    final List<dynamic> datesDynamic = data['wear_dates'] ?? [];
+                    final List<dynamic> datesDynamic =
+                        data['wear_dates'] ?? [];
 
                     for (var dateEntry in datesDynamic) {
                       if (dateEntry is Timestamp) {
                         final normalizedDate =
-                            _normalizeDate(dateEntry.toDate());
+                            vm.normalizeDate(dateEntry.toDate());
                         groupedOutfits[normalizedDate] ??= [];
                         data['id'] = doc.id;
                         groupedOutfits[normalizedDate]!.add(data);
@@ -204,14 +169,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   }
                 }
 
-                List<Map<String, dynamic>> dayOutfits = _selectedDay != null
-                    ? groupedOutfits[_normalizeDate(_selectedDay!)] ?? []
-                    : [];
+                List<Map<String, dynamic>> dayOutfits =
+                    vm.selectedDay != null
+                        ? groupedOutfits[vm.normalizeDate(vm.selectedDay!)] ??
+                            []
+                        : [];
 
-                if (_selectedDay != null && dayOutfits.isNotEmpty) {
+                if (vm.selectedDay != null && dayOutfits.isNotEmpty) {
                   dayOutfits.sort((a, b) {
-                    final dtA = _getWearDateTime(a, _selectedDay!);
-                    final dtB = _getWearDateTime(b, _selectedDay!);
+                    final dtA = vm.getWearDateTime(a, vm.selectedDay!);
+                    final dtB = vm.getWearDateTime(b, vm.selectedDay!);
                     if (dtA == null && dtB == null) return 0;
                     if (dtA == null) return 1;
                     if (dtB == null) return -1;
@@ -222,35 +189,24 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 return Column(
                   children: [
                     CalendarHeader(
-                      focusedDay: _focusedDay,
-                      onPrevMonth: () => setState(() {
-                        _focusedDay = DateTime(
-                          _focusedDay.year,
-                          _focusedDay.month - 1,
-                        );
-                      }),
-                      onNextMonth: () => setState(() {
-                        _focusedDay = DateTime(
-                          _focusedDay.year,
-                          _focusedDay.month + 1,
-                        );
-                      }),
+                      focusedDay: vm.focusedDay,
+                      onPrevMonth: vm.prevMonth,
+                      onNextMonth: vm.nextMonth,
                     ),
                     TableCalendar(
                       firstDay: DateTime.utc(2020, 1, 1),
                       lastDay: DateTime.utc(2030, 12, 31),
-                      focusedDay: _focusedDay,
+                      focusedDay: vm.focusedDay,
                       selectedDayPredicate: (day) =>
-                          _isSameDay(_selectedDay, day),
+                          vm.isSameDay(vm.selectedDay, day),
                       calendarFormat: CalendarFormat.month,
                       startingDayOfWeek: StartingDayOfWeek.monday,
-                      eventLoader: (day) {
-                        return groupedOutfits[_normalizeDate(day)] ?? [];
-                      },
+                      eventLoader: (day) =>
+                          groupedOutfits[vm.normalizeDate(day)] ?? [],
                       calendarBuilders: CalendarBuilders(
                         markerBuilder: (context, date, events) {
                           if (events.isNotEmpty &&
-                              !_isSameDay(_selectedDay, date)) {
+                              !vm.isSameDay(vm.selectedDay, date)) {
                             return Positioned(
                               bottom: 5,
                               child: Container(
@@ -273,15 +229,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           return const SizedBox.shrink();
                         },
                       ),
-                      onDaySelected: (selectedDay, focusedDay) {
-                        setState(() {
-                          _selectedDay = selectedDay;
-                          _focusedDay = focusedDay;
-                        });
-                      },
-                      onPageChanged: (focusedDay) {
-                        setState(() => _focusedDay = focusedDay);
-                      },
+                      onDaySelected: vm.selectDay,
+                      onPageChanged: vm.changePage,
                       rowHeight: 42,
                       daysOfWeekHeight: 26,
                       calendarStyle: CalendarStyle(
@@ -342,7 +291,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     ),
                     CalendarOutfitCarousel(
                       dayOutfits: dayOutfits,
-                      selectedDay: _selectedDay,
+                      selectedDay: vm.selectedDay,
                     ),
                   ],
                 );

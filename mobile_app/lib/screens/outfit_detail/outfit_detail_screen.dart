@@ -1,21 +1,19 @@
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:mobile_app/services/firebase_service.dart';
-import 'package:mobile_app/services/calendar_service.dart';
+import 'package:provider/provider.dart';
 import 'package:mobile_app/screens/virtual_dressing_room/virtual_dressing_room_screen.dart';
-import 'package:mobile_app/utils/outfit_sorting_utils.dart';
 import 'package:mobile_app/widgets/scale_button.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import 'package:mobile_app/widgets/glassmorphism_card.dart';
 import 'widgets/outfit_items_list.dart';
 import 'widgets/outfit_action_bar.dart';
+import 'outfit_detail_view_model.dart';
 
 const _kBlob1 = Color(0x384F46E5);
 const _kBlob2 = Color(0x206352D2);
 
-class OutfitDetailScreen extends StatefulWidget {
+class OutfitDetailScreen extends StatelessWidget {
   final Map<String, dynamic> outfitData;
   final String outfitId;
 
@@ -26,58 +24,19 @@ class OutfitDetailScreen extends StatefulWidget {
   });
 
   @override
-  State<OutfitDetailScreen> createState() => _OutfitDetailScreenState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) =>
+          OutfitDetailViewModel(outfitData: outfitData, outfitId: outfitId),
+      child: const _OutfitDetailBody(),
+    );
+  }
 }
 
-class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
-  final FirebaseService _firebaseService = FirebaseService();
-  late TextEditingController _nameController;
-  late double _currentRating;
-  List<Map<String, dynamic>> _items = [];
-  bool _isLoading = true;
-  late int _wearCount;
+class _OutfitDetailBody extends StatelessWidget {
+  const _OutfitDetailBody();
 
-  @override
-  void initState() {
-    super.initState();
-    _nameController = TextEditingController(
-      text: widget.outfitData['name'] ?? 'Untitled',
-    );
-    _currentRating = (widget.outfitData['rating'] ?? 0.0).toDouble();
-    _wearCount = (widget.outfitData['wear_count'] ?? 0) as int;
-    _fetchItems();
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _fetchItems() async {
-    try {
-      final List<dynamic> itemIdsDynamic = widget.outfitData['item_ids'] ?? [];
-      final List<String> itemIds = itemIdsDynamic
-          .map((e) => e.toString())
-          .toList();
-      if (itemIds.isNotEmpty) {
-        final items = await _firebaseService.getItemsByIds(itemIds);
-        if (mounted) {
-          setState(() {
-            _items = OutfitSortingUtils.sortOutfitItems(items);
-            _isLoading = false;
-          });
-        }
-      } else {
-        if (mounted) setState(() => _isLoading = false);
-      }
-    } catch (e) {
-      debugPrint('Error fetching items: $e');
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _saveChanges() async {
+  Future<void> _saveChanges(BuildContext context) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -161,45 +120,36 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
       ),
     );
 
-    try {
-      await FirebaseFirestore.instance
-          .collection('outfits')
-          .doc(widget.outfitId)
-          .update({
-            'name': _nameController.text.trim(),
-            'rating': _currentRating,
-          });
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Changes saved successfully!'),
-            backgroundColor: const Color(0xFF16A34A),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+    final vm = context.read<OutfitDetailViewModel>();
+    final error = await vm.saveChanges();
+    if (!context.mounted) return;
+    Navigator.pop(context);
+    if (error == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Changes saved successfully!'),
+          backgroundColor: const Color(0xFF16A34A),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error saving changes: $e'),
-            backgroundColor: const Color(0xFFDC2626),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error saving changes: $error'),
+          backgroundColor: const Color(0xFFDC2626),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-        );
-      }
+        ),
+      );
     }
   }
 
-  Future<void> _deleteOutfit() async {
+  Future<void> _deleteOutfit(BuildContext context) async {
     final bool? confirm = await showDialog<bool>(
       context: context,
       barrierColor: Colors.black.withOpacity(0.3),
@@ -283,31 +233,28 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
       ),
     );
 
-    if (confirm == true) {
-      try {
-        await FirebaseFirestore.instance
-            .collection('outfits')
-            .doc(widget.outfitId)
-            .delete();
-        if (mounted) Navigator.pop(context);
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error deleting outfit: $e'),
-              backgroundColor: const Color(0xFFDC2626),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+    if (confirm == true && context.mounted) {
+      final vm = context.read<OutfitDetailViewModel>();
+      final error = await vm.deleteOutfit();
+      if (!context.mounted) return;
+      if (error == null) {
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting outfit: $error'),
+            backgroundColor: const Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-          );
-        }
+          ),
+        );
       }
     }
   }
 
-  Future<void> _logWear() async {
+  Future<void> _logWear(BuildContext context) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -390,70 +337,42 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
       ),
     );
 
-    try {
-      final db = FirebaseFirestore.instance;
-      final batch = db.batch();
-
-      final outfitRef = db.collection('outfits').doc(widget.outfitId);
-      batch.update(outfitRef, {
-        'wear_count': FieldValue.increment(1),
-        'wear_dates': FieldValue.arrayUnion([Timestamp.now()]),
-      });
-
-      final List<dynamic> itemIdsDynamic = widget.outfitData['item_ids'] ?? [];
-      for (var id in itemIdsDynamic) {
-        final itemRef = db.collection('clothing').doc(id.toString());
-        batch.set(itemRef, {
-          'wear_count': FieldValue.increment(1),
-          'last_worn': Timestamp.now(),
-        }, SetOptions(merge: true));
-      }
-
-      await batch.commit();
-
-      final calendarService = CalendarService();
-      await calendarService.addOutfitEvent(
-        widget.outfitData['name'] ?? 'Untitled Outfit',
-        DateTime.now(),
+    final vm = context.read<OutfitDetailViewModel>();
+    final error = await vm.logWear();
+    if (!context.mounted) return;
+    Navigator.pop(context);
+    if (error == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Outfit logged! Your style history has been updated.',
+          ),
+          backgroundColor: const Color(0xFF16A34A),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
       );
-
-      if (mounted) {
-        Navigator.pop(context);
-        setState(() => _wearCount++);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text(
-              'Outfit logged! Your style history has been updated.',
-            ),
-            backgroundColor: const Color(0xFF16A34A),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error logging wear: $error'),
+          backgroundColor: const Color(0xFFDC2626),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error logging wear: $e'),
-            backgroundColor: const Color(0xFFDC2626),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-      }
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isAiGenerated = widget.outfitData['is_ai_generated'] ?? false;
-    final Timestamp? createdAt = widget.outfitData['created_at'] as Timestamp?;
+    final vm = context.watch<OutfitDetailViewModel>();
+    final bool isAiGenerated = vm.outfitData['is_ai_generated'] ?? false;
+    final createdAt = vm.outfitData['created_at'];
     final String dateStr = createdAt != null
         ? '${createdAt.toDate().day}/${createdAt.toDate().month}/${createdAt.toDate().year}'
         : 'Unknown date';
@@ -483,7 +402,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: ScaleButton(
-              onTap: _deleteOutfit,
+              onTap: () => _deleteOutfit(context),
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -544,203 +463,244 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              OutfitItemsList(isLoading: _isLoading, items: _items),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  OutfitItemsList(isLoading: vm.isLoading, items: vm.items),
 
-              const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-              // Edit card
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.black.withOpacity(0.06)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(7),
-                            decoration: BoxDecoration(
-                              color: kPrimaryLight,
-                              borderRadius: BorderRadius.circular(9),
-                            ),
-                            child: const Icon(
-                              CupertinoIcons.pencil,
-                              size: 14,
-                              color: kPrimary,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          const Text(
-                            'Edit Outfit',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.black87,
-                              letterSpacing: -0.3,
-                            ),
-                          ),
-                        ],
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.black.withOpacity(0.06),
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    Container(
-                      height: 1,
-                      margin: const EdgeInsets.symmetric(horizontal: 18),
-                      color: Colors.black.withOpacity(0.05),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          TextFormField(
-                            controller: _nameController,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.black87,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            decoration: InputDecoration(
-                              labelText: 'Outfit Name',
-                              labelStyle: TextStyle(
-                                color: Colors.black.withOpacity(0.45),
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              filled: true,
-                              fillColor: Colors.black.withOpacity(0.03),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Colors.black.withOpacity(0.08),
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Colors.black.withOpacity(0.08),
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: kPrimary,
-                                  width: 1.5,
-                                ),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 13,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          Text(
-                            'Rating',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black.withOpacity(0.45),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: List.generate(5, (index) {
-                              final filled = index < _currentRating;
-                              return GestureDetector(
-                                onTap: () => setState(
-                                  () => _currentRating = index + 1.0,
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.only(right: 6),
-                                  child: AnimatedSwitcher(
-                                    duration: const Duration(milliseconds: 200),
-                                    child: Icon(
-                                      filled
-                                          ? Icons.star_rounded
-                                          : Icons.star_outline_rounded,
-                                      key: ValueKey(filled),
-                                      color: filled
-                                          ? const Color(0xFFF59E0B)
-                                          : Colors.black.withOpacity(0.2),
-                                      size: 32,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }),
-                          ),
-                          const SizedBox(height: 20),
-                          Container(
-                            height: 1,
-                            color: Colors.black.withOpacity(0.05),
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
+                          child: Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 5,
-                                ),
+                                padding: const EdgeInsets.all(7),
                                 decoration: BoxDecoration(
-                                  color: isAiGenerated
-                                      ? kPrimary.withOpacity(0.08)
-                                      : Colors.black.withOpacity(0.05),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: isAiGenerated
-                                        ? kPrimary.withOpacity(0.20)
-                                        : Colors.black.withOpacity(0.08),
-                                  ),
+                                  color: kPrimaryLight,
+                                  borderRadius: BorderRadius.circular(9),
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      isAiGenerated
-                                          ? Icons.auto_awesome
-                                          : CupertinoIcons.person,
-                                      size: 12,
-                                      color: isAiGenerated
-                                          ? kPrimary
-                                          : Colors.black54,
-                                    ),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      isAiGenerated ? 'AI' : 'Manual',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: isAiGenerated
-                                            ? kPrimary
-                                            : Colors.black54,
-                                      ),
-                                    ),
-                                  ],
+                                child: const Icon(
+                                  CupertinoIcons.pencil,
+                                  size: 14,
+                                  color: kPrimary,
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              Builder(
-                                builder: (context) {
-                                  if (_wearCount == 0) {
-                                    return const SizedBox.shrink();
-                                  }
-                                  return Container(
+                              const SizedBox(width: 10),
+                              const Text(
+                                'Edit Outfit',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.black87,
+                                  letterSpacing: -0.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          height: 1,
+                          margin: const EdgeInsets.symmetric(horizontal: 18),
+                          color: Colors.black.withOpacity(0.05),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              TextFormField(
+                                controller: vm.nameController,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black87,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                decoration: InputDecoration(
+                                  labelText: 'Outfit Name',
+                                  labelStyle: TextStyle(
+                                    color: Colors.black.withOpacity(0.45),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.black.withOpacity(0.03),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: Colors.black.withOpacity(0.08),
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: Colors.black.withOpacity(0.08),
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(
+                                      color: kPrimary,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 13,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              Text(
+                                'Rating',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.black.withOpacity(0.45),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: List.generate(5, (index) {
+                                  final filled = index < vm.currentRating;
+                                  return GestureDetector(
+                                    onTap: () => context
+                                        .read<OutfitDetailViewModel>()
+                                        .setRating(index + 1.0),
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(right: 6),
+                                      child: AnimatedSwitcher(
+                                        duration: const Duration(
+                                          milliseconds: 200,
+                                        ),
+                                        child: Icon(
+                                          filled
+                                              ? Icons.star_rounded
+                                              : Icons.star_outline_rounded,
+                                          key: ValueKey(filled),
+                                          color: filled
+                                              ? const Color(0xFFF59E0B)
+                                              : Colors.black.withOpacity(0.2),
+                                          size: 32,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }),
+                              ),
+                              const SizedBox(height: 20),
+                              Container(
+                                height: 1,
+                                color: Colors.black.withOpacity(0.05),
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isAiGenerated
+                                          ? kPrimary.withOpacity(0.08)
+                                          : Colors.black.withOpacity(0.05),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: isAiGenerated
+                                            ? kPrimary.withOpacity(0.20)
+                                            : Colors.black.withOpacity(0.08),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          isAiGenerated
+                                              ? Icons.auto_awesome
+                                              : CupertinoIcons.person,
+                                          size: 12,
+                                          color: isAiGenerated
+                                              ? kPrimary
+                                              : Colors.black54,
+                                        ),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          isAiGenerated ? 'AI' : 'Manual',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: isAiGenerated
+                                                ? kPrimary
+                                                : Colors.black54,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Builder(
+                                    builder: (context) {
+                                      if (vm.wearCount == 0) {
+                                        return const SizedBox.shrink();
+                                      }
+                                      return Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 5,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.05),
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              CupertinoIcons.checkmark_circle,
+                                              size: 12,
+                                              color: Colors.black.withOpacity(
+                                                0.45,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              'Worn ${vm.wearCount}×',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500,
+                                                color: Colors.black.withOpacity(
+                                                  0.45,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 10,
                                       vertical: 5,
@@ -753,13 +713,13 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Icon(
-                                          CupertinoIcons.checkmark_circle,
+                                          CupertinoIcons.calendar,
                                           size: 12,
                                           color: Colors.black.withOpacity(0.45),
                                         ),
                                         const SizedBox(width: 4),
                                         Text(
-                                          'Worn $_wearCount×',
+                                          dateStr,
                                           style: TextStyle(
                                             fontSize: 12,
                                             fontWeight: FontWeight.w500,
@@ -770,72 +730,39 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                                         ),
                                       ],
                                     ),
-                                  );
-                                },
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 5,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.05),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      CupertinoIcons.calendar,
-                                      size: 12,
-                                      color: Colors.black.withOpacity(0.45),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      dateStr,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.black.withOpacity(0.45),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
+                  ),
 
-              const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-              OutfitActionBar(
-                onLogWear: _logWear,
-                onRemix: () {
-                  final List<dynamic> itemIdsDynamic =
-                      widget.outfitData['item_ids'] ?? [];
-                  final List<String> itemIds = itemIdsDynamic
-                      .map((e) => e.toString())
-                      .toList();
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => VirtualDressingRoomScreen(
-                        initialItemIds: itemIds,
-                      ),
-                    ),
-                  );
-                },
-                onSave: _saveChanges,
+                  OutfitActionBar(
+                    onLogWear: () => _logWear(context),
+                    onRemix: () {
+                      final List<dynamic> itemIdsDynamic =
+                          vm.outfitData['item_ids'] ?? [];
+                      final List<String> itemIds =
+                          itemIdsDynamic.map((e) => e.toString()).toList();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => VirtualDressingRoomScreen(
+                            initialItemIds: itemIds,
+                          ),
+                        ),
+                      );
+                    },
+                    onSave: () => _saveChanges(context),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
           ),
         ],
       ),

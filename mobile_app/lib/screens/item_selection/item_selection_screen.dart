@@ -1,119 +1,37 @@
-import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:mobile_app/services/wardrobe_state_service.dart';
+import 'package:provider/provider.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import 'widgets/selection_filter_chips.dart';
 import 'widgets/selection_grid_item.dart';
+import 'item_selection_view_model.dart';
 
 const _kBlob1 = Color(0x3840C4FF);
 const _kBlob2 = Color(0x1E1565C0);
 
-class ItemSelectionScreen extends StatefulWidget {
+class ItemSelectionScreen extends StatelessWidget {
   final List<String> initialSelectedIds;
 
   const ItemSelectionScreen({super.key, required this.initialSelectedIds});
 
   @override
-  State<ItemSelectionScreen> createState() => _ItemSelectionScreenState();
-}
-
-class _ItemSelectionScreenState extends State<ItemSelectionScreen> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  StreamSubscription<QuerySnapshot>? _wardrobeSubscription;
-
-  List<Map<String, dynamic>> _allWardrobeItems = [];
-  Set<String> _selectedIds = {};
-
-  String _selectedCategory = 'All';
-  String _selectedSubCategory = 'All';
-
-  bool _isLoading = true;
-  String? _errorMessage;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedIds = Set.from(widget.initialSelectedIds);
-    wardrobeStateService.addListener(_onWardrobeChanged);
-    _listenToWardrobe();
-  }
-
-  void _onWardrobeChanged() {
-    _listenToWardrobe();
-  }
-
-  void _listenToWardrobe() {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = 'User not logged in.';
-          _isLoading = false;
-        });
-      }
-      return;
-    }
-
-    _wardrobeSubscription?.cancel();
-
-    var query = _firestore
-        .collection('clothing')
-        .where('userId', isEqualTo: currentUser.uid);
-
-    final activeId = wardrobeStateService.activeWardrobeId;
-    if (activeId != null) {
-      query = query.where('wardrobe_id', isEqualTo: activeId);
-    }
-
-    _wardrobeSubscription = query.snapshots().listen(
-      (snapshot) {
-        final items = snapshot.docs.map((doc) {
-          final data = doc.data();
-          data['id'] = doc.id;
-          return data;
-        }).toList();
-
-        if (mounted) {
-          setState(() {
-            _allWardrobeItems = items;
-            _isLoading = false;
-          });
-        }
-      },
-      onError: (error) {
-        if (mounted) {
-          setState(() {
-            _errorMessage = 'Failed to load wardrobe. ${error.toString()}';
-            _isLoading = false;
-          });
-        }
-      },
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) =>
+          ItemSelectionViewModel(initialSelectedIds: initialSelectedIds),
+      child: const _ItemSelectionBody(),
     );
   }
+}
 
-  @override
-  void dispose() {
-    wardrobeStateService.removeListener(_onWardrobeChanged);
-    _wardrobeSubscription?.cancel();
-    super.dispose();
-  }
-
-  void _toggleSelection(String id) {
-    setState(() {
-      if (_selectedIds.contains(id)) {
-        _selectedIds.remove(id);
-      } else {
-        _selectedIds.add(id);
-      }
-    });
-  }
+class _ItemSelectionBody extends StatelessWidget {
+  const _ItemSelectionBody();
 
   @override
   Widget build(BuildContext context) {
+    final vm = context.watch<ItemSelectionViewModel>();
+
     return Scaffold(
       backgroundColor: kBgColor,
       body: Stack(
@@ -187,7 +105,7 @@ class _ItemSelectionScreenState extends State<ItemSelectionScreen> {
                       ),
                       TextButton(
                         onPressed: () =>
-                            Navigator.pop(context, _selectedIds.toList()),
+                            Navigator.pop(context, vm.selectedIds.toList()),
                         child: Text(
                           'Done',
                           style: TextStyle(
@@ -200,7 +118,7 @@ class _ItemSelectionScreenState extends State<ItemSelectionScreen> {
                     ],
                   ),
                 ),
-                Expanded(child: _buildContent()),
+                Expanded(child: _buildContent(context, vm)),
               ],
             ),
           ),
@@ -209,30 +127,22 @@ class _ItemSelectionScreenState extends State<ItemSelectionScreen> {
     );
   }
 
-  Widget _buildContent() {
-    if (_isLoading) {
+  Widget _buildContent(BuildContext context, ItemSelectionViewModel vm) {
+    if (vm.isLoading) {
       return const Center(
         child: CircularProgressIndicator(color: Colors.blueGrey),
       );
     }
-    if (_errorMessage != null) {
+    if (vm.errorMessage != null) {
       return Center(
         child: Text(
-          _errorMessage!,
+          vm.errorMessage!,
           style: const TextStyle(color: Colors.red),
         ),
       );
     }
 
-    final filteredDocs = _allWardrobeItems.where((doc) {
-      final cat = doc['basic_info']?['category'] as String?;
-      final sub = doc['basic_info']?['sub_category'] as String?;
-      final matchCategory =
-          (_selectedCategory == 'All') || (cat == _selectedCategory);
-      final matchSubCategory =
-          (_selectedSubCategory == 'All') || (sub == _selectedSubCategory);
-      return matchCategory && matchSubCategory;
-    }).toList();
+    final filteredDocs = vm.filteredDocs;
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
@@ -242,16 +152,11 @@ class _ItemSelectionScreenState extends State<ItemSelectionScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SelectionFilterChips(
-                allWardrobeItems: _allWardrobeItems,
-                selectedCategory: _selectedCategory,
-                selectedSubCategory: _selectedSubCategory,
-                onCategoryChanged: (val) => setState(() {
-                  _selectedCategory = val;
-                  _selectedSubCategory = 'All';
-                }),
-                onSubCategoryChanged: (val) => setState(() {
-                  _selectedSubCategory = val;
-                }),
+                allWardrobeItems: vm.allWardrobeItems.toList(),
+                selectedCategory: vm.selectedCategory,
+                selectedSubCategory: vm.selectedSubCategory,
+                onCategoryChanged: vm.setCategory,
+                onSubCategoryChanged: vm.setSubCategory,
               ),
               const SizedBox(height: 16),
             ],
@@ -292,8 +197,8 @@ class _ItemSelectionScreenState extends State<ItemSelectionScreen> {
                       return SelectionGridItem(
                         key: ValueKey(id),
                         item: item,
-                        isSelected: _selectedIds.contains(id),
-                        onTap: () => _toggleSelection(id),
+                        isSelected: vm.selectedIds.contains(id),
+                        onTap: () => vm.toggleSelection(id),
                       );
                     },
                     childCount: filteredDocs.length,

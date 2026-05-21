@@ -1,66 +1,37 @@
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:mobile_app/services/firebase_service.dart';
 import 'package:mobile_app/screens/clothing_detail/clothing_detail_screen.dart';
-import 'package:mobile_app/services/wardrobe_state_service.dart';
 import 'package:mobile_app/widgets/global_wardrobe_selector.dart';
 import 'package:mobile_app/theme/app_colors.dart';
+import 'wardrobe_gallery_view_model.dart';
 import 'widgets/gallery_filter_chips.dart';
 import 'widgets/wardrobe_card.dart';
 
 const _kBlob1 = Color(0x384F46E5);
 const _kBlob2 = Color(0x206352D2);
 
-class WardrobeGalleryScreen extends StatefulWidget {
+class WardrobeGalleryScreen extends StatelessWidget {
   const WardrobeGalleryScreen({super.key});
 
   @override
-  State<WardrobeGalleryScreen> createState() => _WardrobeGalleryScreenState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => WardrobeGalleryViewModel(),
+      child: const _WardrobeGalleryBody(),
+    );
+  }
 }
 
-class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+class _WardrobeGalleryBody extends StatelessWidget {
+  const _WardrobeGalleryBody();
 
-  String _selectedCategory = 'All';
-  String _selectedSubCategory = 'All';
-
-  late Stream<QuerySnapshot> _clothingStream;
-
-  @override
-  void initState() {
-    super.initState();
-    wardrobeStateService.addListener(_onWardrobeChanged);
-    _updateStream();
-  }
-
-  @override
-  void dispose() {
-    wardrobeStateService.removeListener(_onWardrobeChanged);
-    super.dispose();
-  }
-
-  void _onWardrobeChanged() {
-    setState(() => _updateStream());
-  }
-
-  void _updateStream() {
-    final currentUserId = FirebaseService().currentUser?.uid;
-    var query = _firestore
-        .collection('clothing')
-        .where('userId', isEqualTo: currentUserId)
-        .orderBy('createdAt', descending: true);
-
-    final activeId = wardrobeStateService.activeWardrobeId;
-    if (activeId != null) {
-      query = query.where('wardrobe_id', isEqualTo: activeId);
-    }
-
-    _clothingStream = query.snapshots();
-  }
-
-  Widget _buildGalleryGrid(List<QueryDocumentSnapshot> docs) {
+  Widget _buildGalleryGrid(
+    BuildContext context,
+    List<QueryDocumentSnapshot> docs,
+  ) {
     if (docs.isEmpty) {
       return SliverFillRemaining(
         child: Center(
@@ -127,6 +98,7 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final vm = context.watch<WardrobeGalleryViewModel>();
     return Scaffold(
       backgroundColor: kBgColor,
       body: Stack(
@@ -169,7 +141,7 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
           SafeArea(
             top: false,
             child: StreamBuilder<QuerySnapshot>(
-              stream: _clothingStream,
+              stream: vm.clothingStream,
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return Center(
@@ -338,7 +310,7 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
                   );
                 }
 
-                // Extract categories
+                // Extract categories from snapshot data
                 final Set<String> categories = {'All'};
                 for (var doc in allDocs) {
                   final data = doc.data() as Map<String, dynamic>;
@@ -348,17 +320,26 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
                 final categoryList = categories.toList()..sort();
                 categoryList.remove('All');
                 categoryList.insert(0, 'All');
-                if (!categories.contains(_selectedCategory)) {
-                  _selectedCategory = 'All';
+
+                // Reset selected category if it no longer exists in the data
+                final effectiveCategory = categories.contains(vm.selectedCategory)
+                    ? vm.selectedCategory
+                    : 'All';
+                if (effectiveCategory != vm.selectedCategory) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    context
+                        .read<WardrobeGalleryViewModel>()
+                        .selectCategory('All');
+                  });
                 }
 
                 // Extract subcategories
                 final Set<String> subCategories = {'All'};
-                if (_selectedCategory != 'All') {
+                if (effectiveCategory != 'All') {
                   for (var doc in allDocs) {
                     final data = doc.data() as Map<String, dynamic>;
                     final cat = data['basic_info']?['category'] as String?;
-                    if (cat == _selectedCategory) {
+                    if (cat == effectiveCategory) {
                       final sub =
                           data['basic_info']?['sub_category'] as String?;
                       if (sub != null && sub.isNotEmpty) {
@@ -370,19 +351,28 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
                 final subCategoryList = subCategories.toList()..sort();
                 subCategoryList.remove('All');
                 subCategoryList.insert(0, 'All');
-                if (!subCategories.contains(_selectedSubCategory)) {
-                  _selectedSubCategory = 'All';
+
+                final effectiveSubCategory =
+                    subCategories.contains(vm.selectedSubCategory)
+                        ? vm.selectedSubCategory
+                        : 'All';
+                if (effectiveSubCategory != vm.selectedSubCategory) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    context
+                        .read<WardrobeGalleryViewModel>()
+                        .selectSubCategory('All');
+                  });
                 }
 
-                // Filter
+                // Filter docs
                 final filteredDocs = allDocs.where((doc) {
                   final data = doc.data() as Map<String, dynamic>;
                   final cat = data['basic_info']?['category'] as String?;
                   final sub = data['basic_info']?['sub_category'] as String?;
-                  return ((_selectedCategory == 'All') ||
-                          (cat == _selectedCategory)) &&
-                      ((_selectedSubCategory == 'All') ||
-                          (sub == _selectedSubCategory));
+                  return (effectiveCategory == 'All' ||
+                          cat == effectiveCategory) &&
+                      (effectiveSubCategory == 'All' ||
+                          sub == effectiveSubCategory);
                 }).toList();
 
                 return CustomScrollView(
@@ -399,24 +389,20 @@ class _WardrobeGalleryScreenState extends State<WardrobeGalleryScreen> {
                     SliverToBoxAdapter(
                       child: GalleryFilterChips(
                         items: categoryList,
-                        selectedItem: _selectedCategory,
-                        onSelected: (val) => setState(() {
-                          _selectedCategory = val;
-                          _selectedSubCategory = 'All';
-                        }),
+                        selectedItem: effectiveCategory,
+                        onSelected: vm.selectCategory,
                       ),
                     ),
-                    if (_selectedCategory != 'All')
+                    if (effectiveCategory != 'All')
                       SliverToBoxAdapter(
                         child: GalleryFilterChips(
                           items: subCategoryList,
-                          selectedItem: _selectedSubCategory,
-                          onSelected: (val) =>
-                              setState(() => _selectedSubCategory = val),
+                          selectedItem: effectiveSubCategory,
+                          onSelected: vm.selectSubCategory,
                           isSecondary: true,
                         ),
                       ),
-                    _buildGalleryGrid(filteredDocs),
+                    _buildGalleryGrid(context, filteredDocs),
                   ],
                 );
               },

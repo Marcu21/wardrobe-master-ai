@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../services/weather_service.dart';
+import 'package:provider/provider.dart';
 import '../../services/firebase_service.dart';
 import '../ai_stylist/ai_stylist_chat_screen.dart';
 import '../calendar/calendar_screen.dart';
@@ -9,6 +9,7 @@ import '../shopping_assistant/shopping_assistant_screen.dart';
 import '../my_trips/my_trips_screen.dart';
 import '../virtual_dressing_room/virtual_dressing_room_screen.dart';
 import 'package:mobile_app/theme/app_colors.dart';
+import 'home_view_model.dart';
 import 'widgets/weather_card.dart';
 import 'widgets/hero_section.dart';
 import 'widgets/ai_stylist_card.dart';
@@ -18,50 +19,24 @@ import 'widgets/user_avatar.dart';
 const _kBlob1 = Color(0x384F46E5);
 const _kBlob2 = Color(0x206352D2);
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => HomeViewModel(),
+      child: const _HomeBody(),
+    );
+  }
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  final WeatherService _weatherService = WeatherService();
-  WeatherModel? _weather;
-  bool _isLoading = true;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchWeather();
-  }
-
-  Future<void> _fetchWeather() async {
-    try {
-      final position = await _weatherService.determinePosition();
-      final weather = await _weatherService.fetchWeather(
-        position.latitude,
-        position.longitude,
-      );
-      if (mounted) {
-        setState(() {
-          _weather = weather;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.toString();
-          _isLoading = false;
-        });
-      }
-    }
-  }
+class _HomeBody extends StatelessWidget {
+  const _HomeBody();
 
   @override
   Widget build(BuildContext context) {
+    final vm = context.watch<HomeViewModel>();
     return Scaffold(
       backgroundColor: kBgColor,
       extendBodyBehindAppBar: true,
@@ -199,16 +174,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   const HeroSection(),
                   const SizedBox(height: 24),
                   DynamicWeatherCard(
-                    weather: _weather,
-                    isLoading: _isLoading,
-                    error: _error,
-                    onRetry: () {
-                      setState(() {
-                        _isLoading = true;
-                        _error = null;
-                      });
-                      _fetchWeather();
-                    },
+                    weather: vm.weather,
+                    isLoading: vm.isLoading,
+                    error: vm.error,
+                    onRetry: () => vm.fetchWeather(),
                   ),
                   const SizedBox(height: 16),
                   AiStylistCard(

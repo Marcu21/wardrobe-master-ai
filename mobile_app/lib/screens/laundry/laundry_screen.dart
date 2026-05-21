@@ -1,202 +1,82 @@
-import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:mobile_app/services/laundry_service.dart';
-import 'package:mobile_app/services/wardrobe_state_service.dart';
-import 'package:mobile_app/widgets/global_wardrobe_selector.dart';
+import 'package:provider/provider.dart';
 import 'package:mobile_app/theme/app_colors.dart';
+import 'package:mobile_app/widgets/global_wardrobe_selector.dart';
+import 'laundry_view_model.dart';
 import 'widgets/animated_alert.dart';
 import 'widgets/laundry_splits_modal.dart';
 import 'widgets/laundry_status_banner.dart';
 import 'widgets/virtual_basket_view.dart';
 import 'widgets/wardrobe_filter_chips.dart';
 import 'widgets/wardrobe_grid_item.dart';
+import 'package:mobile_app/services/laundry_service.dart';
 
 const _kBlob1 = Color(0x384F46E5);
 const _kBlob2 = Color(0x206352D2);
 
-class LaundryScreen extends StatefulWidget {
+Widget _buildBlobBackground() {
+  return Stack(
+    children: [
+      Positioned(
+        top: -70,
+        right: -50,
+        child: IgnorePointer(
+          child: ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: 45, sigmaY: 45),
+            child: Container(
+              width: 220,
+              height: 220,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: _kBlob1,
+              ),
+            ),
+          ),
+        ),
+      ),
+      Positioned(
+        top: 120,
+        left: -50,
+        child: IgnorePointer(
+          child: ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+            child: Container(
+              width: 160,
+              height: 160,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: _kBlob2,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+class LaundryScreen extends StatelessWidget {
   const LaundryScreen({super.key});
 
   @override
-  State<LaundryScreen> createState() => _LaundryScreenState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => LaundryViewModel(),
+      child: const _LaundryBody(),
+    );
+  }
 }
 
-class _LaundryScreenState extends State<LaundryScreen> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final LaundryService _laundryService = LaundryService();
-
-  List<Map<String, dynamic>> _allWardrobeItems = [];
-  final List<Map<String, dynamic>> _basketItems = [];
-
-  String _selectedCategory = 'All';
-  String _selectedSubCategory = 'All';
-
-  bool _isLoading = true;
-  String? _errorMessage;
-
-  StreamSubscription<QuerySnapshot>? _wardrobeSubscription;
-
-  @override
-  void initState() {
-    super.initState();
-    wardrobeStateService.addListener(_onWardrobeChanged);
-    _listenToWardrobe();
-  }
-
-  void _onWardrobeChanged() {
-    _listenToWardrobe();
-  }
-
-  void _listenToWardrobe() {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = 'User not logged in.';
-          _isLoading = false;
-        });
-      }
-      return;
-    }
-
-    _wardrobeSubscription?.cancel();
-
-    var query = _firestore
-        .collection('clothing')
-        .where('userId', isEqualTo: currentUser.uid);
-
-    final activeId = wardrobeStateService.activeWardrobeId;
-    if (activeId != null) {
-      query = query.where('wardrobe_id', isEqualTo: activeId);
-    }
-
-    _wardrobeSubscription = query.snapshots().listen(
-      (snapshot) {
-        final items = snapshot.docs.map((doc) {
-          final data = doc.data();
-          data['id'] = doc.id;
-          return data;
-        }).toList();
-
-        if (mounted) {
-          setState(() {
-            _allWardrobeItems = items;
-
-            final dbDirtyItems = items.where((item) {
-              final status = item['status']?.toString().toLowerCase();
-              final isDirty =
-                  item['is_dirty'] == true || item['isDirty'] == true;
-              return status == 'dirty' || status == 'laundry' || isDirty;
-            }).toList();
-
-            for (var dirty in dbDirtyItems) {
-              bool exists = _basketItems.any(
-                (bItem) => bItem['id'] == dirty['id'],
-              );
-              if (!exists) {
-                _basketItems.add(dirty);
-              }
-            }
-
-            _basketItems.removeWhere((basketItem) {
-              final serverItem = items.firstWhere(
-                (i) => i['id'] == basketItem['id'],
-                orElse: () => <String, dynamic>{},
-              );
-              if (serverItem.isEmpty) return true;
-
-              final status = serverItem['status']?.toString().toLowerCase();
-              if (status == 'clean' ||
-                  serverItem['is_dirty'] == false ||
-                  serverItem['isDirty'] == false) {
-                return true;
-              }
-              return false;
-            });
-
-            _isLoading = false;
-          });
-        }
-      },
-      onError: (error) {
-        if (mounted) {
-          setState(() {
-            _errorMessage =
-                'Failed to load wardrobe realtime. ${error.toString()}';
-            _isLoading = false;
-          });
-        }
-      },
-    );
-  }
-
-  @override
-  void dispose() {
-    wardrobeStateService.removeListener(_onWardrobeChanged);
-    _wardrobeSubscription?.cancel();
-    super.dispose();
-  }
-
-  void _addToBasket(Map<String, dynamic> item) {
-    setState(() {
-      _basketItems.add(item);
-    });
-  }
-
-  void _removeFromBasket(Map<String, dynamic> item) {
-    setState(() {
-      _basketItems.removeWhere((element) => element['id'] == item['id']);
-    });
-  }
-
-  Widget _buildBlobBackground() {
-    return Stack(
-      children: [
-        Positioned(
-          top: -70,
-          right: -50,
-          child: IgnorePointer(
-            child: ImageFiltered(
-              imageFilter: ImageFilter.blur(sigmaX: 45, sigmaY: 45),
-              child: Container(
-                width: 220,
-                height: 220,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _kBlob1,
-                ),
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          top: 120,
-          left: -50,
-          child: IgnorePointer(
-            child: ImageFiltered(
-              imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
-              child: Container(
-                width: 160,
-                height: 160,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _kBlob2,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+class _LaundryBody extends StatelessWidget {
+  const _LaundryBody();
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
+    final vm = context.watch<LaundryViewModel>();
+
+    if (vm.isLoading) {
       return Scaffold(
         backgroundColor: kBgColor,
         extendBodyBehindAppBar: true,
@@ -282,7 +162,7 @@ class _LaundryScreenState extends State<LaundryScreen> {
       );
     }
 
-    if (_errorMessage != null) {
+    if (vm.errorMessage != null) {
       return Scaffold(
         backgroundColor: kBgColor,
         extendBodyBehindAppBar: true,
@@ -301,7 +181,7 @@ class _LaundryScreenState extends State<LaundryScreen> {
             _buildBlobBackground(),
             Center(
               child: Text(
-                _errorMessage!,
+                vm.errorMessage!,
                 style: const TextStyle(color: Colors.red),
               ),
             ),
@@ -310,14 +190,15 @@ class _LaundryScreenState extends State<LaundryScreen> {
       );
     }
 
-    final result = _laundryService.analyzeBasket(_basketItems);
+    final result = vm.analysisResult;
+    final basketItems = vm.basketItems;
 
     Color statusColor;
     IconData statusIcon;
     String statusTitle;
     String statusSubtitle;
 
-    if (_basketItems.isEmpty) {
+    if (basketItems.isEmpty) {
       statusColor = Colors.blueGrey;
       statusIcon = CupertinoIcons.sparkles;
       statusTitle = 'Ready to Wash';
@@ -329,39 +210,26 @@ class _LaundryScreenState extends State<LaundryScreen> {
           statusIcon = CupertinoIcons.checkmark_circle;
           statusTitle = 'Safe to Wash';
           statusSubtitle =
-              '${_basketItems.length} item${_basketItems.length == 1 ? '' : 's'} in basket';
+              '${basketItems.length} item${basketItems.length == 1 ? '' : 's'} in basket';
           break;
         case LaundryStatus.Warning:
           statusColor = const Color(0xFFD97706);
           statusIcon = CupertinoIcons.exclamationmark_triangle;
           statusTitle = 'Warning';
           statusSubtitle =
-              '${_basketItems.length} item${_basketItems.length == 1 ? '' : 's'} — check alerts below';
+              '${basketItems.length} item${basketItems.length == 1 ? '' : 's'} — check alerts below';
           break;
         case LaundryStatus.Critical:
           statusColor = const Color(0xFFDC2626);
           statusIcon = CupertinoIcons.xmark_circle;
           statusTitle = 'Critical Issue';
           statusSubtitle =
-              '${_basketItems.length} item${_basketItems.length == 1 ? '' : 's'} — cannot wash together';
+              '${basketItems.length} item${basketItems.length == 1 ? '' : 's'} — cannot wash together';
           break;
       }
     }
 
-    final Set<String> basketItemIds = _basketItems
-        .map((e) => e['id'] as String)
-        .toSet();
-
-    final filteredDocs = _allWardrobeItems.where((doc) {
-      if (basketItemIds.contains(doc['id'])) return false;
-      final cat = doc['basic_info']?['category'] as String?;
-      final sub = doc['basic_info']?['sub_category'] as String?;
-      bool matchCategory =
-          (_selectedCategory == 'All') || (cat == _selectedCategory);
-      bool matchSubCategory =
-          (_selectedSubCategory == 'All') || (sub == _selectedSubCategory);
-      return matchCategory && matchSubCategory;
-    }).toList();
+    final filteredDocs = vm.filteredDocs;
 
     return Scaffold(
       backgroundColor: kBgColor,
@@ -372,7 +240,6 @@ class _LaundryScreenState extends State<LaundryScreen> {
             child: CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [
-                // 1. Title (scrolls away)
                 const SliverAppBar(
                   pinned: false,
                   floating: false,
@@ -391,7 +258,6 @@ class _LaundryScreenState extends State<LaundryScreen> {
                   actions: [GlobalWardrobeSelector(isActionItem: true)],
                 ),
 
-                // 2. Sticky Status Banner
                 SliverPersistentHeader(
                   pinned: true,
                   delegate: StatusHeaderDelegate(
@@ -402,13 +268,12 @@ class _LaundryScreenState extends State<LaundryScreen> {
                       statusTitle: statusTitle,
                       statusSubtitle: statusSubtitle,
                       recommendedTemp: result.recommendedTemp,
-                      hasItems: _basketItems.isNotEmpty,
+                      hasItems: basketItems.isNotEmpty,
                     ),
                   ),
                 ),
 
-                // 3. Alerts
-                if (_basketItems.isNotEmpty && result.alerts.isNotEmpty)
+                if (basketItems.isNotEmpty && result.alerts.isNotEmpty)
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
@@ -438,8 +303,8 @@ class _LaundryScreenState extends State<LaundryScreen> {
                                   child: GestureDetector(
                                     onTap: () => showLaundryAutoSplitModal(
                                       context,
-                                      _basketItems,
-                                      _laundryService,
+                                      basketItems.toList(),
+                                      vm.laundryService,
                                     ),
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
@@ -455,9 +320,7 @@ class _LaundryScreenState extends State<LaundryScreen> {
                                         ),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: statusColor.withOpacity(
-                                              0.12,
-                                            ),
+                                            color: statusColor.withOpacity(0.12),
                                             blurRadius: 12,
                                             offset: const Offset(0, 4),
                                           ),
@@ -492,15 +355,14 @@ class _LaundryScreenState extends State<LaundryScreen> {
                     ),
                   ),
 
-                // 4. Virtual Basket & Filters
                 SliverToBoxAdapter(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       VirtualBasketView(
-                        basketItems: _basketItems,
+                        basketItems: basketItems.toList(),
                         statusColor: statusColor,
-                        onRemove: _removeFromBasket,
+                        onRemove: vm.removeFromBasket,
                       ),
                       Padding(
                         padding: const EdgeInsets.fromLTRB(20, 24, 20, 4),
@@ -530,23 +392,17 @@ class _LaundryScreenState extends State<LaundryScreen> {
                         ),
                       ),
                       WardrobeFilterChips(
-                        allWardrobeItems: _allWardrobeItems,
-                        selectedCategory: _selectedCategory,
-                        selectedSubCategory: _selectedSubCategory,
-                        onCategoryChanged: (val) => setState(() {
-                          _selectedCategory = val;
-                          _selectedSubCategory = 'All';
-                        }),
-                        onSubCategoryChanged: (val) => setState(() {
-                          _selectedSubCategory = val;
-                        }),
+                        allWardrobeItems: vm.allWardrobeItems,
+                        selectedCategory: vm.selectedCategory,
+                        selectedSubCategory: vm.selectedSubCategory,
+                        onCategoryChanged: vm.setCategory,
+                        onSubCategoryChanged: vm.setSubCategory,
                       ),
                       const SizedBox(height: 8),
                     ],
                   ),
                 ),
 
-                // 5. Wardrobe Grid
                 filteredDocs.isEmpty
                     ? SliverToBoxAdapter(
                         child: Center(
@@ -587,17 +443,17 @@ class _LaundryScreenState extends State<LaundryScreen> {
                         sliver: SliverGrid(
                           gridDelegate:
                               const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                crossAxisSpacing: 8.0,
-                                mainAxisSpacing: 8.0,
-                                childAspectRatio: 0.75,
-                              ),
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 8.0,
+                            mainAxisSpacing: 8.0,
+                            childAspectRatio: 0.75,
+                          ),
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
                               final item = filteredDocs[index];
                               return WardrobeGridItem(
                                 item: item,
-                                onTap: () => _addToBasket(item),
+                                onTap: () => vm.addToBasket(item),
                               );
                             },
                             childCount: filteredDocs.length,

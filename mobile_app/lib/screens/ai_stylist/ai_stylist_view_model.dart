@@ -6,6 +6,10 @@ import 'package:mobile_app/services/wardrobe_state_service.dart';
 import 'chat_message.dart';
 
 class AiStylistViewModel extends ChangeNotifier {
+  // Shared session-scoped singleton — persists for the lifetime of the app
+  // process so chat history survives navigation pops.
+  static final AiStylistViewModel shared = AiStylistViewModel._();
+
   final ApiService _apiService;
   final FirebaseService _firebaseService;
   final WeatherService _weatherService;
@@ -21,7 +25,7 @@ class AiStylistViewModel extends ChangeNotifier {
   /// Exposed so OutfitMessageCard can call Firebase directly.
   FirebaseService get firebaseService => _firebaseService;
 
-  AiStylistViewModel()
+  AiStylistViewModel._()
       : _apiService = ApiService(),
         _firebaseService = FirebaseService(),
         _weatherService = WeatherService();

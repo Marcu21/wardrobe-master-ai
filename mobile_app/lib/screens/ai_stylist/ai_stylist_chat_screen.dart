@@ -99,8 +99,8 @@ class AiStylistChatScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<AiStylistViewModel>(
-      create: (_) => AiStylistViewModel(),
+    return ChangeNotifierProvider<AiStylistViewModel>.value(
+      value: AiStylistViewModel.shared,
       child: const _AiStylistChatBody(),
     );
   }

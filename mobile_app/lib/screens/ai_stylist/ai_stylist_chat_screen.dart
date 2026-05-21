@@ -1,14 +1,12 @@
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:mobile_app/services/api_service.dart';
-import 'package:mobile_app/services/firebase_service.dart';
-import 'package:mobile_app/services/weather_service.dart';
-import 'package:mobile_app/services/wardrobe_state_service.dart';
+import 'package:provider/provider.dart';
 import 'package:mobile_app/widgets/global_wardrobe_selector.dart';
 import 'package:mobile_app/widgets/glassmorphism_card.dart';
 import 'package:mobile_app/utils/outfit_sorting_utils.dart';
 import 'package:mobile_app/theme/app_colors.dart';
+import 'ai_stylist_view_model.dart';
 import 'chat_message.dart';
 import 'widgets/typing_indicator.dart';
 import 'widgets/outfit_message_card.dart';
@@ -18,21 +16,18 @@ const _kBlob1 = Color(0x38C026D3);
 const _kBlob2 = Color(0x20A21CAF);
 
 class _BlobPainter extends CustomPainter {
-  final double t; // animation value 0..1
+  final double t;
   _BlobPainter(this.t);
 
   @override
   void paint(Canvas canvas, Size size) {
     final p1 = Paint()..color = _kBlob1;
     final p2 = Paint()..color = _kBlob2;
-
-    // Principal indigo blob
     canvas.drawCircle(
       Offset(size.width * 0.90 + 10 * (0.5 - t), -size.height * 0.02 + 8 * t),
       size.width * 0.38,
       p1,
     );
-    // Secondary violet blob
     canvas.drawCircle(
       Offset(size.width * 0.04 - 6 * t, size.height * 0.10 + 10 * (0.5 - t)),
       size.width * 0.22,
@@ -79,7 +74,6 @@ class _AnimatedBlobBgState extends State<_AnimatedBlobBg>
         return Stack(
           children: [
             Positioned.fill(child: ColoredBox(color: kBgColor)),
-            // Blobs — CustomPaint needs a child to inherit constraints
             Positioned.fill(
               child: ImageFiltered(
                 imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
@@ -98,27 +92,39 @@ class _AnimatedBlobBgState extends State<_AnimatedBlobBg>
   }
 }
 
-class AiStylistChatScreen extends StatefulWidget {
+// ─── Entry point ────────────────────────────────────────────────────────────
+
+class AiStylistChatScreen extends StatelessWidget {
   const AiStylistChatScreen({super.key});
 
   @override
-  State<AiStylistChatScreen> createState() => _AiStylistChatScreenState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider<AiStylistViewModel>(
+      create: (_) => AiStylistViewModel(),
+      child: const _AiStylistChatBody(),
+    );
+  }
 }
 
-class _AiStylistChatScreenState extends State<AiStylistChatScreen>
+// ─── Body (UI-only state: scroll controllers + input focus animation) ────────
+
+class _AiStylistChatBody extends StatefulWidget {
+  const _AiStylistChatBody();
+
+  @override
+  State<_AiStylistChatBody> createState() => _AiStylistChatBodyState();
+}
+
+class _AiStylistChatBodyState extends State<_AiStylistChatBody>
     with SingleTickerProviderStateMixin {
-  final List<ChatMessage> _messages = [];
-  final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final ScrollController _emptyScrollController = ScrollController();
-  bool _isTyping = false;
-
-  late AnimationController _inputFocusCtrl;
   bool _inputFocused = false;
+  late AnimationController _inputFocusCtrl;
 
-  final ApiService _apiService = ApiService();
-  final FirebaseService _firebaseService = FirebaseService();
-  final WeatherService _weatherService = WeatherService();
+  // Scroll-on-new-content tracking (updated in build — no setState needed).
+  int _prevMessageCount = 0;
+  bool _prevIsTyping = false;
 
   @override
   void initState() {
@@ -132,7 +138,6 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
   @override
   void dispose() {
     _inputFocusCtrl.dispose();
-    _controller.dispose();
     _scrollController.dispose();
     _emptyScrollController.dispose();
     super.dispose();
@@ -150,106 +155,22 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
     });
   }
 
-  Future<void> _sendMessage(String text) async {
-    if (text.trim().isEmpty) return;
-    setState(() {
-      _messages.add(ChatMessage(role: 'user', text: text));
-      _isTyping = true;
-    });
-    _controller.clear();
-    _scrollToBottom();
+  // ── Empty state ─────────────────────────────────────────────────────────
 
-    String currentWeatherStr = "Unknown Weather";
-    String hourlyForecastStr = "Unknown Forecast";
-    final weather = _weatherService.cachedWeather;
-    if (weather != null) {
-      currentWeatherStr =
-          'Currently ${weather.temperature}°C and ${weather.condition} in ${weather.cityName}';
-      final buffer = StringBuffer();
-      for (var item in weather.forecast) {
-        buffer.write(
-          '${item.timeLabel}: ${item.temperature}°C (${item.condition}), ',
-        );
-      }
-      hourlyForecastStr = buffer.toString();
-    }
-
-    try {
-      final response = await _apiService.generateOutfit(
-        userPrompt: text,
-        currentWeather: currentWeatherStr,
-        hourlyForecast: hourlyForecastStr,
-        wardrobeId: wardrobeStateService.activeWardrobeId,
-      );
-
-      final explanation = response['explanation'] as String;
-      final selectedIds = List<String>.from(
-        response['selected_item_ids'] ?? [],
-      );
-      final overallScore = response['overall_score'] as int?;
-      final scores = response['scores'] as Map<String, dynamic>?;
-
-      List<Map<String, dynamic>> outfitItems = [];
-      if (selectedIds.isNotEmpty) {
-        outfitItems = await _firebaseService.getItemsByIds(selectedIds);
-      }
-
-      if (mounted) {
-        setState(() {
-          _isTyping = false;
-          if (outfitItems.isNotEmpty) {
-            _messages.add(
-              ChatMessage(
-                role: 'ai',
-                text: explanation,
-                isOutfit: true,
-                outfitItems: outfitItems,
-                overallScore: overallScore,
-                scores: scores,
-                userPrompt: text,
-                weatherContext:
-                    '$currentWeatherStr | Forecast: $hourlyForecastStr',
-              ),
-            );
-          } else {
-            _messages.add(ChatMessage(role: 'ai', text: explanation));
-          }
-        });
-        _scrollToBottom();
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isTyping = false;
-          _messages.add(
-            ChatMessage(
-              role: 'ai',
-              text:
-                  "Sorry, I'm having trouble connecting to my fashion brain right now. Please try again later.",
-            ),
-          );
-        });
-        _scrollToBottom();
-      }
-    }
-  }
-
-  // Empty state
-
-  Widget _buildEmptyState() {
-    final suggestions = [
-      "Office",
-      "Workout",
-      "Casual Coffee",
-      "Night Out",
-      "Date Night",
-      "City Walk",
+  Widget _buildEmptyState(BuildContext context, AiStylistViewModel vm) {
+    const suggestions = [
+      'Office',
+      'Workout',
+      'Casual Coffee',
+      'Night Out',
+      'Date Night',
+      'City Walk',
     ];
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final topPad = MediaQuery.of(context).padding.top + kToolbarHeight + 16;
-
+        final topPad =
+            MediaQuery.of(context).padding.top + kToolbarHeight + 16;
         return Stack(
           children: [
             Positioned.fill(
@@ -274,7 +195,6 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Hero icon
                           Container(
                             width: 56,
                             height: 56,
@@ -333,7 +253,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
                             runSpacing: 8,
                             children: suggestions.map((s) {
                               return GestureDetector(
-                                onTap: () => _sendMessage(s),
+                                onTap: () => vm.sendMessage(s),
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 14,
@@ -427,9 +347,9 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
     );
   }
 
-  // Message bubble
+  // ── Message bubble ───────────────────────────────────────────────────────
 
-  Widget _buildMessage(ChatMessage message) {
+  Widget _buildMessage(AiStylistViewModel vm, ChatMessage message) {
     final isUser = message.role == 'user';
 
     if (message.isOutfit) {
@@ -438,8 +358,11 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
       return OutfitMessageCard(
         message: message,
         items: items,
-        firebaseService: _firebaseService,
-        setParentState: setState,
+        firebaseService: vm.firebaseService,
+        setParentState: (fn) {
+          fn();
+          vm.notifyUpdate();
+        },
       );
     }
 
@@ -458,12 +381,10 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(20),
             topRight: const Radius.circular(20),
-            bottomLeft: isUser
-                ? const Radius.circular(20)
-                : const Radius.circular(5),
-            bottomRight: isUser
-                ? const Radius.circular(5)
-                : const Radius.circular(20),
+            bottomLeft:
+                isUser ? const Radius.circular(20) : const Radius.circular(5),
+            bottomRight:
+                isUser ? const Radius.circular(5) : const Radius.circular(20),
           ),
           child: BackdropFilter(
             filter: ImageFilter.blur(
@@ -471,7 +392,8 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
               sigmaY: isUser ? 0 : 8,
             ),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               constraints: const BoxConstraints(maxWidth: 270),
               decoration: BoxDecoration(
                 gradient: isUser
@@ -529,9 +451,9 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
     );
   }
 
-  // Input bar
+  // ── Input bar ────────────────────────────────────────────────────────────
 
-  Widget _buildInputBar() {
+  Widget _buildInputBar(BuildContext context, AiStylistViewModel vm) {
     return ClipRect(
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
@@ -540,7 +462,10 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.72),
             border: Border(
-              top: BorderSide(color: Colors.white.withOpacity(0.85), width: 1),
+              top: BorderSide(
+                color: Colors.white.withOpacity(0.85),
+                width: 1,
+              ),
             ),
           ),
           child: Row(
@@ -565,7 +490,7 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
                     onFocusChange: (focused) =>
                         setState(() => _inputFocused = focused),
                     child: TextField(
-                      controller: _controller,
+                      controller: vm.controller,
                       textCapitalization: TextCapitalization.sentences,
                       maxLines: null,
                       style: const TextStyle(
@@ -584,14 +509,14 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
                           vertical: 12,
                         ),
                       ),
-                      onSubmitted: _sendMessage,
+                      onSubmitted: vm.sendMessage,
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: 10),
               GestureDetector(
-                onTap: () => _sendMessage(_controller.text),
+                onTap: () => vm.sendMessage(vm.controller.text),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   width: 44,
@@ -621,10 +546,23 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
     );
   }
 
-  // Full build
+  // ── Build ────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
+    final vm = context.watch<AiStylistViewModel>();
+
+    // Scroll to bottom whenever a new message appears or typing starts.
+    if (vm.messages.length > _prevMessageCount ||
+        (vm.isTyping && !_prevIsTyping)) {
+      _prevMessageCount = vm.messages.length;
+      _prevIsTyping = vm.isTyping;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+    } else {
+      _prevMessageCount = vm.messages.length;
+      _prevIsTyping = vm.isTyping;
+    }
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: kBgColor,
@@ -657,7 +595,6 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
       ),
       body: Stack(
         children: [
-          // Background blobs
           Positioned(
             top: -70,
             right: -50,
@@ -692,32 +629,34 @@ class _AiStylistChatScreenState extends State<AiStylistChatScreen>
               ),
             ),
           ),
-
           Column(
             children: [
               Expanded(
-                child: _messages.isEmpty
-                    ? _buildEmptyState()
+                child: vm.messages.isEmpty
+                    ? _buildEmptyState(context, vm)
                     : ListView.builder(
                         controller: _scrollController,
                         physics: const BouncingScrollPhysics(),
                         padding: EdgeInsets.only(
-                          top:
-                              MediaQuery.of(context).padding.top +
+                          top: MediaQuery.of(context).padding.top +
                               kToolbarHeight +
                               16,
                           bottom: 16,
                         ),
-                        itemCount: _messages.length + (_isTyping ? 1 : 0),
+                        itemCount:
+                            vm.messages.length + (vm.isTyping ? 1 : 0),
                         itemBuilder: (context, index) {
-                          if (index == _messages.length) {
+                          if (index == vm.messages.length) {
                             return const TypingIndicator();
                           }
-                          return _buildMessage(_messages[index]);
+                          return _buildMessage(vm, vm.messages[index]);
                         },
                       ),
               ),
-              SafeArea(top: false, child: _buildInputBar()),
+              SafeArea(
+                top: false,
+                child: _buildInputBar(context, vm),
+              ),
             ],
           ),
         ],

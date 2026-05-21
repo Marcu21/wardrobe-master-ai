@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_app/services/firebase_service.dart';
-import 'package:mobile_app/screens/trip_view/trip_view_screen.dart';
+import 'package:mobile_app/navigation/app_routes.dart';
 
 class TripCard extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -54,20 +54,17 @@ class TripCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => TripViewScreen(
-                tripId: docId,
-                destination: destination,
-                days: calculatedDays,
-                vibe: vibe,
-                initialTripData: data,
-              ),
-            ),
-          );
-        },
+        onTap: () => Navigator.pushNamed(
+          context,
+          AppRoutes.tripView,
+          arguments: TripViewArgs(
+            tripId: docId,
+            destination: destination,
+            days: calculatedDays,
+            vibe: vibe,
+            initialTripData: data,
+          ),
+        ),
         child: Stack(
           children: [
             Padding(

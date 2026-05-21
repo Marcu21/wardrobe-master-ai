@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_app/screens/packing_setup/packing_setup_screen.dart';
+import 'package:mobile_app/navigation/app_routes.dart';
 
 class MyTripsEmptyState extends StatelessWidget {
   const MyTripsEmptyState({super.key});
@@ -61,14 +61,8 @@ class MyTripsEmptyState extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const PackingSetupScreen(),
-                    ),
-                  );
-                },
+                onPressed: () =>
+                    Navigator.pushNamed(context, AppRoutes.tripSetup),
                 icon: const Icon(Icons.add),
                 label: const Text(
                   "Start Planning",

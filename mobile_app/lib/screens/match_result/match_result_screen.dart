@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:mobile_app/screens/add_clothing/add_clothing_screen.dart';
+import 'package:mobile_app/navigation/app_routes.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import 'package:mobile_app/widgets/scale_button.dart';
 import 'widgets/match_result_header.dart';
@@ -260,13 +260,12 @@ class _MatchResultBodyState extends State<_MatchResultBody> {
                   const SizedBox(height: 32),
                   ScaleButton(
                     onTap: () {
-                      Navigator.pushReplacement(
+                      Navigator.pushReplacementNamed(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => AddClothingScreen(
-                            initialAnalysisResult: widget.scannedItemData,
-                            initialImageFile: widget.imageFile,
-                          ),
+                        AppRoutes.addClothing,
+                        arguments: AddClothingArgs(
+                          initialAnalysisResult: widget.scannedItemData,
+                          initialImageFile: widget.imageFile,
                         ),
                       );
                     },

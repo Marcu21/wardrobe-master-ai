@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:mobile_app/screens/clothing_detail/clothing_detail_screen.dart';
+import 'package:mobile_app/navigation/app_routes.dart';
 import 'package:mobile_app/widgets/global_wardrobe_selector.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import 'wardrobe_gallery_view_model.dart';
@@ -82,11 +82,10 @@ class _WardrobeGalleryBody extends StatelessWidget {
             return WardrobeCard(
               key: ValueKey(docs[index].id),
               data: data,
-              onTap: () => Navigator.push(
+              onTap: () => Navigator.pushNamed(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => ClothingDetailScreen(itemData: data),
-                ),
+                AppRoutes.clothingDetail,
+                arguments: ClothingDetailArgs(data),
               ),
             );
           },

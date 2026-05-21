@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:mobile_app/screens/clothing_detail/clothing_detail_screen.dart';
+import 'package:mobile_app/navigation/app_routes.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import 'widgets/stat_tile.dart';
 import 'widgets/neglected_card.dart';
@@ -542,13 +542,10 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
                                       item: item,
                                       accentColor: _orange,
                                       accentBgColor: _orangeLight,
-                                      onTap: () => Navigator.push(
+                                      onTap: () => Navigator.pushNamed(
                                         context,
-                                        MaterialPageRoute(
-                                          builder: (_) => ClothingDetailScreen(
-                                            itemData: item,
-                                          ),
-                                        ),
+                                        AppRoutes.clothingDetail,
+                                        arguments: ClothingDetailArgs(item),
                                       ),
                                     );
                                   },
@@ -577,12 +574,10 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
                                   rank: index + 1,
                                   accentColor: _green,
                                   accentBgColor: _greenLight,
-                                  onTap: () => Navigator.push(
+                                  onTap: () => Navigator.pushNamed(
                                     context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          ClothingDetailScreen(itemData: item),
-                                    ),
+                                    AppRoutes.clothingDetail,
+                                    arguments: ClothingDetailArgs(item),
                                   ),
                                 );
                               }),
@@ -609,12 +604,10 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
                                   rank: index + 1,
                                   accentColor: _red,
                                   accentBgColor: _redLight,
-                                  onTap: () => Navigator.push(
+                                  onTap: () => Navigator.pushNamed(
                                     context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          ClothingDetailScreen(itemData: item),
-                                    ),
+                                    AppRoutes.clothingDetail,
+                                    arguments: ClothingDetailArgs(item),
                                   ),
                                 );
                               }),

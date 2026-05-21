@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:mobile_app/screens/item_selection/item_selection_screen.dart';
+import 'package:mobile_app/navigation/app_routes.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import 'widgets/trip_skeleton_loader.dart';
 import 'widgets/trip_suitcase_tab.dart';
@@ -57,13 +57,10 @@ class _TripViewBody extends StatelessWidget {
 
   void _openItemSelection(BuildContext context) async {
     final vm = context.read<TripViewViewModel>();
-    final newIds = await Navigator.push<List<String>>(
+    final newIds = await Navigator.pushNamed<List<String>>(
       context,
-      MaterialPageRoute(
-        builder: (_) => ItemSelectionScreen(
-          initialSelectedIds: List.from(vm.editableItemIds),
-        ),
-      ),
+      AppRoutes.itemSelection,
+      arguments: ItemSelectionArgs(List.from(vm.editableItemIds)),
     );
     if (newIds != null && context.mounted) {
       vm.updateEditableItems(newIds);

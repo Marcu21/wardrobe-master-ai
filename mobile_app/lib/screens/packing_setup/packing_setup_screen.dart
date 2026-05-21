@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_app/widgets/global_wardrobe_selector.dart';
-import 'package:mobile_app/screens/trip_view/trip_view_screen.dart';
+import 'package:mobile_app/navigation/app_routes.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import 'widgets/setup_vibe_chips.dart';
 import 'widgets/setup_luggage_selector.dart';
@@ -70,19 +70,18 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
 
     final days = _selectedDateRange!.duration.inDays + 1;
 
-    Navigator.push(
+    Navigator.pushNamed(
       context,
-      MaterialPageRoute(
-        builder: (_) => TripViewScreen(
-          destination: _destinationController.text.trim(),
-          days: days,
-          vibe: _selectedVibe!,
-          dateRange: _selectedDateRange!,
-          tripPlans: _tripPlansController.text.trim().isNotEmpty
-              ? _tripPlansController.text.trim()
-              : null,
-          luggageSize: _selectedLuggage,
-        ),
+      AppRoutes.tripView,
+      arguments: TripViewArgs(
+        destination: _destinationController.text.trim(),
+        days: days,
+        vibe: _selectedVibe!,
+        dateRange: _selectedDateRange!,
+        tripPlans: _tripPlansController.text.trim().isNotEmpty
+            ? _tripPlansController.text.trim()
+            : null,
+        luggageSize: _selectedLuggage,
       ),
     );
   }

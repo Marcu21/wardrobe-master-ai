@@ -3,8 +3,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:mobile_app/navigation/app_routes.dart';
 import 'package:mobile_app/widgets/smart_outfit_card.dart';
-import 'package:mobile_app/screens/outfit_detail/outfit_detail_screen.dart';
 
 class CalendarOutfitCarousel extends StatelessWidget {
   final List<Map<String, dynamic>> dayOutfits;
@@ -98,13 +98,12 @@ class CalendarOutfitCarousel extends StatelessWidget {
                       key: ValueKey(data['id']),
                       outfitData: data,
                       outfitId: data['id'] ?? '',
-                      onTap: () => Navigator.push(
+                      onTap: () => Navigator.pushNamed(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => OutfitDetailScreen(
-                            outfitData: data,
-                            outfitId: data['id'] ?? '',
-                          ),
+                        AppRoutes.outfitDetail,
+                        arguments: OutfitDetailArgs(
+                          outfitData: data,
+                          outfitId: data['id'] ?? '',
                         ),
                       ),
                       footer: ClipRRect(

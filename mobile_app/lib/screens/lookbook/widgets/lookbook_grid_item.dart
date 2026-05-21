@@ -2,8 +2,8 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:mobile_app/navigation/app_routes.dart';
 import 'package:mobile_app/widgets/smart_outfit_card.dart';
-import 'package:mobile_app/screens/outfit_detail/outfit_detail_screen.dart';
 
 String _formatDate(Timestamp? timestamp) {
   if (timestamp == null) return '';
@@ -32,14 +32,10 @@ class LookbookGridItem extends StatelessWidget {
       key: ValueKey(outfitId),
       outfitData: outfitData,
       outfitId: outfitId,
-      onTap: () => Navigator.push(
+      onTap: () => Navigator.pushNamed(
         context,
-        MaterialPageRoute(
-          builder: (_) => OutfitDetailScreen(
-            outfitData: outfitData,
-            outfitId: outfitId,
-          ),
-        ),
+        AppRoutes.outfitDetail,
+        arguments: OutfitDetailArgs(outfitData: outfitData, outfitId: outfitId),
       ),
       badge: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),

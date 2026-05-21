@@ -3,10 +3,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_app/services/firebase_service.dart';
 import 'package:mobile_app/theme/app_colors.dart';
+import 'package:mobile_app/navigation/app_routes.dart';
 import 'package:mobile_app/widgets/glassmorphism_card.dart';
 import 'package:mobile_app/widgets/save_outfit_dialog.dart';
 import 'package:mobile_app/widgets/smart_clothing_image.dart';
-import 'package:mobile_app/screens/virtual_dressing_room/virtual_dressing_room_screen.dart';
 import '../chat_message.dart';
 import '../dialogs/vertical_preview_dialog.dart';
 import 'feedback_buttons.dart';
@@ -543,12 +543,11 @@ class _OutfitMessageCardState extends State<OutfitMessageCard> {
                               final ids = items
                                   .map((e) => e['id'].toString())
                                   .toList();
-                              Navigator.push(
+                              Navigator.pushNamed(
                                 context,
-                                MaterialPageRoute(
-                                  builder: (_) => VirtualDressingRoomScreen(
-                                    initialItemIds: ids,
-                                  ),
+                                AppRoutes.dressingRoom,
+                                arguments: VirtualDressingRoomArgs(
+                                  initialItemIds: ids,
                                 ),
                               );
                             },

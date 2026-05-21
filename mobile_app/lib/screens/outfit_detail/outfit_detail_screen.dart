@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:mobile_app/screens/virtual_dressing_room/virtual_dressing_room_screen.dart';
+import 'package:mobile_app/navigation/app_routes.dart';
 import 'package:mobile_app/widgets/scale_button.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import 'package:mobile_app/widgets/glassmorphism_card.dart';
@@ -749,12 +749,11 @@ class _OutfitDetailBody extends StatelessWidget {
                           vm.outfitData['item_ids'] ?? [];
                       final List<String> itemIds =
                           itemIdsDynamic.map((e) => e.toString()).toList();
-                      Navigator.push(
+                      Navigator.pushNamed(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => VirtualDressingRoomScreen(
-                            initialItemIds: itemIds,
-                          ),
+                        AppRoutes.dressingRoom,
+                        arguments: VirtualDressingRoomArgs(
+                          initialItemIds: itemIds,
                         ),
                       );
                     },

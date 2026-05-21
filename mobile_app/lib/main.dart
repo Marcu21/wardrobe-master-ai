@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'package:mobile_app/screens/auth_wrapper.dart';
-
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'navigation/app_router.dart';
+import 'navigation/app_routes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,7 +39,8 @@ class WardrobeApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const AuthWrapper(),
+      initialRoute: AppRoutes.auth,
+      onGenerateRoute: AppRouter.generateRoute,
     );
   }
 }

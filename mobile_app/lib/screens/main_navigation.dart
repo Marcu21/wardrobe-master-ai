@@ -1,8 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:mobile_app/navigation/app_routes.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import 'home/home_screen.dart';
-import 'add_clothing/add_clothing_screen.dart';
 import 'wardrobe_gallery/wardrobe_gallery_screen.dart';
 import 'lookbook/lookbook_screen.dart';
 import 'laundry/laundry_screen.dart';
@@ -32,10 +32,8 @@ class _MainNavigationState extends State<MainNavigation> {
       bottomNavigationBar: _buildBottomBar(),
       floatingActionButton: _selectedIndex == 1
           ? FloatingActionButton(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AddClothingScreen()),
-              ),
+              onPressed: () =>
+                  Navigator.pushNamed(context, AppRoutes.addClothing),
               backgroundColor: Colors.black87,
               elevation: 4,
               child: const Icon(Icons.add, color: Colors.white, size: 22),

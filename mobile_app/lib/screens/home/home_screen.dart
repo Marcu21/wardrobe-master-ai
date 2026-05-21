@@ -2,12 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/firebase_service.dart';
-import '../ai_stylist/ai_stylist_chat_screen.dart';
-import '../calendar/calendar_screen.dart';
-import '../sustainability/sustainability_screen.dart';
-import '../shopping_assistant/shopping_assistant_screen.dart';
-import '../my_trips/my_trips_screen.dart';
-import '../virtual_dressing_room/virtual_dressing_room_screen.dart';
+import 'package:mobile_app/navigation/app_routes.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import 'home_view_model.dart';
 import 'widgets/weather_card.dart';
@@ -64,17 +59,13 @@ class _HomeBody extends StatelessWidget {
               Icons.calendar_month_outlined,
               color: Colors.black87,
             ),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const CalendarScreen()),
-            ),
+            onPressed: () =>
+                Navigator.pushNamed(context, AppRoutes.calendar),
           ),
           IconButton(
             icon: const Icon(Icons.eco_outlined, color: Colors.black87),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const SustainabilityScreen()),
-            ),
+            onPressed: () =>
+                Navigator.pushNamed(context, AppRoutes.sustainability),
           ),
           PopupMenuButton<String>(
             offset: const Offset(0, 48),
@@ -181,25 +172,17 @@ class _HomeBody extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   AiStylistCard(
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const AiStylistChatScreen()),
-                    ),
+                    onTap: () =>
+                        Navigator.pushNamed(context, AppRoutes.aiStylist),
                   ),
                   const SizedBox(height: 12),
                   QuickActionsColumn(
-                    onDressingRoomTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const VirtualDressingRoomScreen()),
-                    ),
-                    onShoppingTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ShoppingAssistantScreen()),
-                    ),
-                    onSmartPackingTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const MyTripsScreen()),
-                    ),
+                    onDressingRoomTap: () =>
+                        Navigator.pushNamed(context, AppRoutes.dressingRoom),
+                    onShoppingTap: () =>
+                        Navigator.pushNamed(context, AppRoutes.shopping),
+                    onSmartPackingTap: () =>
+                        Navigator.pushNamed(context, AppRoutes.trips),
                   ),
                   const SizedBox(height: kBottomNavigationBarHeight + 66),
                 ],

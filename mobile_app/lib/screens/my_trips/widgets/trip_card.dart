@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_app/services/trip_repository.dart';
 import 'package:mobile_app/navigation/app_routes.dart';
+import 'package:mobile_app/widgets/custom_snackbar.dart';
 
 class TripCard extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -208,18 +209,16 @@ class TripCard extends StatelessWidget {
                     try {
                       await TripRepository().deleteTrip(docId);
                       if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Trip deleted successfully."),
-                          ),
+                        CustomSnackBar.showSuccess(
+                          context,
+                          'Trip deleted successfully.',
                         );
                       }
                     } catch (e) {
                       if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("Failed to delete trip: $e"),
-                          ),
+                        CustomSnackBar.showError(
+                          context,
+                          'Failed to delete trip: $e',
                         );
                       }
                     }

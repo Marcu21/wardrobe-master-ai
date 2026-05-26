@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:mobile_app/services/auth_service.dart';
 import 'package:mobile_app/theme/app_colors.dart';
+import 'package:mobile_app/widgets/custom_snackbar.dart';
 import 'widgets/login_header.dart';
 import 'widgets/login_form_card.dart';
 
@@ -75,15 +76,9 @@ class _LoginScreenState extends State<LoginScreen>
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceAll('Exception: ', '')),
-            backgroundColor: const Color(0xFFDC2626),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
+        CustomSnackBar.showError(
+          context,
+          e.toString().replaceAll('Exception: ', ''),
         );
         setState(() => _isLoading = false);
       }
@@ -94,17 +89,9 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() => _isLoading = true);
     final credentials = await AuthService().signInWithGoogle();
     if (mounted && credentials == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Failed to sign in with Google. Please try again.',
-          ),
-          backgroundColor: const Color(0xFFDC2626),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
+      CustomSnackBar.showError(
+        context,
+        'Failed to sign in with Google. Please try again.',
       );
       setState(() => _isLoading = false);
     }

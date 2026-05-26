@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile_app/navigation/app_routes.dart';
+import 'package:mobile_app/widgets/custom_snackbar.dart';
 import 'package:mobile_app/widgets/scale_button.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import 'package:mobile_app/widgets/glassmorphism_card.dart';
@@ -125,27 +126,9 @@ class _OutfitDetailBody extends StatelessWidget {
     if (!context.mounted) return;
     Navigator.pop(context);
     if (error == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Changes saved successfully!'),
-          backgroundColor: const Color(0xFF16A34A),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+      CustomSnackBar.showSuccess(context, 'Changes saved successfully!');
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error saving changes: $error'),
-          backgroundColor: const Color(0xFFDC2626),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+      CustomSnackBar.showError(context, 'Error saving changes: $error');
     }
   }
 
@@ -240,16 +223,7 @@ class _OutfitDetailBody extends StatelessWidget {
       if (error == null) {
         Navigator.pop(context);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error deleting outfit: $error'),
-            backgroundColor: const Color(0xFFDC2626),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
+        CustomSnackBar.showError(context, 'Error deleting outfit: $error');
       }
     }
   }
@@ -342,29 +316,12 @@ class _OutfitDetailBody extends StatelessWidget {
     if (!context.mounted) return;
     Navigator.pop(context);
     if (error == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Outfit logged! Your style history has been updated.',
-          ),
-          backgroundColor: const Color(0xFF16A34A),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
+      CustomSnackBar.showSuccess(
+        context,
+        'Outfit logged! Your style history has been updated.',
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error logging wear: $error'),
-          backgroundColor: const Color(0xFFDC2626),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+      CustomSnackBar.showError(context, 'Error logging wear: $error');
     }
   }
 

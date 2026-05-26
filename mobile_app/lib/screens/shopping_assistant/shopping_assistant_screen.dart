@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mobile_app/services/api_service.dart';
 import 'package:mobile_app/navigation/app_routes.dart';
 import 'package:mobile_app/theme/app_colors.dart';
+import 'package:mobile_app/widgets/custom_snackbar.dart';
 import 'widgets/shopping_initial_view.dart';
 import 'widgets/shopping_preview_view.dart';
 import 'widgets/shopping_loading_view.dart';
@@ -103,14 +104,11 @@ class _ShoppingAssistantScreenState extends State<ShoppingAssistantScreen>
   }
 
   void _showSnack(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.redAccent : Colors.teal,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
+    if (isError) {
+      CustomSnackBar.showError(context, message);
+    } else {
+      CustomSnackBar.showSuccess(context, message);
+    }
   }
 
   Widget _buildBody() {

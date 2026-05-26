@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:mobile_app/widgets/custom_snackbar.dart';
 import 'package:mobile_app/widgets/save_outfit_dialog.dart';
 import 'package:mobile_app/widgets/global_wardrobe_selector.dart';
 import 'package:mobile_app/theme/app_colors.dart';
@@ -37,14 +38,7 @@ class _VirtualDressingRoomBody extends StatelessWidget {
     if (selectedIds.isNotEmpty) {
       SaveOutfitDialog.show(context, itemIds: selectedIds, isAiGenerated: false);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please select at least one item'),
-          backgroundColor: Colors.black87,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
+      CustomSnackBar.showInfo(context, 'Please select at least one item');
     }
   }
 

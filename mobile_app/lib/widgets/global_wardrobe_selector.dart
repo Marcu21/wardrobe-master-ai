@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/wardrobe_state_service.dart';
+import 'custom_snackbar.dart';
 
 class GlobalWardrobeSelector extends StatefulWidget {
   final bool isActionItem;
@@ -125,19 +126,16 @@ class _GlobalWardrobeSelectorState extends State<GlobalWardrobeSelector> {
                 try {
                   await wardrobeStateService.deleteWardrobe(wardrobe['id']);
                   if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Wardrobe deleted successfully.'),
-                      ),
+                    CustomSnackBar.showSuccess(
+                      context,
+                      'Wardrobe deleted successfully.',
                     );
                   }
                 } catch (e) {
                   if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Failed to delete wardrobe: $e'),
-                        backgroundColor: Colors.red,
-                      ),
+                    CustomSnackBar.showError(
+                      context,
+                      'Failed to delete wardrobe: $e',
                     );
                   }
                 }

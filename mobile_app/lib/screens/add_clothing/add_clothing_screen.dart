@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile_app/theme/app_colors.dart';
+import 'package:mobile_app/widgets/custom_snackbar.dart';
 import 'package:mobile_app/widgets/glassmorphism_card.dart';
 import 'package:mobile_app/widgets/scale_button.dart';
 import 'package:mobile_app/services/wardrobe_state_service.dart';
@@ -53,9 +54,7 @@ class _AddClothingBody extends StatelessWidget {
           await vm.pickImage(isTag, source);
         } catch (e) {
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error picking image: $e')),
-            );
+            CustomSnackBar.showError(context, 'Error picking image: $e');
           }
         }
       },
@@ -65,9 +64,7 @@ class _AddClothingBody extends StatelessWidget {
   Future<void> _onAnalyzePressed(BuildContext context) async {
     final vm = context.read<AddClothingViewModel>();
     if (vm.itemImage == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please upload an item image first.')),
-      );
+      CustomSnackBar.showInfo(context, 'Please upload an item image first.');
       return;
     }
     await vm.analyzeItem();
@@ -80,28 +77,10 @@ class _AddClothingBody extends StatelessWidget {
     if (!context.mounted) return;
     Navigator.pop(context); // dismiss saving dialog
     if (error == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Item saved to Wardrobe!'),
-          backgroundColor: const Color(0xFF16A34A),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+      CustomSnackBar.showSuccess(context, 'Item saved to Wardrobe!');
       Navigator.pop(context);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to save: $error'),
-          backgroundColor: const Color(0xFFDC2626),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+      CustomSnackBar.showError(context, 'Failed to save: $error');
     }
   }
 

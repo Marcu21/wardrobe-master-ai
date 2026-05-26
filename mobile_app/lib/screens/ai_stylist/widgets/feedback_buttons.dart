@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_app/services/outfit_repository.dart';
 import 'package:mobile_app/theme/app_colors.dart';
+import 'package:mobile_app/widgets/custom_snackbar.dart';
 import '../chat_message.dart';
 
 class FeedbackButtons extends StatefulWidget {
@@ -59,8 +60,9 @@ class _FeedbackButtonsState extends State<FeedbackButtons> {
           )
           .catchError((e) {
             if (mounted) {
-              ScaffoldMessenger.of(widget.parentContext).showSnackBar(
-                SnackBar(content: Text('Failed to save feedback: $e')),
+              CustomSnackBar.showError(
+                widget.parentContext,
+                'Failed to save feedback: $e',
               );
             }
           });
@@ -208,8 +210,9 @@ class _FeedbackButtonsState extends State<FeedbackButtons> {
           )
           .catchError((e) {
             if (mounted) {
-              ScaffoldMessenger.of(widget.parentContext).showSnackBar(
-                SnackBar(content: Text('Failed to save feedback: $e')),
+              CustomSnackBar.showError(
+                widget.parentContext,
+                'Failed to save feedback: $e',
               );
             }
           });

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile_app/navigation/app_routes.dart';
 import 'package:mobile_app/theme/app_colors.dart';
+import 'package:mobile_app/widgets/custom_snackbar.dart';
 import 'widgets/trip_skeleton_loader.dart';
 import 'widgets/trip_suitcase_tab.dart';
 import 'widgets/trip_outfits_tab.dart';
@@ -75,13 +76,9 @@ class _TripViewBody extends StatelessWidget {
     final error = await vm.syncAndRestyle();
     if (!context.mounted) return;
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to re-style trip: $error")),
-      );
+      CustomSnackBar.showError(context, 'Failed to re-style trip: $error');
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Trip Re-styled locally!")),
-      );
+      CustomSnackBar.showSuccess(context, 'Trip Re-styled locally!');
     }
   }
 
@@ -96,26 +93,21 @@ class _TripViewBody extends StatelessWidget {
 
     if (name == null || name.isEmpty || !context.mounted) return;
 
-    // Capture navigator + messenger references BEFORE the await so we
-    // never call .of(context) after the dialog-dismissal microtask, which
-    // is the exact window where the framework was throwing the
+    // Capture navigator reference BEFORE the await so we never call
+    // .of(context) after the dialog-dismissal microtask, which is the
+    // exact window where the framework was throwing the
     // "wrong build scope" / `_dependents.isEmpty` assertions.
     final navigator = Navigator.of(context);
-    final messenger = ScaffoldMessenger.of(context);
 
     final saveError = await vm.saveTrip(name);
     if (!context.mounted) return;
 
     if (saveError != null) {
-      messenger.showSnackBar(
-        SnackBar(content: Text("Failed to save trip: $saveError")),
-      );
+      CustomSnackBar.showError(context, 'Failed to save trip: $saveError');
       return;
     }
 
-    messenger.showSnackBar(
-      const SnackBar(content: Text("Trip saved successfully!")),
-    );
+    CustomSnackBar.showSuccess(context, 'Trip saved successfully!');
 
     // Pop the unsaved TripView instead of mutating its provider in place.
     // The provider/VM is then torn down by Flutter's normal route
@@ -129,13 +121,9 @@ class _TripViewBody extends StatelessWidget {
     final error = await vm.updateTrip();
     if (!context.mounted) return;
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to update trip: $error")),
-      );
+      CustomSnackBar.showError(context, 'Failed to update trip: $error');
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Trip updated successfully!")),
-      );
+      CustomSnackBar.showSuccess(context, 'Trip updated successfully!');
     }
   }
 
@@ -183,13 +171,9 @@ class _TripViewBody extends StatelessWidget {
     final error = await vm.editDayOutfit(index, result);
     if (!context.mounted) return;
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to update outfit: $error")),
-      );
+      CustomSnackBar.showError(context, 'Failed to update outfit: $error');
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Outfit updated successfully!")),
-      );
+      CustomSnackBar.showSuccess(context, 'Outfit updated successfully!');
     }
   }
 
@@ -197,9 +181,7 @@ class _TripViewBody extends StatelessWidget {
     final vm = context.read<TripViewViewModel>();
     final error = await vm.addAdHocOutfit(contextPlan);
     if (error != null && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to add outfit: $error")),
-      );
+      CustomSnackBar.showError(context, 'Failed to add outfit: $error');
     }
   }
 

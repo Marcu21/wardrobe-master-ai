@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile_app/navigation/app_routes.dart';
 import 'package:mobile_app/theme/app_colors.dart';
+import 'package:mobile_app/widgets/custom_snackbar.dart';
 import 'package:mobile_app/widgets/scale_button.dart';
 import 'widgets/match_result_header.dart';
 import 'widgets/match_score_card.dart';
@@ -61,10 +62,9 @@ class _MatchResultBodyState extends State<_MatchResultBody> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && !_errorShown) {
           setState(() => _errorShown = true);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error analyzing wardrobe: ${vm.errorMessage}'),
-            ),
+          CustomSnackBar.showError(
+            context,
+            'Error analyzing wardrobe: ${vm.errorMessage}',
           );
         }
       });

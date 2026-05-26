@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/outfit_repository.dart';
 import '../services/calendar_service.dart';
+import 'custom_snackbar.dart';
 
 class SaveOutfitDialog extends StatefulWidget {
   final List<String> itemIds;
@@ -52,9 +53,7 @@ class _SaveOutfitDialogState extends State<SaveOutfitDialog> {
 
   Future<void> _saveOutfit() async {
     if (_nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter an outfit name')),
-      );
+      CustomSnackBar.showInfo(context, 'Please enter an outfit name');
       return;
     }
 
@@ -110,22 +109,17 @@ class _SaveOutfitDialogState extends State<SaveOutfitDialog> {
       }
 
       if (mounted) {
-        Navigator.of(context).pop(outfitId); // Close dialog and return ID
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              widget.isWearAction
-                  ? 'Outfit logged as worn and saved to your collection!'
-                  : 'Outfit saved successfully!',
-            ),
-          ),
+        Navigator.of(context).pop(outfitId);
+        CustomSnackBar.showSuccess(
+          context,
+          widget.isWearAction
+              ? 'Outfit logged as worn and saved to your collection!'
+              : 'Outfit saved successfully!',
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error saving outfit: $e')));
+        CustomSnackBar.showError(context, 'Error saving outfit: $e');
       }
     } finally {
       if (mounted) {

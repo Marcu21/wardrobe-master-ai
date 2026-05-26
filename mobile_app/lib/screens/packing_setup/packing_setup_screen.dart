@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:mobile_app/widgets/custom_snackbar.dart';
 import 'package:mobile_app/widgets/global_wardrobe_selector.dart';
 import 'package:mobile_app/navigation/app_routes.dart';
 import 'package:mobile_app/theme/app_colors.dart';
@@ -54,16 +55,9 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
     if (_destinationController.text.trim().isEmpty ||
         _selectedDateRange == null ||
         _selectedVibe == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Please enter a destination, select travel dates, and pick a vibe.',
-          ),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
+      CustomSnackBar.showInfo(
+        context,
+        'Please enter a destination, select travel dates, and pick a vibe.',
       );
       return;
     }

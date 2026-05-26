@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:mobile_app/widgets/custom_snackbar.dart';
 import 'package:mobile_app/widgets/scale_button.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import 'package:mobile_app/widgets/glassmorphism_card.dart';
@@ -36,27 +37,12 @@ class _ClothingDetailBody extends StatelessWidget {
     final error = await vm.updateItemWardrobe(newWardrobeId);
     if (!context.mounted) return;
     if (error == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Item moved to ${vm.currentWardrobeName}'),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: const Color(0xFF16A34A),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
+      CustomSnackBar.showSuccess(
+        context,
+        'Item moved to ${vm.currentWardrobeName}',
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error moving item: $error'),
-          backgroundColor: const Color(0xFFDC2626),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+      CustomSnackBar.showError(context, 'Error moving item: $error');
     }
   }
 
@@ -270,24 +256,10 @@ class _ClothingDetailBody extends StatelessWidget {
     if (!context.mounted) return;
     Navigator.pop(context);
     if (error == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Item deleted successfully'),
-          backgroundColor: const Color(0xFF16A34A),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
+      CustomSnackBar.showSuccess(context, 'Item deleted successfully');
       Navigator.pop(context);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error deleting item: $error'),
-          backgroundColor: const Color(0xFFDC2626),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
+      CustomSnackBar.showError(context, 'Error deleting item: $error');
     }
   }
 
@@ -393,24 +365,10 @@ class _ClothingDetailBody extends StatelessWidget {
     if (!context.mounted) return;
     Navigator.pop(context);
     if (error == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Details updated successfully!'),
-          backgroundColor: const Color(0xFF16A34A),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
+      CustomSnackBar.showSuccess(context, 'Details updated successfully!');
       Navigator.pop(context);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error updating item: $error'),
-          backgroundColor: const Color(0xFFDC2626),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
+      CustomSnackBar.showError(context, 'Error updating item: $error');
     }
   }
 

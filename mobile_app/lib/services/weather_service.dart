@@ -249,13 +249,19 @@ class WeatherService {
         final baseTime = DateTime(now.year, now.month, now.day, now.hour);
 
         // Current item (Now)
-        // We manually force the time label to be the current rounded hour (e.g. "19:00")
+        // We manually force the time label to be the current rounded hour (e.g. "19:00").
+        // The API's icon code carries a 'd'/'n' suffix derived from the API
+        // slot's own UTC time, which is up to 3h ahead of our label here —
+        // so re-derive the suffix from baseTime to keep icon and label in sync.
         final currentItem = ForecastItem(
           time: baseTime,
           timeLabel: "${baseTime.hour.toString().padLeft(2, '0')}:00",
           temperature: (current['main']['temp'] as num).round(),
           condition: current['weather'][0]['main'],
-          iconCode: current['weather'][0]['icon'],
+          iconCode: _alignIconWithLocalTime(
+            current['weather'][0]['icon'],
+            baseTime,
+          ),
         );
 
         // Get next 8 items for 24h forecast (3h intervals * 8 = 24h)
@@ -281,7 +287,10 @@ class WeatherService {
               timeLabel: timeLabel,
               temperature: (itemJson['main']['temp'] as num).round(),
               condition: itemJson['weather'][0]['main'],
-              iconCode: itemJson['weather'][0]['icon'],
+              iconCode: _alignIconWithLocalTime(
+                itemJson['weather'][0]['icon'],
+                projectedTime,
+              ),
             ),
           );
         }
@@ -291,7 +300,10 @@ class WeatherService {
           temperature: (current['main']['temp'] as num).round(),
           condition: current['weather'][0]['main'],
           description: current['weather'][0]['description'],
-          iconCode: current['weather'][0]['icon'],
+          iconCode: _alignIconWithLocalTime(
+            current['weather'][0]['icon'],
+            baseTime,
+          ),
           forecast: forecastList,
         );
 
@@ -306,6 +318,20 @@ class WeatherService {
     } else {
       throw Exception('Failed to load weather data: ${response.statusCode}');
     }
+  }
+
+  // OpenWeather icons end in 'd' (day) or 'n' (night) based on the API
+  // slot's own UTC timestamp. Because fetchWeather() re-labels slots to
+  // local hours (shifting the icon up to 3h away from its real slot),
+  // the suffix has to be re-derived from the local hour we're displaying.
+  // Approximation: night = 20:00–05:59 local — good enough year-round at
+  // moderate latitudes without pulling in sunrise/sunset data per slot.
+  String _alignIconWithLocalTime(String apiIcon, DateTime localTime) {
+    if (apiIcon.length < 2) return apiIcon;
+    final h = localTime.hour;
+    final isNight = h < 6 || h >= 20;
+    final base = apiIcon.substring(0, apiIcon.length - 1);
+    return '$base${isNight ? 'n' : 'd'}';
   }
 }
 

@@ -398,7 +398,7 @@ class _AiStylistChatBodyState extends State<_AiStylistChatBody>
               decoration: BoxDecoration(
                 gradient: isUser
                     ? const LinearGradient(
-                        colors: [Color(0xFF5B52F0), Color(0xFF3730C8)],
+                        colors: [kCtaStart, kCtaEnd],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       )
@@ -522,7 +522,7 @@ class _AiStylistChatBodyState extends State<_AiStylistChatBody>
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1A1A1A),
+                    color: kTextDark,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
@@ -664,3 +664,4 @@ class _AiStylistChatBodyState extends State<_AiStylistChatBody>
     );
   }
 }
+

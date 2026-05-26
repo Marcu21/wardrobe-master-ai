@@ -28,7 +28,7 @@ class LoginHeader extends StatelessWidget {
               height: isLoginMode ? 80 : 60,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF5B52F0), Color(0xFF3730C8)],
+                  colors: [kCtaStart, kCtaEnd],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -75,3 +75,4 @@ class LoginHeader extends StatelessWidget {
     );
   }
 }
+

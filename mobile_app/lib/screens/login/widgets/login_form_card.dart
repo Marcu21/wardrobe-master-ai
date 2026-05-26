@@ -83,14 +83,14 @@ class LoginFormCard extends StatelessWidget {
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(
-            color: Color(0xFFDC2626),
+            color: kDanger,
             width: 1.5,
           ),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(
-            color: Color(0xFFDC2626),
+            color: kDanger,
             width: 1.5,
           ),
         ),
@@ -286,7 +286,7 @@ class LoginFormCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [Color(0xFF5B52F0), Color(0xFF3730C8)],
+                              colors: [kCtaStart, kCtaEnd],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
@@ -441,3 +441,4 @@ class _TabButton extends StatelessWidget {
     );
   }
 }
+

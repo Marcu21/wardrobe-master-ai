@@ -9,8 +9,8 @@ import 'package:mobile_app/theme/app_colors.dart';
 import 'widgets/setup_vibe_chips.dart';
 import 'widgets/setup_luggage_selector.dart';
 
-const _kBlob1 = Color(0x3840C4FF);
-const _kBlob2 = Color(0x1E1565C0);
+const _kBlob1 = kGlowBlue;
+const _kBlob2 = kGlowBlue2;
 
 class PackingSetupScreen extends StatefulWidget {
   const PackingSetupScreen({super.key});
@@ -391,3 +391,4 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
     );
   }
 }
+

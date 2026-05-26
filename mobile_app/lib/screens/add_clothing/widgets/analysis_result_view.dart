@@ -244,7 +244,7 @@ class AnalysisResultView extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF5B52F0), Color(0xFF3730C8)],
+                      colors: [kCtaStart, kCtaEnd],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -350,3 +350,4 @@ class AnalysisResultView extends StatelessWidget {
     );
   }
 }
+

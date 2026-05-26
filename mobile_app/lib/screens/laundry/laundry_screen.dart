@@ -13,8 +13,8 @@ import 'widgets/wardrobe_filter_chips.dart';
 import 'widgets/wardrobe_grid_item.dart';
 import 'package:mobile_app/services/laundry_service.dart';
 
-const _kBlob1 = Color(0x384F46E5);
-const _kBlob2 = Color(0x206352D2);
+const _kBlob1 = kGlowPrimary;
+const _kBlob2 = kGlowPrimary2;
 
 Widget _buildBlobBackground() {
   return Stack(
@@ -220,7 +220,7 @@ class _LaundryBody extends StatelessWidget {
               '${basketItems.length} item${basketItems.length == 1 ? '' : 's'} — check alerts below';
           break;
         case LaundryStatus.Critical:
-          statusColor = const Color(0xFFDC2626);
+          statusColor = kDanger;
           statusIcon = CupertinoIcons.xmark_circle;
           statusTitle = 'Critical Issue';
           statusSubtitle =
@@ -468,3 +468,4 @@ class _LaundryBody extends StatelessWidget {
     );
   }
 }
+

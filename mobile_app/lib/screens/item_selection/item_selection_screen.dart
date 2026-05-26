@@ -7,8 +7,8 @@ import 'widgets/selection_filter_chips.dart';
 import 'widgets/selection_grid_item.dart';
 import 'item_selection_view_model.dart';
 
-const _kBlob1 = Color(0x3840C4FF);
-const _kBlob2 = Color(0x1E1565C0);
+const _kBlob1 = kGlowBlue;
+const _kBlob2 = kGlowBlue2;
 
 class ItemSelectionScreen extends StatelessWidget {
   final List<String> initialSelectedIds;
@@ -210,3 +210,4 @@ class _ItemSelectionBody extends StatelessWidget {
     );
   }
 }
+

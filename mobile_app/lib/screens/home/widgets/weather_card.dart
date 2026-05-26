@@ -434,7 +434,7 @@ class DynamicWeatherCard extends StatelessWidget {
       );
     } else if (condition.contains('rain') || condition.contains('drizzle')) {
       return const LinearGradient(
-        colors: [Color(0xFF0A2E5C), Color(0xFF0D47A1), Color(0xFF1565C0)],
+        colors: [Color(0xFF0A2E5C), Color(0xFF0D47A1), kBlueAccent],
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
       );
@@ -500,3 +500,4 @@ class DynamicWeatherCard extends StatelessWidget {
         : CupertinoIcons.sun_max_fill;
   }
 }
+

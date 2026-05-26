@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_app/theme/app_colors.dart';
 import 'package:mobile_app/navigation/app_routes.dart';
 
 class MyTripsEmptyState extends StatelessWidget {
@@ -17,14 +18,14 @@ class MyTripsEmptyState extends StatelessWidget {
               height: 120,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF1565C0), Color(0xFF42A5F5)],
+                  colors: [kBlueAccent, Color(0xFF42A5F5)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF1565C0).withValues(alpha: 0.3),
+                    color: kBlueAccent.withValues(alpha: 0.3),
                     blurRadius: 24,
                     offset: const Offset(0, 10),
                   ),
@@ -69,14 +70,14 @@ class MyTripsEmptyState extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1565C0),
+                  backgroundColor: kBlueAccent,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
                   elevation: 4,
-                  shadowColor: const Color(0xFF1565C0).withValues(alpha: 0.4),
+                  shadowColor: kBlueAccent.withValues(alpha: 0.4),
                 ),
               ),
             ),
@@ -86,3 +87,4 @@ class MyTripsEmptyState extends StatelessWidget {
     );
   }
 }
+

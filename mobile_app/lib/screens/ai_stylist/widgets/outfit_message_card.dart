@@ -13,9 +13,9 @@ import 'feedback_buttons.dart';
 import 'truncated_text.dart';
 
 Color _getScoreColor(num score) {
-  if (score >= 80) return const Color(0xFF22C55E);
-  if (score >= 60) return const Color(0xFFF59E0B);
-  return const Color(0xFFEF4444);
+  if (score >= 80) return kSuccess;
+  if (score >= 60) return kWarning;
+  return kError;
 }
 
 void _showScoreDetails(BuildContext context, Map<String, dynamic> scores) {
@@ -421,7 +421,7 @@ class _OutfitMessageCardState extends State<OutfitMessageCard> {
                   margin: const EdgeInsets.fromLTRB(12, 10, 12, 0),
                   height: 190,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1A1A1A).withOpacity(0.04),
+                    color: kTextDark.withOpacity(0.04),
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
                       color: Colors.black.withOpacity(0.06),
@@ -608,7 +608,7 @@ class _OutfitMessageCardState extends State<OutfitMessageCard> {
         decoration: BoxDecoration(
           gradient: isPrimary
               ? const LinearGradient(
-                  colors: [Color(0xFF5B52F0), Color(0xFF3730C8)],
+                  colors: [kCtaStart, kCtaEnd],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 )

@@ -65,7 +65,7 @@ class _ClothingDetailBody extends StatelessWidget {
               borderWidth: 1.5,
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFDC2626).withOpacity(0.12),
+                  color: kDanger.withOpacity(0.12),
                   blurRadius: 40,
                   spreadRadius: 8,
                   offset: const Offset(0, 12),
@@ -85,15 +85,15 @@ class _ClothingDetailBody extends StatelessWidget {
                     height: 72,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: const Color(0xFFDC2626).withOpacity(0.08),
+                      color: kDanger.withOpacity(0.08),
                       border: Border.all(
-                        color: const Color(0xFFDC2626).withOpacity(0.18),
+                        color: kDanger.withOpacity(0.18),
                         width: 1.5,
                       ),
                     ),
                     child: const Icon(
                       CupertinoIcons.trash,
-                      color: Color(0xFFDC2626),
+                      color: kDanger,
                       size: 28,
                     ),
                   ),
@@ -170,7 +170,7 @@ class _ClothingDetailBody extends StatelessWidget {
               borderWidth: 1.5,
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFDC2626).withOpacity(0.15),
+                  color: kDanger.withOpacity(0.15),
                   blurRadius: 40,
                   spreadRadius: 10,
                   offset: const Offset(0, 12),
@@ -193,9 +193,9 @@ class _ClothingDetailBody extends StatelessWidget {
                         height: 72,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: const Color(0xFFDC2626).withOpacity(0.08),
+                          color: kDanger.withOpacity(0.08),
                           border: Border.all(
-                            color: const Color(0xFFDC2626).withOpacity(0.15),
+                            color: kDanger.withOpacity(0.15),
                             width: 1.5,
                           ),
                         ),
@@ -204,7 +204,7 @@ class _ClothingDetailBody extends StatelessWidget {
                         width: 52,
                         height: 52,
                         child: CircularProgressIndicator(
-                          color: const Color(0xFFDC2626).withOpacity(0.3),
+                          color: kDanger.withOpacity(0.3),
                           strokeWidth: 2,
                         ),
                       ),
@@ -212,13 +212,13 @@ class _ClothingDetailBody extends StatelessWidget {
                         width: 36,
                         height: 36,
                         child: CircularProgressIndicator(
-                          color: Color(0xFFDC2626),
+                          color: kDanger,
                           strokeWidth: 2.5,
                         ),
                       ),
                       const Icon(
                         CupertinoIcons.trash,
-                        color: Color(0xFFDC2626),
+                        color: kDanger,
                         size: 15,
                       ),
                     ],
@@ -477,7 +477,7 @@ class _ClothingDetailBody extends StatelessWidget {
                               ),
                               child: const Icon(
                                 CupertinoIcons.trash,
-                                color: Color(0xFFDC2626),
+                                color: kDanger,
                                 size: 16,
                               ),
                             ),
@@ -560,7 +560,7 @@ class _DialogButtonState extends State<_DialogButton> {
 
   @override
   Widget build(BuildContext context) {
-    final color = widget.isDestructive ? const Color(0xFFDC2626) : kPrimary;
+    final color = widget.isDestructive ? kDanger : kPrimary;
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _scale = 0.96),
@@ -594,3 +594,4 @@ class _DialogButtonState extends State<_DialogButton> {
     );
   }
 }
+

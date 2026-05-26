@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:mobile_app/theme/app_colors.dart';
 import 'package:mobile_app/widgets/scale_button.dart';
 
 class ShoppingErrorView extends StatelessWidget {
@@ -41,9 +42,9 @@ class ShoppingErrorView extends StatelessWidget {
                   height: 96,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFFDC2626).withOpacity(0.06),
+                    color: kDanger.withOpacity(0.06),
                     border: Border.all(
-                      color: const Color(0xFFDC2626).withOpacity(0.14),
+                      color: kDanger.withOpacity(0.14),
                       width: 1.5,
                     ),
                   ),
@@ -53,12 +54,12 @@ class ShoppingErrorView extends StatelessWidget {
                   height: 66,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFFDC2626).withOpacity(0.08),
+                    color: kDanger.withOpacity(0.08),
                   ),
                 ),
                 const Icon(
                   CupertinoIcons.xmark_circle,
-                  color: Color(0xFFDC2626),
+                  color: kDanger,
                   size: 34,
                 ),
               ],
@@ -165,3 +166,4 @@ class ShoppingErrorView extends StatelessWidget {
     );
   }
 }
+

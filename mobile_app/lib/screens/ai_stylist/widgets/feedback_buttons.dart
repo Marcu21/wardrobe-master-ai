@@ -228,8 +228,8 @@ class _FeedbackButtonsState extends State<FeedbackButtons> {
     final isSelected = isLike ? status == 'liked' : status == 'disliked';
     final isDisabled = status != null && !isSelected;
     final activeColor = isLike
-        ? const Color(0xFF22C55E)
-        : const Color(0xFFEF4444);
+        ? kSuccess
+        : kError;
     final icon = isLike
         ? (isSelected ? Icons.thumb_up_rounded : Icons.thumb_up_outlined)
         : (isSelected ? Icons.thumb_down_rounded : Icons.thumb_down_outlined);

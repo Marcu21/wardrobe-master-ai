@@ -15,8 +15,8 @@ import 'widgets/analysis_loading_view.dart';
 import 'widgets/analysis_error_view.dart';
 import 'widgets/analysis_result_view.dart';
 
-const _kBlob1 = Color(0x384F46E5);
-const _kBlob2 = Color(0x206352D2);
+const _kBlob1 = kGlowPrimary;
+const _kBlob2 = kGlowPrimary2;
 
 class AddClothingScreen extends StatelessWidget {
   final Map<String, dynamic>? initialAnalysisResult;
@@ -740,7 +740,7 @@ class _AddClothingBody extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF5B52F0), Color(0xFF3730C8)],
+              colors: [kCtaStart, kCtaEnd],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -774,3 +774,4 @@ class _AddClothingBody extends StatelessWidget {
     );
   }
 }
+

@@ -10,8 +10,8 @@ import 'widgets/trip_suitcase_tab.dart';
 import 'widgets/trip_outfits_tab.dart';
 import 'trip_view_view_model.dart';
 
-const _kBlob1 = Color(0x3840C4FF);
-const _kBlob2 = Color(0x1E1565C0);
+const _kBlob1 = kGlowBlue;
+const _kBlob2 = kGlowBlue2;
 
 class TripViewScreen extends StatelessWidget {
   final String? tripId;
@@ -210,9 +210,9 @@ class _TripViewBody extends StatelessWidget {
                   height: 96,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFFDC2626).withOpacity(0.06),
+                    color: kDanger.withOpacity(0.06),
                     border: Border.all(
-                      color: const Color(0xFFDC2626).withOpacity(0.14),
+                      color: kDanger.withOpacity(0.14),
                       width: 1.5,
                     ),
                   ),
@@ -222,12 +222,12 @@ class _TripViewBody extends StatelessWidget {
                   height: 66,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFFDC2626).withOpacity(0.08),
+                    color: kDanger.withOpacity(0.08),
                   ),
                 ),
                 const Icon(
                   CupertinoIcons.xmark_circle,
-                  color: Color(0xFFDC2626),
+                  color: kDanger,
                   size: 34,
                 ),
               ],
@@ -263,10 +263,10 @@ class _TripViewBody extends StatelessWidget {
                   vertical: 14,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF40C4FF).withOpacity(0.15),
+                  color: kBlueBright.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
-                    color: const Color(0xFF40C4FF).withOpacity(0.35),
+                    color: kBlueBright.withOpacity(0.35),
                     width: 1.5,
                   ),
                 ),
@@ -275,7 +275,7 @@ class _TripViewBody extends StatelessWidget {
                   children: [
                     Icon(
                       CupertinoIcons.arrow_clockwise,
-                      color: Color(0xFF1565C0),
+                      color: kBlueAccent,
                       size: 17,
                     ),
                     SizedBox(width: 8),
@@ -284,7 +284,7 @@ class _TripViewBody extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF1565C0),
+                        color: kBlueAccent,
                       ),
                     ),
                   ],
@@ -613,3 +613,4 @@ class _SaveTripDialogState extends State<_SaveTripDialog> {
     );
   }
 }
+

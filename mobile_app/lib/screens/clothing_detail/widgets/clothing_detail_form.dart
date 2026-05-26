@@ -179,7 +179,7 @@ class ClothingDetailForm extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF5B52F0), Color(0xFF3730C8)],
+                  colors: [kCtaStart, kCtaEnd],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -222,10 +222,10 @@ class ClothingDetailForm extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 14),
               decoration: BoxDecoration(
-                color: const Color(0xFFDC2626).withOpacity(0.08),
+                color: kDanger.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
-                  color: const Color(0xFFDC2626).withOpacity(0.25),
+                  color: kDanger.withOpacity(0.25),
                 ),
               ),
               child: Row(
@@ -233,7 +233,7 @@ class ClothingDetailForm extends StatelessWidget {
                 children: const [
                   Icon(
                     CupertinoIcons.delete,
-                    color: Color(0xFFDC2626),
+                    color: kDanger,
                     size: 17,
                   ),
                   SizedBox(width: 8),
@@ -242,7 +242,7 @@ class ClothingDetailForm extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFFDC2626),
+                      color: kDanger,
                     ),
                   ),
                 ],
@@ -431,3 +431,4 @@ class ClothingDetailForm extends StatelessWidget {
     );
   }
 }
+

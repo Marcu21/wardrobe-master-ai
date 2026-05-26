@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_app/theme/app_colors.dart';
 
 class CustomSnackBar {
   static void showSuccess(BuildContext context, String message) {
@@ -6,7 +7,7 @@ class CustomSnackBar {
       context,
       message: message,
       icon: Icons.check_circle_rounded,
-      accentColor: const Color(0xFF22C55E),
+      accentColor: kSuccess,
     );
   }
 
@@ -15,7 +16,7 @@ class CustomSnackBar {
       context,
       message: message,
       icon: Icons.error_rounded,
-      accentColor: const Color(0xFFEF4444),
+      accentColor: kError,
     );
   }
 
@@ -24,7 +25,7 @@ class CustomSnackBar {
       context,
       message: message,
       icon: Icons.info_rounded,
-      accentColor: const Color(0xFF6366F1),
+      accentColor: kInfo,
     );
   }
 
@@ -46,7 +47,7 @@ class CustomSnackBar {
           content: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFF18181B),
+              color: kSurfaceDark,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(

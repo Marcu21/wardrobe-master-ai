@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:mobile_app/theme/app_colors.dart';
 import '../../../services/auth_service.dart';
 import 'home_card.dart';
 
@@ -35,7 +36,7 @@ class QuickActionsColumn extends StatelessWidget {
                 ),
                 child: const Icon(
                   Icons.checkroom,
-                  color: Color(0xFF673AB7),
+                  color: const Color(0xFF673AB7),
                   size: 22,
                 ),
               ),
@@ -148,19 +149,19 @@ class _SmartPackingCard extends StatelessWidget {
           : const Stream.empty(),
       builder: (context, snapshot) {
         return HomeCard(
-          shadowColor: const Color(0xFF1565C0),
+          shadowColor: kBlueAccent,
           onTap: onTap,
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1565C0).withOpacity(0.10),
+                  color: kBlueAccent.withOpacity(0.10),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.luggage_rounded,
-                  color: Color(0xFF1565C0),
+                  color: kBlueAccent,
                   size: 24,
                 ),
               ),
@@ -202,3 +203,5 @@ class _SmartPackingCard extends StatelessWidget {
     );
   }
 }
+
+

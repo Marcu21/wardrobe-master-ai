@@ -8,8 +8,8 @@ import 'package:mobile_app/theme/app_colors.dart';
 import 'widgets/my_trips_empty_state.dart';
 import 'widgets/trip_card.dart';
 
-const _kBlob1 = Color(0x3840C4FF);
-const _kBlob2 = Color(0x1E1565C0);
+const _kBlob1 = kGlowBlue;
+const _kBlob2 = kGlowBlue2;
 
 class MyTripsScreen extends StatelessWidget {
   const MyTripsScreen({super.key});
@@ -156,3 +156,4 @@ class MyTripsScreen extends StatelessWidget {
     );
   }
 }
+

@@ -10,8 +10,8 @@ import 'wardrobe_gallery_view_model.dart';
 import 'widgets/gallery_filter_chips.dart';
 import 'widgets/wardrobe_card.dart';
 
-const _kBlob1 = Color(0x384F46E5);
-const _kBlob2 = Color(0x206352D2);
+const _kBlob1 = kGlowPrimary;
+const _kBlob2 = kGlowPrimary2;
 
 class WardrobeGalleryScreen extends StatelessWidget {
   const WardrobeGalleryScreen({super.key});
@@ -411,3 +411,4 @@ class _WardrobeGalleryBody extends StatelessWidget {
     );
   }
 }
+

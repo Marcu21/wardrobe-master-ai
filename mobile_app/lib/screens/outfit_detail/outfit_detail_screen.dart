@@ -11,8 +11,8 @@ import 'widgets/outfit_items_list.dart';
 import 'widgets/outfit_action_bar.dart';
 import 'outfit_detail_view_model.dart';
 
-const _kBlob1 = Color(0x384F46E5);
-const _kBlob2 = Color(0x206352D2);
+const _kBlob1 = kGlowPrimary;
+const _kBlob2 = kGlowPrimary2;
 
 class OutfitDetailScreen extends StatelessWidget {
   final Map<String, dynamic> outfitData;
@@ -159,12 +159,12 @@ class _OutfitDetailBody extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFDC2626).withOpacity(0.1),
+                    color: kDanger.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     CupertinoIcons.trash,
-                    color: Color(0xFFDC2626),
+                    color: kDanger,
                     size: 26,
                   ),
                 ),
@@ -363,16 +363,16 @@ class _OutfitDetailBody extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDC2626).withOpacity(0.08),
+                  color: kDanger.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: const Color(0xFFDC2626).withOpacity(0.18),
+                    color: kDanger.withOpacity(0.18),
                     width: 1,
                   ),
                 ),
                 child: const Icon(
                   CupertinoIcons.trash,
-                  color: Color(0xFFDC2626),
+                  color: kDanger,
                   size: 16,
                 ),
               ),
@@ -554,7 +554,7 @@ class _OutfitDetailBody extends StatelessWidget {
                                               : Icons.star_outline_rounded,
                                           key: ValueKey(filled),
                                           color: filled
-                                              ? const Color(0xFFF59E0B)
+                                              ? kWarning
                                               : Colors.black.withOpacity(0.2),
                                           size: 32,
                                         ),
@@ -748,7 +748,7 @@ class _DialogButtonState extends State<_DialogButton> {
 
   @override
   Widget build(BuildContext context) {
-    final color = widget.isDestructive ? const Color(0xFFDC2626) : kPrimary;
+    final color = widget.isDestructive ? kDanger : kPrimary;
     return GestureDetector(
       onTapDown: (_) => setState(() => _scale = 0.96),
       onTapUp: (_) {
@@ -781,3 +781,4 @@ class _DialogButtonState extends State<_DialogButton> {
     );
   }
 }
+

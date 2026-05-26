@@ -11,8 +11,8 @@ import 'widgets/ai_stylist_card.dart';
 import 'widgets/quick_actions_row.dart';
 import 'widgets/user_avatar.dart';
 
-const _kBlob1 = Color(0x384F46E5);
-const _kBlob2 = Color(0x206352D2);
+const _kBlob1 = kGlowPrimary;
+const _kBlob2 = kGlowPrimary2;
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -194,3 +194,4 @@ class _HomeBody extends StatelessWidget {
     );
   }
 }
+

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -6,8 +7,9 @@ import 'package:mobile_app/services/laundry_service.dart';
 import 'package:mobile_app/services/wardrobe_state_service.dart';
 
 class LaundryViewModel extends ChangeNotifier {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  FirebaseFirestore get _firestore => FirebaseFirestore.instance;
   final LaundryService _laundryService = LaundryService();
+  bool _testMode = false;
 
   List<Map<String, dynamic>> allWardrobeItems = [];
   final List<Map<String, dynamic>> _basketItems = [];
@@ -40,6 +42,13 @@ class LaundryViewModel extends ChangeNotifier {
   LaundryViewModel() {
     wardrobeStateService.addListener(_onWardrobeChanged);
     _listenToWardrobe();
+  }
+
+  /// Test-only constructor — bypasses Firebase subscription entirely.
+  @visibleForTesting
+  LaundryViewModel.forTest() {
+    _testMode = true;
+    isLoading = false;
   }
 
   void _onWardrobeChanged() => _listenToWardrobe();
@@ -134,7 +143,7 @@ class LaundryViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
-    wardrobeStateService.removeListener(_onWardrobeChanged);
+    if (!_testMode) wardrobeStateService.removeListener(_onWardrobeChanged);
     _wardrobeSubscription?.cancel();
     super.dispose();
   }

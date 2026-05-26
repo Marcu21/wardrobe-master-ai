@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:http/http.dart' as http;
@@ -18,6 +19,10 @@ class WeatherService {
   }
 
   WeatherService._internal();
+
+  /// Creates an independent (non-singleton) instance for use in test fakes.
+  @visibleForTesting
+  WeatherService.forTest();
 
   // Cache variables
   WeatherModel? _cachedWeather;

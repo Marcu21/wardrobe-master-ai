@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:mobile_app/services/api_service.dart';
 import 'package:mobile_app/services/clothing_repository.dart';
@@ -21,6 +22,10 @@ class AiStylistViewModel extends ChangeNotifier {
   bool _isTyping = false;
   bool _disposed = false;
 
+  /// When non-null, used instead of [wardrobeStateService] — test seam only.
+  @visibleForTesting
+  final String? Function()? wardrobeIdProvider;
+
   List<ChatMessage> get messages => List.unmodifiable(_messages);
   bool get isTyping => _isTyping;
 
@@ -31,7 +36,21 @@ class AiStylistViewModel extends ChangeNotifier {
       : _apiService = ApiService(),
         _clothingRepository = ClothingRepository(),
         _outfitRepository = OutfitRepository(),
-        _weatherService = WeatherService();
+        _weatherService = WeatherService(),
+        wardrobeIdProvider = null;
+
+  static String? _nullWardrobeId() => null;
+
+  /// Test-only constructor — bypasses Firebase-backed [wardrobeStateService].
+  @visibleForTesting
+  AiStylistViewModel.forTest({
+    ApiService? apiService,
+    WeatherService? weatherService,
+  })  : _apiService = apiService ?? ApiService.forTest(),
+        _clothingRepository = ClothingRepository(),
+        _outfitRepository = OutfitRepository(),
+        _weatherService = weatherService ?? WeatherService.forTest(),
+        wardrobeIdProvider = _nullWardrobeId;
 
   @override
   void dispose() {
@@ -70,7 +89,9 @@ class AiStylistViewModel extends ChangeNotifier {
         userPrompt: text,
         currentWeather: currentWeatherStr,
         hourlyForecast: hourlyForecastStr,
-        wardrobeId: wardrobeStateService.activeWardrobeId,
+        wardrobeId: wardrobeIdProvider != null
+            ? wardrobeIdProvider!()
+            : wardrobeStateService.activeWardrobeId,
       );
 
       final explanation = response['explanation'] as String;

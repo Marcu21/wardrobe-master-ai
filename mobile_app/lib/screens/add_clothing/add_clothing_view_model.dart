@@ -8,7 +8,8 @@ import 'package:mobile_app/services/clothing_repository.dart';
 import 'package:mobile_app/services/storage_service.dart';
 
 class AddClothingViewModel extends ChangeNotifier {
-  final ApiService _apiService;
+  ApiService? _apiServiceInstance;
+  ApiService get _apiService => _apiServiceInstance ??= ApiService();
   final ImagePicker _picker;
 
   File? _itemImage;
@@ -55,8 +56,7 @@ class AddClothingViewModel extends ChangeNotifier {
     Map<String, dynamic>? initialAnalysisResult,
     File? initialImageFile,
     String? wardrobeId,
-  })  : _apiService = ApiService(),
-        _picker = ImagePicker() {
+  }) : _picker = ImagePicker() {
     _selectedWardrobeId = wardrobeId;
     if (initialAnalysisResult != null && initialImageFile != null) {
       _analysisResult = initialAnalysisResult;

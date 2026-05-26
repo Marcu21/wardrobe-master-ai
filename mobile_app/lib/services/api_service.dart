@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart'; // For MediaType
 
@@ -15,6 +16,10 @@ class ApiService {
   // For physical devices, use your computer's local IP address (e.g. 192.168.x.x)
   ApiService({String? baseUrl})
     : baseUrl = baseUrl ?? dotenv.env['SERVER_URL'] ?? 'http://10.0.2.2:8000';
+
+  /// Test-only constructor — skips dotenv, uses unreachable localhost URL.
+  @visibleForTesting
+  ApiService.forTest() : baseUrl = 'http://localhost:8000';
 
   Future<Map<String, dynamic>?> processItem(
     File itemFile, {

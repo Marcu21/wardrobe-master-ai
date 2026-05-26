@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import '../../services/weather_service.dart';
 
 class HomeViewModel extends ChangeNotifier {
-  final WeatherService _weatherService = WeatherService();
+  final WeatherService _weatherService;
 
   WeatherModel? weather;
   bool isLoading = true;
   String? error;
 
-  HomeViewModel() {
+  HomeViewModel({WeatherService? weatherService})
+      : _weatherService = weatherService ?? WeatherService() {
     fetchWeather();
   }
 

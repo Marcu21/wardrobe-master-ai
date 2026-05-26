@@ -36,18 +36,21 @@ class TripViewScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => TripViewViewModel(
-        tripId: tripId,
-        destination: destination,
-        days: days,
-        vibe: vibe,
-        dateRange: dateRange,
-        initialTripData: initialTripData,
-        tripPlans: tripPlans,
-        luggageSize: luggageSize,
+    return DefaultTabController(
+      length: 2,
+      child: ChangeNotifierProvider(
+        create: (_) => TripViewViewModel(
+          tripId: tripId,
+          destination: destination,
+          days: days,
+          vibe: vibe,
+          dateRange: dateRange,
+          initialTripData: initialTripData,
+          tripPlans: tripPlans,
+          luggageSize: luggageSize,
+        ),
+        child: const _TripViewBody(),
       ),
-      child: const _TripViewBody(),
     );
   }
 }
@@ -84,44 +87,41 @@ class _TripViewBody extends StatelessWidget {
 
   Future<void> _saveTrip(BuildContext context) async {
     final vm = context.read<TripViewViewModel>();
-    final controller = TextEditingController(text: vm.destination);
-    final result = await showDialog<String>(
+
+    final String? name = await showDialog<String>(
       context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: const Text("Save Trip"),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(labelText: "Trip Name"),
-            autofocus: true,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              onPressed: () =>
-                  Navigator.pop(ctx, controller.text.trim()),
-              child: const Text("Save"),
-            ),
-          ],
-        );
-      },
+      barrierDismissible: false,
+      builder: (ctx) => _SaveTripDialog(initialName: vm.destination),
     );
-    controller.dispose();
-    if (result == null || result.isEmpty || !context.mounted) return;
-    final error = await vm.saveTrip(result);
+
+    if (name == null || name.isEmpty || !context.mounted) return;
+
+    // Capture navigator + messenger references BEFORE the await so we
+    // never call .of(context) after the dialog-dismissal microtask, which
+    // is the exact window where the framework was throwing the
+    // "wrong build scope" / `_dependents.isEmpty` assertions.
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+
+    final saveError = await vm.saveTrip(name);
     if (!context.mounted) return;
-    if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to save trip: $error")),
+
+    if (saveError != null) {
+      messenger.showSnackBar(
+        SnackBar(content: Text("Failed to save trip: $saveError")),
       );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Trip saved successfully!")),
-      );
+      return;
     }
+
+    messenger.showSnackBar(
+      const SnackBar(content: Text("Trip saved successfully!")),
+    );
+
+    // Pop the unsaved TripView instead of mutating its provider in place.
+    // The provider/VM is then torn down by Flutter's normal route
+    // lifecycle (no notifyListeners() against a mid-teardown subtree),
+    // and the saved trip appears in MyTrips the next time it's opened.
+    navigator.pop();
   }
 
   Future<void> _updateTrip(BuildContext context) async {
@@ -315,17 +315,13 @@ class _TripViewBody extends StatelessWidget {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final vm = context.watch<TripViewViewModel>();
-
+  Widget _buildFab(BuildContext context, TripViewViewModel vm) {
     final bool hasChanges =
         vm.editableItemIds.length != vm.lastSyncedItemIds.length ||
         !vm.editableItemIds.every((id) => vm.lastSyncedItemIds.contains(id));
 
-    Widget? fab;
     if (vm.isSyncing) {
-      fab = const FloatingActionButton.extended(
+      return const FloatingActionButton.extended(
         onPressed: null,
         icon: SizedBox(
           width: 20,
@@ -337,138 +333,181 @@ class _TripViewBody extends StatelessWidget {
         ),
         label: Text("Syncing..."),
       );
-    } else if (hasChanges) {
-      fab = FloatingActionButton.extended(
+    }
+    if (hasChanges) {
+      return FloatingActionButton.extended(
         onPressed: () => _syncAndRestyle(context),
         icon: const Icon(Icons.sync),
         label: const Text("Sync & Re-style"),
         backgroundColor: Colors.blueAccent,
       );
-    } else if (vm.wardrobe != null && !vm.isLoading) {
+    }
+    if (vm.wardrobe != null && !vm.isLoading) {
       if (vm.currentTripId == null) {
-        fab = FloatingActionButton.extended(
+        return FloatingActionButton.extended(
           onPressed: () => _saveTrip(context),
           icon: const Icon(Icons.bookmark_add),
           label: const Text("Save Trip"),
         );
+      }
+      bool hasUnsavedDatabaseChanges = false;
+      if (vm.initialTripData != null) {
+        final initialDbIds = List<String>.from(
+          vm.initialTripData!['item_ids'] ?? [],
+        );
+        hasUnsavedDatabaseChanges =
+            vm.lastSyncedItemIds.length != initialDbIds.length ||
+            !vm.lastSyncedItemIds.every((id) => initialDbIds.contains(id)) ||
+            vm.hasUnsavedChanges;
       } else {
-        bool hasUnsavedDatabaseChanges = false;
-        if (vm.initialTripData != null) {
-          final initialDbIds = List<String>.from(
-            vm.initialTripData!['item_ids'] ?? [],
-          );
-          hasUnsavedDatabaseChanges =
-              vm.lastSyncedItemIds.length != initialDbIds.length ||
-              !vm.lastSyncedItemIds.every((id) => initialDbIds.contains(id)) ||
-              vm.hasUnsavedChanges;
-        } else {
-          hasUnsavedDatabaseChanges = vm.hasUnsavedChanges;
-        }
-
-        if (hasUnsavedDatabaseChanges) {
-          fab = FloatingActionButton.extended(
-            onPressed: () => _updateTrip(context),
-            icon: const Icon(Icons.update),
-            label: const Text("Update Trip"),
-          );
-        }
+        hasUnsavedDatabaseChanges = vm.hasUnsavedChanges;
+      }
+      if (hasUnsavedDatabaseChanges) {
+        return FloatingActionButton.extended(
+          onPressed: () => _updateTrip(context),
+          icon: const Icon(Icons.update),
+          label: const Text("Update Trip"),
+        );
       }
     }
+    return const SizedBox.shrink();
+  }
 
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        backgroundColor: kBgColor,
-        floatingActionButton: fab,
-        body: Stack(
-          children: [
-            Positioned.fill(child: ColoredBox(color: kBgColor)),
-            Positioned(
-              top: -80,
-              right: -60,
-              child: IgnorePointer(
-                child: ImageFiltered(
-                  imageFilter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
-                  child: Container(
-                    width: 260,
-                    height: 260,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: _kBlob1,
-                    ),
+  Widget _buildBodyContent(BuildContext context, TripViewViewModel vm) {
+    if (vm.isLoading) return const TripSkeletonLoader();
+    if (vm.errorMessage != null) return _buildErrorBody(context, vm);
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0, bottom: 16.0),
+      child: TabBarView(
+        children: [
+          TripSuitcaseTab(
+            clothingItems: vm.clothingItems,
+            wardrobe: vm.wardrobe,
+            isEditMode: vm.isEditMode,
+            isStylistNoteExpanded: vm.isStylistNoteExpanded,
+            onToggleStylistNote: vm.toggleStylistNote,
+            onOpenItemSelection: () => _openItemSelection(context),
+            onRemoveItem: vm.removeItem,
+          ),
+          TripOutfitsTab(
+            wardrobe: vm.wardrobe,
+            clothingItems: vm.clothingItems,
+            loadingOutfitIndices: vm.loadingOutfitIndices,
+            isAddingAdHocOutfit: vm.isAddingAdHocOutfit,
+            adHocOutfitController: vm.adHocOutfitController,
+            onEditDayOutfit: (index) => _editDayOutfit(context, index),
+            onAddAdHocOutfit: (plan) => _addAdHocOutfit(context, plan),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Read immutable trip metadata once. The widget itself does NOT watch
+    // the VM — provider notifications are scoped to the Consumer leaves
+    // below so the NestedScrollView/TabBarView skeleton never reconciles
+    // in response to notifyListeners(), which is what was causing the
+    // cross-build-scope assertion during saveTrip().
+    final tripMeta = context.read<TripViewViewModel>();
+
+    return Scaffold(
+      backgroundColor: kBgColor,
+      floatingActionButton: Consumer<TripViewViewModel>(
+        builder: (context, vm, _) => _buildFab(context, vm),
+      ),
+      body: Stack(
+        children: [
+          const Positioned.fill(child: ColoredBox(color: kBgColor)),
+          Positioned(
+            top: -80,
+            right: -60,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+                child: Container(
+                  width: 260,
+                  height: 260,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob1,
                   ),
                 ),
               ),
             ),
-            Positioned(
-              bottom: 120,
-              left: -60,
-              child: IgnorePointer(
-                child: ImageFiltered(
-                  imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
-                  child: Container(
-                    width: 190,
-                    height: 190,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: _kBlob2,
-                    ),
+          ),
+          Positioned(
+            bottom: 120,
+            left: -60,
+            child: IgnorePointer(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                child: Container(
+                  width: 190,
+                  height: 190,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _kBlob2,
                   ),
                 ),
               ),
             ),
-            SafeArea(
-              top: false,
-              bottom: true,
-              child: NestedScrollView(
-                headerSliverBuilder: (context, innerBoxIsScrolled) {
-                  return [
-                    SliverAppBar(
-                      floating: false,
-                      pinned: true,
-                      toolbarHeight: 80.0,
-                      expandedHeight: 130.0,
-                      backgroundColor: Colors.transparent,
-                      elevation: 0,
-                      scrolledUnderElevation: 0,
-                      centerTitle: true,
-                      leading: IconButton(
-                        icon: const Icon(
-                          CupertinoIcons.back,
-                          color: Colors.black87,
-                        ),
-                        onPressed: () => Navigator.pop(context),
+          ),
+          SafeArea(
+            top: false,
+            bottom: true,
+            child: NestedScrollView(
+              headerSliverBuilder: (context, innerBoxIsScrolled) {
+                return [
+                  SliverAppBar(
+                    floating: false,
+                    pinned: true,
+                    toolbarHeight: 80.0,
+                    expandedHeight: 130.0,
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    scrolledUnderElevation: 0,
+                    centerTitle: true,
+                    leading: IconButton(
+                      icon: const Icon(
+                        CupertinoIcons.back,
+                        color: Colors.black87,
                       ),
-                      flexibleSpace: Stack(
-                        children: [
-                          Positioned.fill(
-                            child: ColoredBox(color: kBgColor),
-                          ),
-                          Positioned(
-                            top: -60,
-                            right: -50,
-                            child: IgnorePointer(
-                              child: ImageFiltered(
-                                imageFilter: ImageFilter.blur(
-                                  sigmaX: 50,
-                                  sigmaY: 50,
-                                ),
-                                child: Container(
-                                  width: 240,
-                                  height: 240,
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: _kBlob1,
-                                  ),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    flexibleSpace: Stack(
+                      children: [
+                        const Positioned.fill(
+                          child: ColoredBox(color: kBgColor),
+                        ),
+                        Positioned(
+                          top: -60,
+                          right: -50,
+                          child: IgnorePointer(
+                            child: ImageFiltered(
+                              imageFilter: ImageFilter.blur(
+                                sigmaX: 50,
+                                sigmaY: 50,
+                              ),
+                              child: Container(
+                                width: 240,
+                                height: 240,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: _kBlob1,
                                 ),
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                      actions: [
-                        if (!vm.isLoading)
-                          TextButton(
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      Consumer<TripViewViewModel>(
+                        builder: (context, vm, _) {
+                          if (vm.isLoading) return const SizedBox.shrink();
+                          return TextButton(
                             onPressed: vm.toggleEditMode,
                             child: Text(
                               vm.isEditMode ? "Cancel" : "Edit",
@@ -477,94 +516,118 @@ class _TripViewBody extends StatelessWidget {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+                          );
+                        },
+                      ),
+                    ],
+                    title: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(height: 17),
+                        Text(
+                          tripMeta.destination,
+                          style: TextStyle(
+                            fontSize: 22.0,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.grey[900],
                           ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "${tripMeta.days} Days • ${tripMeta.vibe}",
+                          style: TextStyle(
+                            fontSize: 13.0,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ],
-                      title: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const SizedBox(height: 17),
-                          Text(
-                            vm.destination,
-                            style: TextStyle(
-                              fontSize: 22.0,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.grey[900],
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "${vm.days} Days • ${vm.vibe}",
-                            style: TextStyle(
-                              fontSize: 13.0,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                      bottom: TabBar(
-                        labelColor: Colors.black87,
-                        unselectedLabelColor: Colors.grey[500],
-                        indicatorColor: Theme.of(context).primaryColor,
-                        indicatorWeight: 3,
-                        indicatorSize: TabBarIndicatorSize.label,
-                        labelStyle: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                        unselectedLabelStyle: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        tabs: const [
-                          Tab(icon: Icon(Icons.luggage), text: "Suitcase"),
-                          Tab(icon: Icon(Icons.style), text: "Daily Outfits"),
-                        ],
-                      ),
                     ),
-                  ];
-                },
-                body: vm.isLoading
-                    ? const TripSkeletonLoader()
-                    : vm.errorMessage != null
-                    ? _buildErrorBody(context, vm)
-                    : Padding(
-                        padding: const EdgeInsets.only(
-                          top: 8.0,
-                          bottom: 16.0,
-                        ),
-                        child: TabBarView(
-                          children: [
-                            TripSuitcaseTab(
-                              clothingItems: vm.clothingItems,
-                              wardrobe: vm.wardrobe,
-                              isEditMode: vm.isEditMode,
-                              isStylistNoteExpanded: vm.isStylistNoteExpanded,
-                              onToggleStylistNote: vm.toggleStylistNote,
-                              onOpenItemSelection: () =>
-                                  _openItemSelection(context),
-                              onRemoveItem: vm.removeItem,
-                            ),
-                            TripOutfitsTab(
-                              wardrobe: vm.wardrobe,
-                              clothingItems: vm.clothingItems,
-                              loadingOutfitIndices: vm.loadingOutfitIndices,
-                              isAddingAdHocOutfit: vm.isAddingAdHocOutfit,
-                              adHocOutfitController: vm.adHocOutfitController,
-                              onEditDayOutfit: (index) =>
-                                  _editDayOutfit(context, index),
-                              onAddAdHocOutfit: (plan) =>
-                                  _addAdHocOutfit(context, plan),
-                            ),
-                          ],
-                        ),
+                    bottom: TabBar(
+                      labelColor: Colors.black87,
+                      unselectedLabelColor: Colors.grey[500],
+                      indicatorColor: Theme.of(context).primaryColor,
+                      indicatorWeight: 3,
+                      indicatorSize: TabBarIndicatorSize.label,
+                      labelStyle: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
                       ),
+                      unselectedLabelStyle: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      tabs: const [
+                        Tab(icon: Icon(Icons.luggage), text: "Suitcase"),
+                        Tab(icon: Icon(Icons.style), text: "Daily Outfits"),
+                      ],
+                    ),
+                  ),
+                ];
+              },
+              body: Consumer<TripViewViewModel>(
+                builder: (context, vm, _) => _buildBodyContent(context, vm),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    );
+  }
+}
+
+// Owns its own TextEditingController so Flutter disposes it only when the
+// dialog widget is fully unmounted. Manually disposing the controller
+// right after showDialog() returns is what was actually causing the
+// "_dependents.isEmpty" / "wrong build scope" crash cascade — the
+// dialog's TextField was still being rebuilt during the dismiss
+// animation and tried to read from a disposed controller.
+class _SaveTripDialog extends StatefulWidget {
+  final String initialName;
+  const _SaveTripDialog({required this.initialName});
+
+  @override
+  State<_SaveTripDialog> createState() => _SaveTripDialogState();
+}
+
+class _SaveTripDialogState extends State<_SaveTripDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialName);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text("Save Trip"),
+      content: TextField(
+        controller: _controller,
+        decoration: const InputDecoration(labelText: "Trip Name"),
+        autofocus: true,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Cancel"),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            final text = _controller.text.trim();
+            if (text.isNotEmpty) Navigator.pop(context, text);
+          },
+          child: const Text("Save"),
+        ),
+      ],
     );
   }
 }

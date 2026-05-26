@@ -1,14 +1,14 @@
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:mobile_app/services/firebase_service.dart';
+import 'package:mobile_app/services/outfit_repository.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import '../chat_message.dart';
 
 class FeedbackButtons extends StatefulWidget {
   final ChatMessage message;
   final List<Map<String, dynamic>> items;
-  final FirebaseService firebaseService;
+  final OutfitRepository outfitRepository;
   final void Function(VoidCallback) setParentState;
   final BuildContext parentContext;
 
@@ -16,7 +16,7 @@ class FeedbackButtons extends StatefulWidget {
     super.key,
     required this.message,
     required this.items,
-    required this.firebaseService,
+    required this.outfitRepository,
     required this.setParentState,
     required this.parentContext,
   });
@@ -50,7 +50,7 @@ class _FeedbackButtonsState extends State<FeedbackButtons> {
     if (ids.isNotEmpty &&
         widget.message.userPrompt != null &&
         widget.message.weatherContext != null) {
-      widget.firebaseService
+      widget.outfitRepository
           .saveOutfitFeedback(
             itemIds: ids,
             userPrompt: widget.message.userPrompt!,
@@ -198,7 +198,7 @@ class _FeedbackButtonsState extends State<FeedbackButtons> {
     if (ids.isNotEmpty &&
         widget.message.userPrompt != null &&
         widget.message.weatherContext != null) {
-      widget.firebaseService
+      widget.outfitRepository
           .saveOutfitFeedback(
             itemIds: ids,
             userPrompt: widget.message.userPrompt!,

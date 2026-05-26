@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart'; // For MediaType
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:mobile_app/services/firebase_service.dart';
+import 'package:mobile_app/services/auth_service.dart';
 
 class ApiService {
   final String baseUrl;
@@ -77,7 +77,7 @@ class ApiService {
     String? wardrobeId,
   }) async {
     final uri = Uri.parse('$baseUrl/generate-outfit/');
-    final token = await FirebaseService().currentUser?.getIdToken();
+    final token = await AuthService().currentUser?.getIdToken();
     if (token == null) throw Exception('Not authenticated');
 
     try {

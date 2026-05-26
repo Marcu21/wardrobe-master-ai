@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:mobile_app/services/firebase_service.dart';
+import 'package:mobile_app/services/trip_repository.dart';
 import 'package:mobile_app/navigation/app_routes.dart';
 
 class TripCard extends StatelessWidget {
@@ -206,7 +206,7 @@ class TripCard extends StatelessWidget {
 
                   if (confirm == true) {
                     try {
-                      await FirebaseService().deleteTrip(docId);
+                      await TripRepository().deleteTrip(docId);
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_app/services/firebase_service.dart';
+import 'package:mobile_app/services/clothing_repository.dart';
 import 'package:mobile_app/services/wardrobe_state_service.dart';
 
 class ClothingDetailViewModel extends ChangeNotifier {
@@ -109,7 +109,7 @@ class ClothingDetailViewModel extends ChangeNotifier {
     _currentWardrobeId = newWardrobeId;
     notifyListeners();
     try {
-      await FirebaseService().updateItem(itemData['id'], {
+      await ClothingRepository().updateItem(itemData['id'], {
         'wardrobe_id': newWardrobeId,
       });
       return null;
@@ -124,7 +124,7 @@ class ClothingDetailViewModel extends ChangeNotifier {
     try {
       final String docId = itemData['id'];
       final String? imageUrl = itemData['imageUrl'];
-      await FirebaseService().deleteItem(docId, imageUrl: imageUrl);
+      await ClothingRepository().deleteItem(docId, imageUrl: imageUrl);
       return null;
     } catch (e) {
       return e.toString();
@@ -175,7 +175,7 @@ class ClothingDetailViewModel extends ChangeNotifier {
         laundryInfo['max_temp_celsius'] = null;
       }
 
-      await FirebaseService().updateItem(itemData['id'], {
+      await ClothingRepository().updateItem(itemData['id'], {
         'basic_info': basicInfo,
         'sustainability_info': sustainabilityInfo,
         'styling_info': stylingInfo,

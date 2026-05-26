@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:mobile_app/services/firebase_service.dart';
+import 'package:mobile_app/services/clothing_repository.dart';
 import 'package:mobile_app/services/calendar_service.dart';
 import 'package:mobile_app/utils/outfit_sorting_utils.dart';
 
@@ -36,7 +36,7 @@ class OutfitDetailViewModel extends ChangeNotifier {
       final List<String> itemIds =
           itemIdsDynamic.map((e) => e.toString()).toList();
       if (itemIds.isNotEmpty) {
-        final fetched = await FirebaseService().getItemsByIds(itemIds);
+        final fetched = await ClothingRepository().getItemsByIds(itemIds);
         if (!_disposed) {
           items = OutfitSortingUtils.sortOutfitItems(fetched);
           isLoading = false;

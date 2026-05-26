@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../services/firebase_service.dart';
+import '../../../services/auth_service.dart';
 import 'home_card.dart';
 
 /// Vertical stack of the three secondary navigation cards:
@@ -138,7 +138,7 @@ class _SmartPackingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final uid = FirebaseService().currentUser?.uid;
+    final uid = AuthService().currentUser?.uid;
     return StreamBuilder<QuerySnapshot>(
       stream: uid != null
           ? FirebaseFirestore.instance

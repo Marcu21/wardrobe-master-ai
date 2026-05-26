@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:mobile_app/services/firebase_service.dart';
+import 'package:mobile_app/services/auth_service.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import 'widgets/login_header.dart';
 import 'widgets/login_form_card.dart';
@@ -62,12 +62,12 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() => _isLoading = true);
     try {
       if (_isLoginMode) {
-        await FirebaseService().signInWithEmail(
+        await AuthService().signInWithEmail(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
       } else {
-        await FirebaseService().signUpWithEmail(
+        await AuthService().signUpWithEmail(
           email: _emailController.text.trim(),
           password: _passwordController.text,
           name: _nameController.text.trim(),
@@ -92,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
-    final credentials = await FirebaseService().signInWithGoogle();
+    final credentials = await AuthService().signInWithGoogle();
     if (mounted && credentials == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '../../../services/firebase_service.dart';
+import '../../../services/auth_service.dart';
 
 /// Greeting header: date chip, "Hello / Name" and tagline.
 class HeroSection extends StatelessWidget {
@@ -54,15 +54,15 @@ class HeroSection extends StatelessWidget {
         StreamBuilder<DocumentSnapshot>(
           stream: FirebaseFirestore.instance
               .collection('users')
-              .doc(FirebaseService().currentUser?.uid)
+              .doc(AuthService().currentUser?.uid)
               .snapshots(),
           builder: (context, snapshot) {
             String name = '';
             if (snapshot.hasData && snapshot.data!.exists) {
               final data = snapshot.data!.data() as Map<String, dynamic>?;
               if (data != null) name = data['name'] ?? '';
-            } else if (FirebaseService().currentUser?.displayName != null) {
-              name = FirebaseService().currentUser!.displayName!;
+            } else if (AuthService().currentUser?.displayName != null) {
+              name = AuthService().currentUser!.displayName!;
             }
 
             return Column(

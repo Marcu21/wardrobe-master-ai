@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mobile_app/services/packing_service.dart';
 import 'package:mobile_app/services/weather_service.dart';
 import 'package:mobile_app/services/wardrobe_state_service.dart';
-import 'package:mobile_app/services/firebase_service.dart';
+import 'package:mobile_app/services/clothing_repository.dart';
+import 'package:mobile_app/services/trip_repository.dart';
 
 class TripViewViewModel extends ChangeNotifier {
   final String? tripId;
@@ -120,7 +121,7 @@ class TripViewViewModel extends ChangeNotifier {
       return;
     }
     try {
-      final items = await FirebaseService().getItemsByIds(editableItemIds);
+      final items = await ClothingRepository().getItemsByIds(editableItemIds);
       if (!_disposed) {
         clothingItems = items;
         isLoading = false;
@@ -212,13 +213,18 @@ class TripViewViewModel extends ChangeNotifier {
     }
   }
 
+  // Pure async write. Never calls notifyListeners — firing it during the
+  // microtask continuation of the save dialog's dismissal (or in the
+  // ChangeNotifierProvider's teardown window) trips Flutter's
+  // "wrong build scope" / `_dependents.isEmpty` assertions inside the
+  // NestedScrollView + TabBarView subtree. The screen replaces the route
+  // with a fresh saved-trip view after this returns instead of mutating
+  // state in place.
   Future<String?> saveTrip(String tripName) async {
     if (wardrobe == null) return null;
-    isLoading = true;
-    _notify();
     try {
       final outfitsList = wardrobe!.outfits.map((o) => o.toJson()).toList();
-      final newTripId = await FirebaseService().saveTrip(
+      final newTripId = await TripRepository().saveTrip(
         name: tripName,
         destination: destination,
         itemIds: wardrobe!.selectedItemIds,
@@ -233,15 +239,9 @@ class TripViewViewModel extends ChangeNotifier {
       if (!_disposed) {
         currentTripId = newTripId;
         hasUnsavedChanges = false;
-        isLoading = false;
-        _notify();
       }
       return null;
     } catch (e) {
-      if (!_disposed) {
-        isLoading = false;
-        _notify();
-      }
       return e.toString();
     }
   }
@@ -267,7 +267,7 @@ class TripViewViewModel extends ChangeNotifier {
     if (wardrobe == null || currentTripId == null) return null;
     try {
       final outfitsList = wardrobe!.outfits.map((o) => o.toJson()).toList();
-      await FirebaseService().updateTrip(
+      await TripRepository().updateTrip(
         currentTripId!,
         wardrobe!.selectedItemIds,
         outfitsList,

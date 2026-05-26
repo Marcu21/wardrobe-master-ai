@@ -358,7 +358,7 @@ class _AiStylistChatBodyState extends State<_AiStylistChatBody>
       return OutfitMessageCard(
         message: message,
         items: items,
-        firebaseService: vm.firebaseService,
+        outfitRepository: vm.outfitRepository,
         setParentState: (fn) {
           fn();
           vm.notifyUpdate();

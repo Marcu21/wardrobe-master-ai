@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:mobile_app/services/firebase_service.dart';
+import 'package:mobile_app/services/auth_service.dart';
 import 'package:mobile_app/services/wardrobe_state_service.dart';
 
 class WardrobeGalleryViewModel extends ChangeNotifier {
@@ -21,7 +21,7 @@ class WardrobeGalleryViewModel extends ChangeNotifier {
   }
 
   void _updateStream() {
-    final currentUserId = FirebaseService().currentUser?.uid;
+    final currentUserId = AuthService().currentUser?.uid;
     var query = _firestore
         .collection('clothing')
         .where('userId', isEqualTo: currentUserId)

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../services/firebase_service.dart';
+import '../services/outfit_repository.dart';
 import '../services/calendar_service.dart';
 
 class SaveOutfitDialog extends StatefulWidget {
@@ -91,7 +91,7 @@ class _SaveOutfitDialogState extends State<SaveOutfitDialog> {
             .doc(outfitId)
             .update(outfitData);
       } else {
-        outfitId = await FirebaseService().saveOutfit(outfitData);
+        outfitId = await OutfitRepository().saveOutfit(outfitData);
       }
 
       if (widget.isWearAction) {

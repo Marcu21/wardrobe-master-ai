@@ -1,9 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:mobile_app/services/firebase_service.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import 'package:mobile_app/navigation/app_routes.dart';
+import 'package:mobile_app/services/outfit_repository.dart';
 import 'package:mobile_app/widgets/glassmorphism_card.dart';
 import 'package:mobile_app/widgets/save_outfit_dialog.dart';
 import 'package:mobile_app/widgets/smart_clothing_image.dart';
@@ -308,14 +308,14 @@ class _ScoreBadge extends StatelessWidget {
 class OutfitMessageCard extends StatefulWidget {
   final ChatMessage message;
   final List<Map<String, dynamic>> items;
-  final FirebaseService firebaseService;
+  final OutfitRepository outfitRepository;
   final void Function(VoidCallback) setParentState;
 
   const OutfitMessageCard({
     super.key,
     required this.message,
     required this.items,
-    required this.firebaseService,
+    required this.outfitRepository,
     required this.setParentState,
   });
 
@@ -402,7 +402,7 @@ class _OutfitMessageCardState extends State<OutfitMessageCard> {
                     FeedbackButtons(
                       message: message,
                       items: items,
-                      firebaseService: widget.firebaseService,
+                      outfitRepository: widget.outfitRepository,
                       setParentState: widget.setParentState,
                       parentContext: context,
                     ),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/firebase_service.dart';
+import '../services/clothing_repository.dart';
 import '../utils/outfit_sorting_utils.dart';
 import 'smart_clothing_image.dart';
 
@@ -33,7 +33,7 @@ class SmartOutfitCard extends StatefulWidget {
 }
 
 class _SmartOutfitCardState extends State<SmartOutfitCard> {
-  final FirebaseService _firebaseService = FirebaseService();
+  final ClothingRepository _clothingRepository = ClothingRepository();
   List<Map<String, dynamic>> _items = [];
   bool _isLoading = true;
 
@@ -51,7 +51,7 @@ class _SmartOutfitCardState extends State<SmartOutfitCard> {
           .toList();
 
       if (itemIds.isNotEmpty) {
-        final items = await _firebaseService.getItemsByIds(itemIds);
+        final items = await _clothingRepository.getItemsByIds(itemIds);
         if (mounted) {
           setState(() {
             _items = OutfitSortingUtils.sortOutfitItems(items);

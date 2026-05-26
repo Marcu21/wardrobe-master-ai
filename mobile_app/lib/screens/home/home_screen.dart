@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../services/firebase_service.dart';
+import '../../services/auth_service.dart';
 import 'package:mobile_app/navigation/app_routes.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import 'home_view_model.dart';
@@ -74,7 +74,7 @@ class _HomeBody extends StatelessWidget {
             ),
             icon: const HomeUserAvatar(),
             onSelected: (value) async {
-              if (value == 'logout') await FirebaseService().signOut();
+              if (value == 'logout') await AuthService().signOut();
             },
             itemBuilder: (context) => [
               const PopupMenuItem(

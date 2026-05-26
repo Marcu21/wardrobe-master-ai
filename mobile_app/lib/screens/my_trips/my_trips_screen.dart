@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:mobile_app/services/firebase_service.dart';
+import 'package:mobile_app/services/auth_service.dart';
 import 'package:mobile_app/navigation/app_routes.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import 'widgets/my_trips_empty_state.dart';
@@ -16,7 +16,7 @@ class MyTripsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = FirebaseService().currentUser;
+    final currentUser = AuthService().currentUser;
     if (currentUser == null) {
       return const Scaffold(
         body: Center(child: Text("Please login to view trips.")),

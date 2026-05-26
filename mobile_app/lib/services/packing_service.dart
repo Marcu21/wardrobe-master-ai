@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:mobile_app/services/firebase_service.dart';
+import 'package:mobile_app/services/auth_service.dart';
 
 class TripOutfit {
   final String title;
@@ -76,7 +76,7 @@ class PackingService {
     String? luggageSize,
   }) async {
     final uri = Uri.parse('$baseUrl/generate-packing/');
-    final token = await FirebaseService().currentUser?.getIdToken();
+    final token = await AuthService().currentUser?.getIdToken();
     if (token == null) throw Exception('Not authenticated');
 
     try {
@@ -129,7 +129,7 @@ class PackingService {
     List<String>? currentOutfitItemIds,
   }) async {
     final uri = Uri.parse('$baseUrl/generate-trip-outfit/');
-    final token = await FirebaseService().currentUser?.getIdToken();
+    final token = await AuthService().currentUser?.getIdToken();
     if (token == null) throw Exception('Not authenticated');
 
     try {

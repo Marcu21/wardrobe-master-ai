@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '../../../services/firebase_service.dart';
+import '../../../services/auth_service.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 
 /// Circular avatar for the AppBar: photo, initial letter, or fallback icon.
@@ -9,7 +9,7 @@ class HomeUserAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseService().currentUser;
+    final user = AuthService().currentUser;
     if (user == null) {
       return const CircleAvatar(
         radius: 16,

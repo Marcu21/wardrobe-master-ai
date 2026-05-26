@@ -4,7 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_app/services/api_service.dart';
-import 'package:mobile_app/services/firebase_service.dart';
+import 'package:mobile_app/services/clothing_repository.dart';
+import 'package:mobile_app/services/storage_service.dart';
 
 class AddClothingViewModel extends ChangeNotifier {
   final ApiService _apiService;
@@ -201,13 +202,13 @@ class AddClothingViewModel extends ChangeNotifier {
       final Uint8List imageBytes =
           base64Decode(_analysisResult!['image_base64']);
       final String? downloadUrl =
-          await FirebaseService().uploadImageToStorage(imageBytes, 'items');
+          await StorageService().uploadImageToStorage(imageBytes, 'items');
 
       if (downloadUrl == null) {
         throw Exception('Failed to upload image to storage.');
       }
 
-      await FirebaseService().saveItem(
+      await ClothingRepository().saveItem(
         imageUrl: downloadUrl,
         metadata: finalMetadata,
         wardrobeId: _selectedWardrobeId,

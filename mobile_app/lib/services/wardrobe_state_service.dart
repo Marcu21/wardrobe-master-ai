@@ -2,10 +2,10 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'firebase_service.dart';
+import 'clothing_repository.dart';
 
 class WardrobeStateService extends ChangeNotifier {
-  final FirebaseService _firebaseService = FirebaseService();
+  final ClothingRepository _clothingRepository = ClothingRepository();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -85,15 +85,15 @@ class WardrobeStateService extends ChangeNotifier {
   }
 
   Future<void> createWardrobe(String name) async {
-    await _firebaseService.createWardrobe(name);
+    await _clothingRepository.createWardrobe(name);
   }
 
   Future<void> updateWardrobe(String id, String newName) async {
-    await _firebaseService.updateWardrobe(id, newName);
+    await _clothingRepository.updateWardrobe(id, newName);
   }
 
   Future<void> deleteWardrobe(String id) async {
-    await _firebaseService.deleteWardrobe(id);
+    await _clothingRepository.deleteWardrobe(id);
     if (_activeWardrobeId == id) {
       _activeWardrobeId = null;
     }

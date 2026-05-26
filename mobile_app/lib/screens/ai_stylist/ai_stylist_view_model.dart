@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app/services/api_service.dart';
-import 'package:mobile_app/services/firebase_service.dart';
+import 'package:mobile_app/services/clothing_repository.dart';
+import 'package:mobile_app/services/outfit_repository.dart';
 import 'package:mobile_app/services/weather_service.dart';
 import 'package:mobile_app/services/wardrobe_state_service.dart';
 import 'chat_message.dart';
@@ -11,7 +12,8 @@ class AiStylistViewModel extends ChangeNotifier {
   static final AiStylistViewModel shared = AiStylistViewModel._();
 
   final ApiService _apiService;
-  final FirebaseService _firebaseService;
+  final ClothingRepository _clothingRepository;
+  final OutfitRepository _outfitRepository;
   final WeatherService _weatherService;
 
   final List<ChatMessage> _messages = [];
@@ -22,12 +24,13 @@ class AiStylistViewModel extends ChangeNotifier {
   List<ChatMessage> get messages => List.unmodifiable(_messages);
   bool get isTyping => _isTyping;
 
-  /// Exposed so OutfitMessageCard can call Firebase directly.
-  FirebaseService get firebaseService => _firebaseService;
+  /// Exposed so OutfitMessageCard can call outfit feedback directly.
+  OutfitRepository get outfitRepository => _outfitRepository;
 
   AiStylistViewModel._()
       : _apiService = ApiService(),
-        _firebaseService = FirebaseService(),
+        _clothingRepository = ClothingRepository(),
+        _outfitRepository = OutfitRepository(),
         _weatherService = WeatherService();
 
   @override
@@ -78,7 +81,7 @@ class AiStylistViewModel extends ChangeNotifier {
 
       List<Map<String, dynamic>> outfitItems = [];
       if (selectedIds.isNotEmpty) {
-        outfitItems = await _firebaseService.getItemsByIds(selectedIds);
+        outfitItems = await _clothingRepository.getItemsByIds(selectedIds);
       }
 
       _isTyping = false;

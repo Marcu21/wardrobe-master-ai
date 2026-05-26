@@ -261,7 +261,7 @@ class _LaundryBody extends StatelessWidget {
                 SliverPersistentHeader(
                   pinned: true,
                   delegate: StatusHeaderDelegate(
-                    height: 88.0,
+                    height: 80.0,
                     child: LaundryStatusBanner(
                       statusColor: statusColor,
                       statusIcon: statusIcon,

@@ -138,7 +138,6 @@ class _WardrobeGalleryBody extends StatelessWidget {
             ),
           ),
           SafeArea(
-            top: false,
             child: StreamBuilder<QuerySnapshot>(
               stream: vm.clothingStream,
               builder: (context, snapshot) {

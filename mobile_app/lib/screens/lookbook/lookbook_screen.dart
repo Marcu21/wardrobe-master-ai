@@ -55,7 +55,6 @@ class LookbookScreen extends StatelessWidget {
             ),
           ),
           SafeArea(
-            top: false,
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('outfits')

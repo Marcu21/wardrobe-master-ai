@@ -80,6 +80,7 @@ class ApiService {
     required String currentWeather,
     required String hourlyForecast,
     String? wardrobeId,
+    bool prioritizeNeglected = true,
   }) async {
     final uri = Uri.parse('$baseUrl/generate-outfit/');
     final token = await AuthService().currentUser?.getIdToken();
@@ -98,6 +99,7 @@ class ApiService {
               'current_weather': currentWeather,
               'hourly_forecast': hourlyForecast,
               if (wardrobeId != null) 'wardrobe_id': wardrobeId,
+              'prioritize_neglected': prioritizeNeglected,
             }),
           )
           .timeout(

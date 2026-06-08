@@ -16,6 +16,7 @@ import 'package:mobile_app/screens/shopping_assistant/shopping_assistant_screen.
 import 'package:mobile_app/screens/laundry/laundry_screen.dart';
 import 'package:mobile_app/screens/match_result/match_result_screen.dart';
 import 'package:mobile_app/screens/item_selection/item_selection_screen.dart';
+import 'package:mobile_app/screens/settings/settings_screen.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -102,6 +103,9 @@ class AppRouter {
             imageFile: args.imageFile,
           ),
         );
+
+      case AppRoutes.settings:
+        return MaterialPageRoute(builder: (_) => const SettingsScreen());
 
       case AppRoutes.itemSelection:
         final args = settings.arguments as ItemSelectionArgs;

@@ -18,6 +18,7 @@ class AppRoutes {
   static const String laundry = '/laundry';
   static const String matchResult = '/match-result';
   static const String itemSelection = '/item-selection';
+  static const String settings = '/settings';
 }
 
 class ClothingDetailArgs {

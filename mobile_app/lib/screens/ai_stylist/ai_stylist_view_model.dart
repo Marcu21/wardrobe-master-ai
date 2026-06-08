@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_app/services/api_service.dart';
 import 'package:mobile_app/services/clothing_repository.dart';
 import 'package:mobile_app/services/outfit_repository.dart';
+import 'package:mobile_app/services/user_settings_service.dart';
 import 'package:mobile_app/services/weather_service.dart';
 import 'package:mobile_app/services/wardrobe_state_service.dart';
 import 'chat_message.dart';
@@ -85,6 +86,8 @@ class AiStylistViewModel extends ChangeNotifier {
     }
 
     try {
+      final prioritizeNeglected =
+          await UserSettingsService().getPrioritizeNeglected();
       final response = await _apiService.generateOutfit(
         userPrompt: text,
         currentWeather: currentWeatherStr,
@@ -92,6 +95,7 @@ class AiStylistViewModel extends ChangeNotifier {
         wardrobeId: wardrobeIdProvider != null
             ? wardrobeIdProvider!()
             : wardrobeStateService.activeWardrobeId,
+        prioritizeNeglected: prioritizeNeglected,
       );
 
       final explanation = response['explanation'] as String;

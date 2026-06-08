@@ -74,7 +74,11 @@ class _HomeBody extends StatelessWidget {
             ),
             icon: const HomeUserAvatar(),
             onSelected: (value) async {
-              if (value == 'logout') await AuthService().signOut();
+              if (value == 'settings') {
+                Navigator.pushNamed(context, AppRoutes.settings);
+              } else if (value == 'logout') {
+                await AuthService().signOut();
+              }
             },
             itemBuilder: (context) => [
               const PopupMenuItem(

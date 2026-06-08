@@ -99,4 +99,76 @@ class AuthService {
       debugPrint("Error signing out: $e");
     }
   }
+
+  bool get isGoogleUser =>
+      _auth.currentUser?.providerData.any((p) => p.providerId == 'google.com') ??
+      false;
+
+  /// Re-authenticates then deletes all user data and the Auth account.
+  /// Pass [password] for email/password accounts; omit for Google accounts.
+  Future<void> deleteAccount({String? password}) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('No signed-in user');
+
+    if (isGoogleUser) {
+      final googleUser = await GoogleSignIn().signIn();
+      final googleAuth = await googleUser?.authentication;
+      if (googleAuth == null) throw Exception('Google sign-in cancelled');
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      await user.reauthenticateWithCredential(credential);
+    } else {
+      if (password == null || password.isEmpty) {
+        throw Exception('Password required');
+      }
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: password,
+      );
+      await user.reauthenticateWithCredential(credential);
+    }
+
+    await _deleteAllUserData(user.uid);
+    await user.delete();
+    await GoogleSignIn().signOut();
+  }
+
+  Future<void> _deleteAllUserData(String uid) async {
+    final db = FirebaseFirestore.instance;
+
+    // Single-doc delete
+    await db.collection('users').doc(uid).delete();
+
+    // Collection sweeps
+    await _deleteWhere(db, 'clothing', 'userId', uid);
+    await _deleteWhere(db, 'wardrobes', 'userId', uid);
+    await _deleteWhere(db, 'outfits', 'user_id', uid);
+    await _deleteWhere(db, 'outfit_feedback', 'user_id', uid);
+    await _deleteWhere(db, 'trips', 'user_id', uid);
+  }
+
+  Future<void> _deleteWhere(
+    FirebaseFirestore db,
+    String collection,
+    String field,
+    String uid,
+  ) async {
+    const limit = 400;
+    while (true) {
+      final snap = await db
+          .collection(collection)
+          .where(field, isEqualTo: uid)
+          .limit(limit)
+          .get();
+      if (snap.docs.isEmpty) break;
+      final batch = db.batch();
+      for (final doc in snap.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+      if (snap.docs.length < limit) break;
+    }
+  }
 }

@@ -394,7 +394,7 @@ class LoginFormCard extends StatelessWidget {
   }
 }
 
-// ── Tab button ────────────────────────────────────────────────────────────────
+// Tab button
 
 class _TabButton extends StatelessWidget {
   final String label;

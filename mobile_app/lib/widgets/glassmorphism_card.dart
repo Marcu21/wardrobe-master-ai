@@ -1,9 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-/// Wraps the canonical ClipRRect → BackdropFilter → Container glass-card
-/// pattern used throughout the app. Every parameter mirrors the inline value
-/// it replaces so callers stay pixel-identical.
 class GlassmorphismCard extends StatelessWidget {
   const GlassmorphismCard({
     super.key,
@@ -25,7 +22,6 @@ class GlassmorphismCard extends StatelessWidget {
   final double colorOpacity;
   final BorderRadius? borderRadius;
 
-  /// Defaults to [Colors.white] when null.
   final Color? borderColor;
   final double borderWidth;
   final List<BoxShadow>? boxShadow;

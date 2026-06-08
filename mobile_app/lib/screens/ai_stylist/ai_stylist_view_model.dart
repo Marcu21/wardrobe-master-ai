@@ -9,8 +9,7 @@ import 'package:mobile_app/services/wardrobe_state_service.dart';
 import 'chat_message.dart';
 
 class AiStylistViewModel extends ChangeNotifier {
-  // Shared session-scoped singleton — persists for the lifetime of the app
-  // process so chat history survives navigation pops.
+  // Singleton — chat history survives navigation pops
   static final AiStylistViewModel shared = AiStylistViewModel._();
 
   final ApiService _apiService;
@@ -23,14 +22,12 @@ class AiStylistViewModel extends ChangeNotifier {
   bool _isTyping = false;
   bool _disposed = false;
 
-  /// When non-null, used instead of [wardrobeStateService] — test seam only.
   @visibleForTesting
   final String? Function()? wardrobeIdProvider;
 
   List<ChatMessage> get messages => List.unmodifiable(_messages);
   bool get isTyping => _isTyping;
 
-  /// Exposed so OutfitMessageCard can call outfit feedback directly.
   OutfitRepository get outfitRepository => _outfitRepository;
 
   AiStylistViewModel._()
@@ -42,7 +39,6 @@ class AiStylistViewModel extends ChangeNotifier {
 
   static String? _nullWardrobeId() => null;
 
-  /// Test-only constructor — bypasses Firebase-backed [wardrobeStateService].
   @visibleForTesting
   AiStylistViewModel.forTest({
     ApiService? apiService,
@@ -60,8 +56,7 @@ class AiStylistViewModel extends ChangeNotifier {
     super.dispose();
   }
 
-  /// Called by child widgets that mutate ChatMessage fields in-place.
-  /// Triggers a screen rebuild without altering the messages list.
+  // Triggers a rebuild when a ChatMessage is mutated in-place.
   void notifyUpdate() => _notify();
 
   Future<void> sendMessage(String text) async {

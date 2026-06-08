@@ -92,7 +92,7 @@ class _AnimatedBlobBgState extends State<_AnimatedBlobBg>
   }
 }
 
-// ─── Entry point ────────────────────────────────────────────────────────────
+// Entry point
 
 class AiStylistChatScreen extends StatelessWidget {
   const AiStylistChatScreen({super.key});
@@ -106,7 +106,7 @@ class AiStylistChatScreen extends StatelessWidget {
   }
 }
 
-// ─── Body (UI-only state: scroll controllers + input focus animation) ────────
+// Body
 
 class _AiStylistChatBody extends StatefulWidget {
   const _AiStylistChatBody();
@@ -122,7 +122,7 @@ class _AiStylistChatBodyState extends State<_AiStylistChatBody>
   bool _inputFocused = false;
   late AnimationController _inputFocusCtrl;
 
-  // Scroll-on-new-content tracking (updated in build — no setState needed).
+  // Scroll-on-new-content tracking
   int _prevMessageCount = 0;
   bool _prevIsTyping = false;
 
@@ -155,7 +155,7 @@ class _AiStylistChatBodyState extends State<_AiStylistChatBody>
     });
   }
 
-  // ── Empty state ─────────────────────────────────────────────────────────
+  // Empty state
 
   Widget _buildEmptyState(BuildContext context, AiStylistViewModel vm) {
     const suggestions = [
@@ -347,7 +347,7 @@ class _AiStylistChatBodyState extends State<_AiStylistChatBody>
     );
   }
 
-  // ── Message bubble ───────────────────────────────────────────────────────
+  // Message bubble
 
   Widget _buildMessage(AiStylistViewModel vm, ChatMessage message) {
     final isUser = message.role == 'user';
@@ -451,7 +451,7 @@ class _AiStylistChatBodyState extends State<_AiStylistChatBody>
     );
   }
 
-  // ── Input bar ────────────────────────────────────────────────────────────
+  // Input bar
 
   Widget _buildInputBar(BuildContext context, AiStylistViewModel vm) {
     return ClipRect(
@@ -546,13 +546,11 @@ class _AiStylistChatBodyState extends State<_AiStylistChatBody>
     );
   }
 
-  // ── Build ────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<AiStylistViewModel>();
 
-    // Scroll to bottom whenever a new message appears or typing starts.
+    // Scroll to bottom whenever a new message appears or typing starts
     if (vm.messages.length > _prevMessageCount ||
         (vm.isTyping && !_prevIsTyping)) {
       _prevMessageCount = vm.messages.length;

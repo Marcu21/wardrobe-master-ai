@@ -3,20 +3,14 @@ import '../services/clothing_repository.dart';
 import '../utils/outfit_sorting_utils.dart';
 import 'smart_clothing_image.dart';
 
-/// A reusable stateful card that fetches outfit items by ID, renders them as a
-/// stacked "mannequin" column with dynamic flex values, and composes a card UI
-/// from a caller-supplied [footer] and an optional [badge].
 class SmartOutfitCard extends StatefulWidget {
   final Map<String, dynamic> outfitData;
   final String outfitId;
 
-  /// The bottom section of the card (e.g. name + rating row, or name + time row).
   final Widget footer;
 
-  /// An optional widget rendered in the top-right of the image area (e.g. AI/You badge).
   final Widget? badge;
 
-  /// Called when the user taps the card.
   final VoidCallback onTap;
 
   const SmartOutfitCard({

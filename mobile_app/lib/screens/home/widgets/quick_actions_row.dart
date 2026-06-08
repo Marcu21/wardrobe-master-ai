@@ -5,8 +5,7 @@ import 'package:mobile_app/theme/app_colors.dart';
 import '../../../services/auth_service.dart';
 import 'home_card.dart';
 
-/// Vertical stack of the three secondary navigation cards:
-/// Dressing Room, Should I Buy This?, and Smart Packing.
+/// Vertical stack of the three secondary navigation cards
 class QuickActionsColumn extends StatelessWidget {
   final VoidCallback onDressingRoomTap;
   final VoidCallback onShoppingTap;

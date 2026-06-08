@@ -44,7 +44,6 @@ class LaundryViewModel extends ChangeNotifier {
     _listenToWardrobe();
   }
 
-  /// Test-only constructor — bypasses Firebase subscription entirely.
   @visibleForTesting
   LaundryViewModel.forTest() {
     _testMode = true;

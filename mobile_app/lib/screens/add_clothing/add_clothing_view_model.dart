@@ -152,7 +152,6 @@ class AddClothingViewModel extends ChangeNotifier {
     }
   }
 
-  /// Returns null on success, or the error message string on failure.
   Future<String?> saveItem() async {
     try {
       Map<String, dynamic> finalMetadata = jsonDecode(

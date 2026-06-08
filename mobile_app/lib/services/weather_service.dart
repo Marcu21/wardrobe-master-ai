@@ -20,7 +20,6 @@ class WeatherService {
 
   WeatherService._internal();
 
-  /// Creates an independent (non-singleton) instance for use in test fakes.
   @visibleForTesting
   WeatherService.forTest();
 
@@ -66,7 +65,6 @@ class WeatherService {
       final daysUntilTrip = startDate.difference(DateTime.now()).inDays;
 
       // Historical Fallback (> 5 days) or past dates
-      // OpenWeatherMap free forecast is 5 days
       if (daysUntilTrip > 5 || daysUntilTrip < 0) {
         return fallbackString;
       }
@@ -189,7 +187,7 @@ class WeatherService {
     bool serviceEnabled;
     LocationPermission permission;
 
-    // Test if location services are enabled.
+    // Test if location services are enabled
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       return Future.error('Location services are disabled.');
@@ -221,7 +219,7 @@ class WeatherService {
       }
     }
 
-    // 1. Get accurate city name using Geocoding
+    // Get accurate city name using Geocoding
     String cityName = 'Unknown Location';
     try {
       List<Placemark> placemarks = await placemarkFromCoordinates(lat, lon);
@@ -232,11 +230,10 @@ class WeatherService {
             'Unknown Location';
       }
     } catch (e) {
-      // ignore: avoid_print
       print('Error fetching city name: $e');
     }
 
-    // 2. Fetch Forecast Data
+    // Fetch Forecast Data
     final response = await http.get(
       Uri.parse('$baseUrl?lat=$lat&lon=$lon&appid=$apiKey&units=metric'),
     );
@@ -246,18 +243,15 @@ class WeatherService {
       final List<dynamic> list = json['list'];
 
       if (list.isNotEmpty) {
-        // Current weather is effectively the first item (or close to it)
+        // Current weather is effectively the first item
         final current = list.first;
 
-        // Base time: Current hour rounded down (e.g. 19:13 -> 19:00)
+        // Base time: Current hour rounded down
         final now = DateTime.now();
         final baseTime = DateTime(now.year, now.month, now.day, now.hour);
 
-        // Current item (Now)
-        // We manually force the time label to be the current rounded hour (e.g. "19:00").
-        // The API's icon code carries a 'd'/'n' suffix derived from the API
-        // slot's own UTC time, which is up to 3h ahead of our label here —
-        // so re-derive the suffix from baseTime to keep icon and label in sync.
+        // Label is forced to the local rounded hour; icon suffix is re-derived from
+        // baseTime because the API slot's UTC time can be up to 3h ahead of our label.
         final currentItem = ForecastItem(
           time: baseTime,
           timeLabel: "${baseTime.hour.toString().padLeft(2, '0')}:00",
@@ -270,7 +264,6 @@ class WeatherService {
         );
 
         // Get next 8 items for 24h forecast (3h intervals * 8 = 24h)
-        // We skip the first one as it's "current"
         final List<ForecastItem> forecastList = [];
         // Add current item first
         forecastList.add(currentItem);
@@ -280,7 +273,7 @@ class WeatherService {
 
         for (int i = 0; i < apiForecast.length; i++) {
           final itemJson = apiForecast[i];
-          // Calculate projected time: baseTime + (i+1)*3 hours
+          // Calculate projected time
           final projectedTime = baseTime.add(Duration(hours: (i + 1) * 3));
           final timeLabel =
               "${projectedTime.hour.toString().padLeft(2, '0')}:00";
@@ -288,7 +281,7 @@ class WeatherService {
           forecastList.add(
             ForecastItem(
               time:
-                  projectedTime, // We purposely override the API time with our calculated time
+                  projectedTime,
               timeLabel: timeLabel,
               temperature: (itemJson['main']['temp'] as num).round(),
               condition: itemJson['weather'][0]['main'],
@@ -325,12 +318,8 @@ class WeatherService {
     }
   }
 
-  // OpenWeather icons end in 'd' (day) or 'n' (night) based on the API
-  // slot's own UTC timestamp. Because fetchWeather() re-labels slots to
-  // local hours (shifting the icon up to 3h away from its real slot),
-  // the suffix has to be re-derived from the local hour we're displaying.
-  // Approximation: night = 20:00–05:59 local — good enough year-round at
-  // moderate latitudes without pulling in sunrise/sunset data per slot.
+  // OpenWeather icon suffix ('d'/'n') is re-derived from local time because
+  // fetchWeather() shifts slots up to 3h. Night = 20:00–05:59 local.
   String _alignIconWithLocalTime(String apiIcon, DateTime localTime) {
     if (apiIcon.length < 2) return apiIcon;
     final h = localTime.hour;
@@ -360,7 +349,7 @@ class WeatherModel {
 
 class ForecastItem {
   final DateTime time;
-  final String timeLabel; // Pre-formatted display string (e.g. "19:00")
+  final String timeLabel; // Pre-formatted display string
   final int temperature;
   final String condition;
   final String iconCode;
@@ -374,8 +363,6 @@ class ForecastItem {
   });
 
   factory ForecastItem.fromJson(Map<String, dynamic> json) {
-    // Note: This factory is less used now since we manually construct items in fetchWeather
-    // but kept for compatibility or fallback.
     final dt = DateTime.fromMillisecondsSinceEpoch(json['dt'] * 1000);
     return ForecastItem(
       time: dt,

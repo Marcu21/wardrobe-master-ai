@@ -8,7 +8,7 @@ class ClothingRepository {
   FirebaseStorage get _storage => FirebaseStorage.instance;
   FirebaseAuth get _auth => FirebaseAuth.instance;
 
-  // ── Wardrobe management ──────────────────────────────────────────────────
+  // Wardrobe management
 
   Future<void> createWardrobe(String name) async {
     try {
@@ -84,7 +84,7 @@ class ClothingRepository {
     }
   }
 
-  // ── Clothing items ───────────────────────────────────────────────────────
+  // Clothing items
 
   Future<void> saveItem({
     required String imageUrl,

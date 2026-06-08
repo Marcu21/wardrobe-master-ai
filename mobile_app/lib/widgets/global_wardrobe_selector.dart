@@ -283,7 +283,7 @@ class _GlobalWardrobeSelectorState extends State<GlobalWardrobeSelector> {
         final activeName = _getActiveWardrobeName();
 
         if (widget.isActionItem) {
-          // Compact UI for placing in AppBar actions (e.g. VirtualDressingRoom, Stylist)
+          // Compact UI for placing in AppBar actions
           return Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: Center(
@@ -340,7 +340,6 @@ class _GlobalWardrobeSelectorState extends State<GlobalWardrobeSelector> {
           );
         }
 
-        // Default: Centered Title format (for WardrobeGallery, Laundry)
         return GestureDetector(
           onTap: () => _showWardrobeManagerSheet(context),
           child: Row(

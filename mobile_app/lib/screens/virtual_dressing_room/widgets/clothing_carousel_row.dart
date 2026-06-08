@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app/widgets/smart_clothing_image.dart';
 
-/// Wrapper that sits inside a flex Column and owns the `Expanded` slot.
 class ClothingCarouselRow extends StatelessWidget {
   final List<Map<String, dynamic>> items;
   final int flex;
@@ -32,7 +31,6 @@ class ClothingCarouselRow extends StatelessWidget {
   }
 }
 
-/// The core stateful PageView carousel.
 class ClothingCarouselRowInternal extends StatefulWidget {
   final List<Map<String, dynamic>> items;
   final void Function(int) onIndexChanged;

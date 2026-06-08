@@ -104,8 +104,7 @@ class AuthService {
       _auth.currentUser?.providerData.any((p) => p.providerId == 'google.com') ??
       false;
 
-  /// Re-authenticates then deletes all user data and the Auth account.
-  /// Pass [password] for email/password accounts; omit for Google accounts.
+  /// Pass password for email/password accounts; omit for Google (re-auth via Google Sign-In).
   Future<void> deleteAccount({String? password}) async {
     final user = _auth.currentUser;
     if (user == null) throw Exception('No signed-in user');

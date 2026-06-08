@@ -78,12 +78,7 @@ class _SaveOutfitDialogState extends State<SaveOutfitDialog> {
 
       String outfitId;
       if (widget.existingOutfitId != null && widget.isWearAction) {
-        // If already saved and now we just want to wear it, we could just log wear.
-        // But the user's prompt explicitly asks to "save the outfit to Firestore" with the dialog fields.
-        // We will just do a save/update. Actually, let's just save it. Wait, if it exists, maybe we update?
-        // Let's just follow the prompt perfectly: "save the outfit to Firestore".
-        // For safety and to avoid duplicate creation from the dialog if existingOutfitId is provided,
-        // we update the existing doc.
+        // existingOutfitId is provided — update instead of creating a duplicate
         outfitId = widget.existingOutfitId!;
         await FirebaseFirestore.instance
             .collection('outfits')
@@ -94,7 +89,7 @@ class _SaveOutfitDialogState extends State<SaveOutfitDialog> {
       }
 
       if (widget.isWearAction) {
-        // Update clothing collection items' last_worn
+        // Update clothing collection items last_worn
         final batch = FirebaseFirestore.instance.batch();
         for (final itemId in widget.itemIds) {
           final itemRef = FirebaseFirestore.instance

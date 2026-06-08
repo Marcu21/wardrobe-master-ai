@@ -46,7 +46,7 @@ class OutfitSortingUtils {
           cat.contains('pant') ||
           sub.contains('jean') ||
           sub.contains('skirt') ||
-          sub.contains('short') ||
+          sub.contains('shorts') ||
           sub.contains('legging'))
         return 4;
 

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:mobile_app/navigation/app_routes.dart';
 import 'package:mobile_app/theme/app_colors.dart';
 import 'package:mobile_app/widgets/custom_snackbar.dart';
+import 'package:mobile_app/screens/item_selection/item_selection_screen.dart';
 import 'widgets/trip_skeleton_loader.dart';
 import 'widgets/trip_suitcase_tab.dart';
 import 'widgets/trip_outfits_tab.dart';
@@ -61,10 +62,12 @@ class _TripViewBody extends StatelessWidget {
 
   void _openItemSelection(BuildContext context) async {
     final vm = context.read<TripViewViewModel>();
-    final newIds = await Navigator.pushNamed<List<String>>(
-      context,
-      AppRoutes.itemSelection,
-      arguments: ItemSelectionArgs(List.from(vm.editableItemIds)),
+    final newIds = await Navigator.of(context).push<List<String>>(
+      MaterialPageRoute(
+        builder: (_) => ItemSelectionScreen(
+          initialSelectedIds: List.from(vm.editableItemIds),
+        ),
+      ),
     );
     if (newIds != null && context.mounted) {
       vm.updateEditableItems(newIds);
@@ -109,11 +112,13 @@ class _TripViewBody extends StatelessWidget {
 
     CustomSnackBar.showSuccess(context, 'Trip saved successfully!');
 
-    // Pop the unsaved TripView instead of mutating its provider in place.
-    // The provider/VM is then torn down by Flutter's normal route
-    // lifecycle (no notifyListeners() against a mid-teardown subtree),
-    // and the saved trip appears in MyTrips the next time it's opened.
-    navigator.pop();
+    // Navigate to MyTrips and clear the setup + view screens from the stack.
+    // pushNamedAndRemoveUntil tears down TripView's provider via normal route
+    // lifecycle (safe, no notifyListeners against a mid-teardown subtree).
+    navigator.pushNamedAndRemoveUntil(
+      AppRoutes.trips,
+      (route) => route.isFirst,
+    );
   }
 
   Future<void> _updateTrip(BuildContext context) async {
@@ -129,44 +134,10 @@ class _TripViewBody extends StatelessWidget {
 
   Future<void> _editDayOutfit(BuildContext context, int index) async {
     final vm = context.read<TripViewViewModel>();
-    final controller = TextEditingController();
     final result = await showDialog<String>(
       context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: const Text("Tweak this outfit"),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            decoration: InputDecoration(
-              hintText: "What would you like to change?",
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: Theme.of(ctx).primaryColor,
-                  width: 2,
-                ),
-              ),
-            ),
-            maxLines: 2,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-              child: const Text("Update"),
-            ),
-          ],
-        );
-      },
+      builder: (ctx) => const _EditOutfitDialog(),
     );
-    controller.dispose();
     if (result == null || result.isEmpty || !context.mounted) return;
     final error = await vm.editDayOutfit(index, result);
     if (!context.mounted) return;
@@ -555,6 +526,67 @@ class _TripViewBody extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _EditOutfitDialog extends StatefulWidget {
+  const _EditOutfitDialog();
+
+  @override
+  State<_EditOutfitDialog> createState() => _EditOutfitDialogState();
+}
+
+class _EditOutfitDialogState extends State<_EditOutfitDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text("Tweak this outfit"),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: InputDecoration(
+          hintText: "What would you like to change?",
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: Theme.of(context).primaryColor,
+              width: 2,
+            ),
+          ),
+        ),
+        maxLines: 2,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Cancel"),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            final text = _controller.text.trim();
+            if (text.isNotEmpty) Navigator.pop(context, text);
+          },
+          child: const Text("Update"),
+        ),
+      ],
     );
   }
 }

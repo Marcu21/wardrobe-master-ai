@@ -127,6 +127,7 @@ class OutfitRequest(BaseModel):
     current_weather: str
     hourly_forecast: str
     wardrobe_id: Optional[str] = None
+    prioritize_neglected: bool = True
 
 class OutfitResponse(BaseModel):
     selected_item_ids: List[str]
@@ -367,12 +368,11 @@ async def generate_outfit(request: OutfitRequest, uid: str = Depends(get_verifie
                     except ValueError:
                         pass
             
-            rotation_status = "Recently worn"
-            if category in ['Shoes', 'Footwear', 'Outerwear'] or (sub_category and ('jacket' in sub_category.lower() or 'coat' in sub_category.lower())):
-                rotation_status = "Exempt from rotation"
-            elif days_since > 45:
-                rotation_status = "Neglected - prioritize if weather permits"
-            
+            is_exempt = category == 'Outerwear' or (
+                sub_category and ('jacket' in sub_category.lower() or 'coat' in sub_category.lower())
+            )
+            is_neglected = not is_exempt and days_since > 45
+
             item_summary = {
                 "id": doc.id,
                 "category": category,
@@ -383,8 +383,9 @@ async def generate_outfit(request: OutfitRequest, uid: str = Depends(get_verifie
                 "fit": data.get('styling_info', {}).get('fit'),
                 "style_occasions": data.get('styling_info', {}).get('style_occasions'),
                 "seasonality": data.get('styling_info', {}).get('seasonality'),
-                "rotation_status": rotation_status,
             }
+            if request.prioritize_neglected and is_neglected:
+                item_summary["rotation_status"] = "Neglected"
             clothing_items.append(item_summary)
 
         if not clothing_items:
@@ -482,8 +483,8 @@ async def generate_outfit(request: OutfitRequest, uid: str = Depends(get_verifie
         Recent Outfit IDs: {recent_outfits_json}
         This is a list of item IDs the user wore together recently. CRITICAL RULE: Do NOT recommend these exact combinations of IDs again. It is PERFECTLY FINE to reuse an individual piece (e.g., you can reuse a Top OR a Bottom from a few days ago), but the WHOLE outfit must not be the same. Specifically, the core combination (Top + Bottom) MUST be different from recent history. EXCEPTION: It is 100% acceptable to reuse the exact same Shoes and Outerwear IDs, just ensure the core outfit (Top + Bottom) underneath is fresh.
 
-        ### WARDROBE ROTATION
-        Look at the 'CLOTHING ITEMS' list. Some items have a 'rotation_status' of 'Neglected'. You MUST prioritize including at least ONE neglected item in your generated outfit, BUT ONLY IF it perfectly matches the weather forecast, the color theory, and the user's plan. Do not force a neglected item if it ruins the outfit.
+        {"""### WARDROBE ROTATION
+        Look at the 'CLOTHING ITEMS' list. Some items have a 'rotation_status' of 'Neglected'. You MUST prioritize including at least ONE neglected item in your generated outfit, BUT ONLY IF it perfectly matches the weather forecast, the color theory, and the user's plan. Do not force a neglected item if it ruins the outfit.""" if request.prioritize_neglected else ""}
 
         ### USER PREFERENCES & RESTRICTIONS
         {feedback_history_text}

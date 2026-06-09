@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mobile_app/services/clothing_repository.dart';
-import 'package:mobile_app/services/calendar_service.dart';
 import 'package:mobile_app/utils/outfit_sorting_utils.dart';
 
 class OutfitDetailViewModel extends ChangeNotifier {
@@ -107,10 +106,6 @@ class OutfitDetailViewModel extends ChangeNotifier {
 
       await batch.commit();
 
-      await CalendarService().addOutfitEvent(
-        outfitData['name'] ?? 'Untitled Outfit',
-        DateTime.now(),
-      );
 
       if (!_disposed) {
         wearCount++;

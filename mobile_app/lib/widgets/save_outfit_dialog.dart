@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/outfit_repository.dart';
-import '../services/calendar_service.dart';
 import 'custom_snackbar.dart';
 
 class SaveOutfitDialog extends StatefulWidget {
@@ -99,8 +98,6 @@ class _SaveOutfitDialogState extends State<SaveOutfitDialog> {
         }
         await batch.commit();
 
-        // Calendar Service
-        await CalendarService().addOutfitEvent(name, DateTime.now());
       }
 
       if (mounted) {

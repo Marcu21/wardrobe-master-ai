@@ -140,6 +140,20 @@ class LaundryViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> markBasketAsWashed() async {
+    final batch = _firestore.batch();
+    for (final item in List.of(_basketItems)) {
+      final id = item['id'] as String?;
+      if (id == null) continue;
+      batch.update(_firestore.collection('clothing').doc(id), {
+        'status': 'clean',
+        'is_dirty': false,
+        'isDirty': false,
+      });
+    }
+    await batch.commit();
+  }
+
   @override
   void dispose() {
     if (!_testMode) wardrobeStateService.removeListener(_onWardrobeChanged);

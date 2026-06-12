@@ -11,6 +11,7 @@ import 'widgets/laundry_status_banner.dart';
 import 'widgets/virtual_basket_view.dart';
 import 'widgets/wardrobe_filter_chips.dart';
 import 'widgets/wardrobe_grid_item.dart';
+import 'widgets/post_wash_care_modal.dart';
 import 'package:mobile_app/services/laundry_service.dart';
 
 const _kBlob1 = kGlowPrimary;
@@ -364,6 +365,76 @@ class _LaundryBody extends StatelessWidget {
                         statusColor: statusColor,
                         onRemove: vm.removeFromBasket,
                       ),
+                      if (basketItems.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                          child: GestureDetector(
+                            onTap: () => showPostWashCareModal(
+                              context,
+                              basketItems.toList(),
+                              vm.laundryService,
+                            ),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 13),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.85),
+                                borderRadius: BorderRadius.circular(22),
+                                border: Border.all(
+                                  color: const Color(0xFF16A34A).withOpacity(0.30),
+                                  width: 1.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF16A34A).withOpacity(0.10),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    CupertinoIcons.wind,
+                                    color: const Color(0xFF16A34A),
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  const Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Washing done?',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 13,
+                                            color: Color(0xFF16A34A),
+                                          ),
+                                        ),
+                                        SizedBox(height: 1),
+                                        Text(
+                                          'See how to dry & iron each item',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.black45,
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(
+                                    CupertinoIcons.chevron_right,
+                                    color: const Color(0xFF16A34A).withOpacity(0.6),
+                                    size: 14,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                       Padding(
                         padding: const EdgeInsets.fromLTRB(20, 24, 20, 4),
                         child: Column(

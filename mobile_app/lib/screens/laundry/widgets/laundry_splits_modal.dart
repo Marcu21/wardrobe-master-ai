@@ -167,14 +167,53 @@ void showLaundryAutoSplitModal(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
-                                            Text(
-                                              load.title,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w800,
-                                                fontSize: 16,
-                                                color: Colors.black87,
-                                                letterSpacing: -0.3,
-                                              ),
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Text(
+                                                    load.title,
+                                                    style: const TextStyle(
+                                                      fontWeight: FontWeight.w800,
+                                                      fontSize: 16,
+                                                      color: Colors.black87,
+                                                      letterSpacing: -0.3,
+                                                    ),
+                                                  ),
+                                                ),
+                                                if (load.recommendedTemp != null)
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 5,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(0xFFF0F4FF),
+                                                      borderRadius: BorderRadius.circular(10),
+                                                      border: Border.all(
+                                                        color: kPrimary.withOpacity(0.20),
+                                                      ),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Icon(
+                                                          Icons.thermostat,
+                                                          size: 13,
+                                                          color: kPrimary.withOpacity(0.7),
+                                                        ),
+                                                        const SizedBox(width: 4),
+                                                        Text(
+                                                          'Max ${load.recommendedTemp}°C',
+                                                          style: TextStyle(
+                                                            fontSize: 12,
+                                                            fontWeight: FontWeight.w700,
+                                                            color: kPrimary.withOpacity(0.8),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                              ],
                                             ),
                                             const SizedBox(height: 5),
                                             Text(

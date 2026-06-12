@@ -35,11 +35,13 @@ class LaundryLoadSuggestion {
   final String title;
   final String reason;
   final List<Map<String, dynamic>> items;
+  final int? recommendedTemp;
 
   LaundryLoadSuggestion({
     required this.title,
     required this.reason,
     required this.items,
+    this.recommendedTemp,
   });
 }
 
@@ -98,8 +100,8 @@ class LaundryService {
       final tempRaw = laundryInfo['max_temp_celsius'];
       if (tempRaw != null) {
         int? temp;
-        if (tempRaw is int) {
-          temp = tempRaw;
+        if (tempRaw is num) {
+          temp = tempRaw.toInt();
         } else if (tempRaw is String) {
           temp = int.tryParse(tempRaw);
         }
@@ -194,8 +196,8 @@ class LaundryService {
 
       bool itemFlagged = false;
 
-      // Priority 1: Dry clean only — checked before "do not wash" so that items
-      // labelled with both "Do not wash" and "Dry clean" get the right message.
+      // Dry clean takes priority — an item tagged with both "Do not wash" and
+      // "Dry clean" should warn about dry cleaning, not a blanket do-not-wash.
       if (hasDryClean && !canBeWashed) {
         dryCleanItems.add(itemLabel);
         itemFlagged = true;
@@ -585,82 +587,82 @@ class LaundryService {
     final List<LaundryLoadSuggestion> suggestions = [];
 
     if (dryClean.isNotEmpty) {
-      suggestions.add(
-        LaundryLoadSuggestion(
-          title: 'Dry Clean Only',
-          reason:
-              'These items cannot be machine washed — take them to a dry cleaner.',
-          items: dryClean,
-        ),
-      );
+      suggestions.add(LaundryLoadSuggestion(
+        title: 'Dry Clean Only',
+        reason: 'These items cannot be machine washed — take them to a dry cleaner.',
+        items: dryClean,
+      ));
     }
 
     if (specialCare.isNotEmpty) {
-      suggestions.add(
-        LaundryLoadSuggestion(
-          title: 'Special Care',
-          reason:
-              'These items cannot be washed in any machine — spot clean or follow the care label.',
-          items: specialCare,
-        ),
-      );
+      suggestions.add(LaundryLoadSuggestion(
+        title: 'Special Care',
+        reason: 'These items cannot be washed in any machine — spot clean or follow the care label.',
+        items: specialCare,
+      ));
     }
 
     if (handWashOnly.isNotEmpty) {
-      suggestions.add(
-        LaundryLoadSuggestion(
-          title: 'Hand Wash Only',
-          reason:
-              'These items must be washed by hand — machine washing may damage them.',
-          items: handWashOnly,
-        ),
-      );
+      suggestions.add(LaundryLoadSuggestion(
+        title: 'Hand Wash Only',
+        reason: 'These items must be washed by hand — machine washing may damage them.',
+        items: handWashOnly,
+      ));
     }
 
     if (footwear.isNotEmpty) {
-      suggestions.add(
-        LaundryLoadSuggestion(
-          title: 'Footwear Load',
-          reason:
-              'Shoes must be washed separately for hygiene and machine safety.',
-          items: footwear,
-        ),
-      );
+      suggestions.add(LaundryLoadSuggestion(
+        title: 'Footwear Load',
+        reason: 'Shoes must be washed separately for hygiene and machine safety.',
+        items: footwear,
+        recommendedTemp: _minTempForItems(footwear),
+      ));
     }
 
     if (delicates.isNotEmpty) {
-      suggestions.add(
-        LaundryLoadSuggestion(
-          title: 'Delicates Load',
-          reason:
-              'Delicate fabrics need a gentle, cold cycle to prevent damage.',
-          items: delicates,
-        ),
-      );
+      suggestions.add(LaundryLoadSuggestion(
+        title: 'Delicates Load',
+        reason: 'Delicate fabrics need a gentle, cold cycle to prevent damage.',
+        items: delicates,
+        recommendedTemp: _minTempForItems(delicates),
+      ));
     }
 
     if (lights.isNotEmpty) {
-      suggestions.add(
-        LaundryLoadSuggestion(
-          title: 'Whites & Lights Load',
-          reason: 'Wash light colors together to prevent color bleeding.',
-          items: lights,
-        ),
-      );
+      suggestions.add(LaundryLoadSuggestion(
+        title: 'Whites & Lights Load',
+        reason: 'Wash light colors together to prevent color bleeding.',
+        items: lights,
+        recommendedTemp: _minTempForItems(lights),
+      ));
     }
 
     final darksAndColors = [...darks, ...colors];
     if (darksAndColors.isNotEmpty) {
-      suggestions.add(
-        LaundryLoadSuggestion(
-          title: 'Darks & Colors Load',
-          reason:
-              'Dark and colored items are safe to wash together — keep them away from lights only.',
-          items: darksAndColors,
-        ),
-      );
+      suggestions.add(LaundryLoadSuggestion(
+        title: 'Darks & Colors Load',
+        reason: 'Dark and colored items are safe to wash together — keep them away from lights only.',
+        items: darksAndColors,
+        recommendedTemp: _minTempForItems(darksAndColors),
+      ));
     }
 
     return suggestions;
+  }
+
+  int? _minTempForItems(List<Map<String, dynamic>> items) {
+    int? min;
+    for (final item in items) {
+      final laundryInfo = item['laundry_info'] as Map<String, dynamic>? ?? {};
+      final tempRaw = laundryInfo['max_temp_celsius'];
+      int? temp;
+      if (tempRaw is num) {
+        temp = tempRaw.toInt();
+      } else if (tempRaw is String) {
+        temp = int.tryParse(tempRaw);
+      }
+      if (temp != null && (min == null || temp < min)) min = temp;
+    }
+    return min;
   }
 }

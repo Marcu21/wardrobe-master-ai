@@ -269,7 +269,8 @@ class _LaundryBody extends StatelessWidget {
                       statusTitle: statusTitle,
                       statusSubtitle: statusSubtitle,
                       recommendedTemp: result.recommendedTemp,
-                      hasItems: basketItems.isNotEmpty,
+                      hasItems: basketItems.isNotEmpty &&
+                          result.status == LaundryStatus.Safe,
                     ),
                   ),
                 ),

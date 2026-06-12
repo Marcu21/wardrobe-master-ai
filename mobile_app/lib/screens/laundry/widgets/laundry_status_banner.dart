@@ -58,6 +58,8 @@ class LaundryStatusBanner extends StatelessWidget {
                 ),
                 Text(
                   statusSubtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.72),
                     fontSize: 12,

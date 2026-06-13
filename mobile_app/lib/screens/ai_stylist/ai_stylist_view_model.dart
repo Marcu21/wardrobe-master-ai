@@ -16,6 +16,7 @@ class AiStylistViewModel extends ChangeNotifier {
   final ClothingRepository _clothingRepository;
   final OutfitRepository _outfitRepository;
   final WeatherService _weatherService;
+  final Future<bool> Function() _fetchPrioritizeNeglected;
 
   final List<ChatMessage> _messages = [];
   final TextEditingController controller = TextEditingController();
@@ -35,6 +36,8 @@ class AiStylistViewModel extends ChangeNotifier {
         _clothingRepository = ClothingRepository(),
         _outfitRepository = OutfitRepository(),
         _weatherService = WeatherService(),
+        _fetchPrioritizeNeglected =
+            (() => UserSettingsService().getPrioritizeNeglected()),
         wardrobeIdProvider = null;
 
   static String? _nullWardrobeId() => null;
@@ -43,10 +46,12 @@ class AiStylistViewModel extends ChangeNotifier {
   AiStylistViewModel.forTest({
     ApiService? apiService,
     WeatherService? weatherService,
+    Future<bool> Function()? getPrioritizeNeglected,
   })  : _apiService = apiService ?? ApiService.forTest(),
         _clothingRepository = ClothingRepository(),
         _outfitRepository = OutfitRepository(),
         _weatherService = weatherService ?? WeatherService.forTest(),
+        _fetchPrioritizeNeglected = getPrioritizeNeglected ?? (() async => true),
         wardrobeIdProvider = _nullWardrobeId;
 
   @override
@@ -81,8 +86,7 @@ class AiStylistViewModel extends ChangeNotifier {
     }
 
     try {
-      final prioritizeNeglected =
-          await UserSettingsService().getPrioritizeNeglected();
+      final prioritizeNeglected = await _fetchPrioritizeNeglected();
       final response = await _apiService.generateOutfit(
         userPrompt: text,
         currentWeather: currentWeatherStr,

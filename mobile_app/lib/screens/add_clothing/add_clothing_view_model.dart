@@ -67,6 +67,20 @@ class AddClothingViewModel extends ChangeNotifier {
     }
   }
 
+  @visibleForTesting
+  AddClothingViewModel.forTest({
+    bool isAnalyzing = false,
+    String? errorMessage,
+    Map<String, dynamic>? analysisResult,
+  }) : _picker = ImagePicker() {
+    _isAnalyzing = isAnalyzing;
+    _errorMessage = errorMessage;
+    _analysisResult = analysisResult;
+    if (analysisResult?['metadata'] != null) {
+      _populateForm(analysisResult!['metadata'] as Map<String, dynamic>);
+    }
+  }
+
   @override
   void dispose() {
     categoryController.dispose();

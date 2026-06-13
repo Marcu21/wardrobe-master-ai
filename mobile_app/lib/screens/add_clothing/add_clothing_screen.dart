@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -21,15 +22,24 @@ const _kBlob2 = kGlowPrimary2;
 class AddClothingScreen extends StatelessWidget {
   final Map<String, dynamic>? initialAnalysisResult;
   final File? initialImageFile;
+  @visibleForTesting
+  final AddClothingViewModel? testViewModel;
 
   const AddClothingScreen({
     super.key,
     this.initialAnalysisResult,
     this.initialImageFile,
+    this.testViewModel,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (testViewModel != null) {
+      return ChangeNotifierProvider<AddClothingViewModel>.value(
+        value: testViewModel!,
+        child: const _AddClothingBody(),
+      );
+    }
     return ChangeNotifierProvider<AddClothingViewModel>(
       create: (_) => AddClothingViewModel(
         initialAnalysisResult: initialAnalysisResult,

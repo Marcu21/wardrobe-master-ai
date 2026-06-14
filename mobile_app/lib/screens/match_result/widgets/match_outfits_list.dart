@@ -11,14 +11,90 @@ class MatchOutfitsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (generatedOutfits.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24.0),
-          child: Text(
-            "No outfits could be generated.",
-            style: TextStyle(color: Colors.grey),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "WAYS TO WEAR IT",
+            style: TextStyle(
+              fontSize: 11,
+              letterSpacing: 4.0,
+              fontWeight: FontWeight.w600,
+              color: Colors.black45,
+            ),
           ),
-        ),
+          const SizedBox(height: 4),
+          const Text(
+            "Outfit combinations",
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              color: Colors.black87,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.75),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: Colors.teal.withOpacity(0.12),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.teal.withOpacity(0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, 6),
+                ),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.teal.withOpacity(0.08),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.style_outlined,
+                    size: 32,
+                    color: Colors.teal.withOpacity(0.6),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                const Text(
+                  "No combinations found",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Add more items to your wardrobe to unlock outfit pairings for this piece.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.black45,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       );
     }
 

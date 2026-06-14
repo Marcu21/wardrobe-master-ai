@@ -26,7 +26,60 @@ class TripOutfitsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (wardrobe == null || wardrobe!.outfits.isEmpty) {
-      return const Center(child: Text("No outfits generated."));
+      return Center(
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeOutCubic,
+          builder: (context, v, child) => Opacity(
+            opacity: v,
+            child: Transform.translate(
+              offset: Offset(0, 20 * (1 - v)),
+              child: child,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(28),
+                decoration: BoxDecoration(
+                  color: Colors.deepPurple.withOpacity(0.07),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.deepPurple.withOpacity(0.15),
+                    width: 1.5,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.style_outlined,
+                  size: 44,
+                  color: Colors.deepPurple,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'No outfits yet',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black87,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Add clothes to your wardrobe to get started',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.black45,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     return ListView.builder(

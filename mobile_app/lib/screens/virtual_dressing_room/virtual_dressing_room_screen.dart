@@ -325,7 +325,58 @@ class _VirtualDressingRoomBody extends StatelessWidget {
                             ],
                           ),
                         )
-                      : Stack(
+                      : vm.isEmpty
+                          ? Center(
+                              child: TweenAnimationBuilder<double>(
+                                tween: Tween(begin: 0.0, end: 1.0),
+                                duration: const Duration(milliseconds: 600),
+                                curve: Curves.easeOutCubic,
+                                builder: (context, v, child) => Opacity(
+                                  opacity: v,
+                                  child: Transform.translate(
+                                    offset: Offset(0, 20 * (1 - v)),
+                                    child: child,
+                                  ),
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(28),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withOpacity(0.05),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.checkroom_outlined,
+                                        size: 44,
+                                        color: Colors.black38,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
+                                    const Text(
+                                      'Your wardrobe is empty',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.black87,
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    const Text(
+                                      'Add clothes to start styling your outfits',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.black45,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : Stack(
                           children: [
                             Column(
                               children: [
@@ -338,6 +389,8 @@ class _VirtualDressingRoomBody extends StatelessWidget {
                                     items: vm.bottoms,
                                     onIndexChanged: vm.setBottomsIndex,
                                     viewportFraction: vpBottoms,
+                                    categoryLabel: 'Bottoms',
+                                    categoryIcon: Icons.accessibility_new,
                                   ),
                                 ),
                                 ClothingCarouselRow(
@@ -347,6 +400,8 @@ class _VirtualDressingRoomBody extends StatelessWidget {
                                   onIndexChanged: vm.setShoesIndex,
                                   alignment: Alignment.bottomCenter,
                                   viewportFraction: vpShoes,
+                                  categoryLabel: 'Shoes',
+                                  categoryIcon: Icons.directions_walk_outlined,
                                 ),
                               ],
                             ),
@@ -361,6 +416,8 @@ class _VirtualDressingRoomBody extends StatelessWidget {
                                     flex: fTop,
                                     onIndexChanged: vm.setTopsIndex,
                                     viewportFraction: vpTops,
+                                    categoryLabel: 'Tops',
+                                    categoryIcon: Icons.dry_cleaning,
                                   ),
                                   if (fBot + fShoe > 0)
                                     const Spacer(flex: fBot + fShoe),
@@ -376,6 +433,8 @@ class _VirtualDressingRoomBody extends StatelessWidget {
                                     flex: fMid,
                                     onIndexChanged: vm.setMidwearIndex,
                                     viewportFraction: vpMidwear,
+                                    categoryLabel: 'Midwear',
+                                    categoryIcon: CupertinoIcons.thermometer,
                                   ),
                                   if (fTop + fBot + fShoe > 0)
                                     Spacer(flex: fTop + fBot + fShoe),
@@ -390,6 +449,8 @@ class _VirtualDressingRoomBody extends StatelessWidget {
                                     flex: fOuter,
                                     onIndexChanged: vm.setOuterwearIndex,
                                     viewportFraction: vpOuterwear,
+                                    categoryLabel: 'Outerwear',
+                                    categoryIcon: CupertinoIcons.umbrella,
                                   ),
                                   if (fMid + fTop + fBot + fShoe > 0)
                                     Spacer(flex: fMid + fTop + fBot + fShoe),

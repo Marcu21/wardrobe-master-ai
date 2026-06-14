@@ -200,6 +200,13 @@ class VirtualDressingRoomViewModel extends ChangeNotifier {
   void setBottomsIndex(int i) => bottomsIndex = i;
   void setShoesIndex(int i) => shoesIndex = i;
 
+  bool get isEmpty =>
+      outerwear.isEmpty &&
+      midwear.isEmpty &&
+      tops.isEmpty &&
+      bottoms.isEmpty &&
+      shoes.isEmpty;
+
   List<String> getSelectedIds() {
     final ids = <String>[];
     if (showOuterwear && outerwear.isNotEmpty) {

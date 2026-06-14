@@ -7,12 +7,16 @@ class ClothingCarouselRow extends StatelessWidget {
   final void Function(int) onIndexChanged;
   final Alignment alignment;
   final double viewportFraction;
+  final String categoryLabel;
+  final IconData categoryIcon;
 
   const ClothingCarouselRow({
     super.key,
     required this.items,
     required this.flex,
     required this.onIndexChanged,
+    required this.categoryLabel,
+    required this.categoryIcon,
     this.alignment = Alignment.center,
     this.viewportFraction = 0.6,
   });
@@ -26,6 +30,8 @@ class ClothingCarouselRow extends StatelessWidget {
         onIndexChanged: onIndexChanged,
         alignment: alignment,
         viewportFraction: viewportFraction,
+        categoryLabel: categoryLabel,
+        categoryIcon: categoryIcon,
       ),
     );
   }
@@ -36,11 +42,15 @@ class ClothingCarouselRowInternal extends StatefulWidget {
   final void Function(int) onIndexChanged;
   final Alignment alignment;
   final double viewportFraction;
+  final String categoryLabel;
+  final IconData categoryIcon;
 
   const ClothingCarouselRowInternal({
     super.key,
     required this.items,
     required this.onIndexChanged,
+    required this.categoryLabel,
+    required this.categoryIcon,
     this.alignment = Alignment.center,
     this.viewportFraction = 0.6,
   });
@@ -69,11 +79,33 @@ class _ClothingCarouselRowInternalState
   @override
   Widget build(BuildContext context) {
     if (widget.items.isEmpty) {
-      return Container(
-        alignment: Alignment.center,
-        child: Text(
-          'Empty',
-          style: TextStyle(color: Colors.grey[300], fontSize: 12),
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.04),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.black12, width: 1),
+              ),
+              child: Icon(
+                widget.categoryIcon,
+                size: 22,
+                color: Colors.black26,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              widget.categoryLabel,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Colors.black26,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ],
         ),
       );
     }

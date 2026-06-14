@@ -280,6 +280,7 @@ class TripViewViewModel extends ChangeNotifier {
       );
       if (!_disposed) {
         hasUnsavedChanges = false;
+        initialTripData?['item_ids'] = List<String>.from(lastSyncedItemIds);
         _notify();
       }
       return null;

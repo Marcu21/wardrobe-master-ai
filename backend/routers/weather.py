@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Query
 router = APIRouter()
 
 _OPENWEATHER_BASE = "https://api.openweathermap.org/data/2.5/forecast"
+_PHOTON_BASE = "https://photon.komoot.io/api/"
 
 _MONTH_NAMES = [
     "January", "February", "March", "April", "May", "June",
@@ -19,6 +20,37 @@ def _align_icon(api_icon: str, local_time: datetime) -> str:
         return api_icon
     is_night = local_time.hour < 6 or local_time.hour >= 20
     return api_icon[:-1] + ("n" if is_night else "d")
+
+
+@router.get("/weather/city-suggestions")
+async def get_city_suggestions(q: str = Query(..., min_length=2)):
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                _PHOTON_BASE,
+                params={"q": q, "limit": 5, "layer": "city", "lang": "en"},
+                headers={"User-Agent": "WardrobeMasterAI/1.0"},
+                timeout=5.0,
+            )
+        if resp.status_code != 200:
+            return {"suggestions": []}
+
+        suggestions = []
+        seen: set[str] = set()
+        for feature in resp.json().get("features", []):
+            props = feature.get("properties", {})
+            city = props.get("name", "")
+            country = props.get("country", "")
+            if not city or not country:
+                continue
+            label = f"{city}, {country}"
+            if label not in seen:
+                seen.add(label)
+                suggestions.append(label)
+
+        return {"suggestions": suggestions}
+    except Exception:
+        return {"suggestions": []}
 
 
 @router.get("/weather/current")

@@ -22,6 +22,21 @@ class WeatherService {
 
   WeatherModel? get cachedWeather => _cachedWeather;
 
+  Future<List<String>> getCitySuggestions(String query) async {
+    if (query.trim().length < 2) return [];
+    try {
+      final uri = Uri.parse('$_serverUrl/weather/city-suggestions').replace(
+        queryParameters: {'q': query.trim()},
+      );
+      final response = await http.get(uri).timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        return List<String>.from(json['suggestions'] as List);
+      }
+    } catch (_) {}
+    return [];
+  }
+
   Future<String> getTripWeatherSummary(
     String destination,
     DateTime startDate,

@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:mobile_app/services/weather_service.dart';
 import 'package:mobile_app/widgets/custom_snackbar.dart';
 import 'package:mobile_app/widgets/global_wardrobe_selector.dart';
 import 'package:mobile_app/navigation/app_routes.dart';
@@ -21,16 +23,50 @@ class PackingSetupScreen extends StatefulWidget {
 
 class _PackingSetupScreenState extends State<PackingSetupScreen> {
   final _destinationController = TextEditingController();
+  final _destinationFocusNode = FocusNode();
   final _tripPlansController = TextEditingController();
   DateTimeRange? _selectedDateRange;
   String? _selectedVibe;
   String _selectedLuggage = 'Carry-on';
+  Timer? _debounce;
+  List<String> _citySuggestions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _destinationFocusNode.addListener(() {
+      if (!_destinationFocusNode.hasFocus) {
+        setState(() => _citySuggestions = []);
+      }
+    });
+  }
 
   @override
   void dispose() {
     _destinationController.dispose();
+    _destinationFocusNode.dispose();
     _tripPlansController.dispose();
+    _debounce?.cancel();
     super.dispose();
+  }
+
+  void _onDestinationChanged(String value) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    if (value.trim().length < 2) {
+      setState(() => _citySuggestions = []);
+      return;
+    }
+    _debounce = Timer(const Duration(milliseconds: 400), () async {
+      final suggestions =
+          await WeatherService().getCitySuggestions(value.trim());
+      if (mounted) setState(() => _citySuggestions = suggestions);
+    });
+  }
+
+  void _selectSuggestion(String suggestion) {
+    _destinationController.text = suggestion;
+    _destinationFocusNode.unfocus();
+    setState(() => _citySuggestions = []);
   }
 
   Future<void> _selectDateRange() async {
@@ -179,7 +215,11 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: _destinationController,
+                          focusNode: _destinationFocusNode,
                           textInputAction: TextInputAction.next,
+                          onChanged: _onDestinationChanged,
+                          onFieldSubmitted: (_) =>
+                              setState(() => _citySuggestions = []),
                           decoration: InputDecoration(
                             hintText: 'e.g., Milan, Italy',
                             prefixIcon: const Icon(
@@ -209,6 +249,70 @@ class _PackingSetupScreenState extends State<PackingSetupScreen> {
                                 const EdgeInsets.symmetric(vertical: 16),
                           ),
                         ),
+                        if (_citySuggestions.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.10),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: ListView.separated(
+                                  shrinkWrap: true,
+                                  padding: EdgeInsets.zero,
+                                  physics:
+                                      const NeverScrollableScrollPhysics(),
+                                  itemCount: _citySuggestions.length,
+                                  separatorBuilder: (_, __) => Divider(
+                                    height: 1,
+                                    indent: 16,
+                                    endIndent: 16,
+                                    color: Colors.grey.shade200,
+                                  ),
+                                  itemBuilder: (ctx, i) {
+                                    return InkWell(
+                                      onTap: () => _selectSuggestion(
+                                          _citySuggestions[i]),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 14,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.location_on_outlined,
+                                              size: 18,
+                                              color: Colors.blueAccent,
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Text(
+                                                _citySuggestions[i],
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.black87,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          ),
                         const SizedBox(height: 32),
 
                         _buildSectionTitle('When?'),

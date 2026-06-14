@@ -55,16 +55,34 @@ class LookbookScreen extends StatelessWidget {
             ),
           ),
           SafeArea(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('outfits')
-                  .where(
-                    'user_id',
-                    isEqualTo: FirebaseAuth.instance.currentUser?.uid,
-                  )
-                  .orderBy('created_at', descending: true)
-                  .snapshots(),
-              builder: (context, snapshot) {
+            child: Column(
+              children: [
+                SizedBox(
+                  height: 56,
+                  child: Center(
+                    child: Builder(
+                      builder: (context) => Text(
+                        'My Outfits',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black87,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('outfits')
+                        .where(
+                          'user_id',
+                          isEqualTo: FirebaseAuth.instance.currentUser?.uid,
+                        )
+                        .orderBy('created_at', descending: true)
+                        .snapshots(),
+                    builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(
                     child: Column(
@@ -174,21 +192,6 @@ class LookbookScreen extends StatelessWidget {
                 return CustomScrollView(
                   physics: const BouncingScrollPhysics(),
                   slivers: [
-                    const SliverAppBar(
-                      pinned: false,
-                      floating: false,
-                      backgroundColor: Colors.transparent,
-                      elevation: 0,
-                      centerTitle: true,
-                      title: Text(
-                        'My Outfits',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          color: Colors.black87,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                    ),
                     SliverPadding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 140),
                       sliver: SliverGrid(
@@ -216,6 +219,9 @@ class LookbookScreen extends StatelessWidget {
                   ],
                 );
               },
+                  ),
+                ),
+              ],
             ),
           ),
         ],

@@ -1,212 +1,175 @@
-# Wardrobe Master AI 🧠👕
+# ✨ Wardrobe Master AI
 
-**An AI-powered mobile app for wardrobe management, outfit recommendations, smarter shopping decisions and clothing care.**
-
-Wardrobe Master AI is a smart mobile app that helps users make better use of their wardrobe, discover new outfit combinations, make smarter shopping decisions and take better care of their clothes.
-
-Instead of being just a digital closet, the app acts like a personal wardrobe assistant: it helps users organize what they own, get outfit suggestions based on weather and context, track what they wear, understand if a new item is worth buying and avoid damaging clothes during washing.
+Your personal AI-powered wardrobe assistant. Wardrobe Master AI helps you organize your clothes, build outfits, plan trips, manage laundry, and get personalized styling advice — all in one app. ✨
 
 ---
 
-## ✨ Why I built it
+## 🤔 What it does
 
-A lot of people have the same problem: a full wardrobe, but “nothing to wear”.
-
-Clothes get forgotten, outfit choices become repetitive, shopping decisions are often impulsive and care labels are confusing enough that many items end up damaged after washing.
-
-Wardrobe Master AI was built to make wardrobe management smarter, more practical and more sustainable.
+Wardrobe Master AI combines a Flutter mobile app with a Python backend powered by Google Gemini. Take a photo of any clothing item and the AI instantly analyzes it, fills in all the details, and adds it to your digital wardrobe. From there, you can mix and match outfits, chat with an AI stylist, pack for trips, and track how sustainably you're using your wardrobe.
 
 ---
 
-## 🧩 Main features
+## 🚀 Features
 
-### 📸 Smart wardrobe digitization
-Users can add clothing items by uploading photos. The app processes the image and helps turn each item into part of a structured digital wardrobe.
+### 👔 Wardrobe Gallery
+Browse your entire wardrobe in a filterable grid with category and sub-category chips. Tap any item to see its full details, or hit the **+** button to add something new.
 
-What this includes:
-- background removal for clothing images
-- automatic extraction of useful metadata
-- category and subcategory detection
-- color, material and pattern identification
-- storing each item in a searchable wardrobe
+### 🗂️ Multiple Wardrobes
+Perfect if you split your time between cities or keep clothes in different places. Create as many named wardrobes as you need (e.g. "London", "Paris", "Beach House") and switch between them with the wardrobe selector in the app bar. When you switch, the entire app updates — Gallery, Laundry, AI Stylist, and Smart Packing all filter to the active wardrobe. You can also view all wardrobes together at any time. Wardrobes can be renamed or deleted whenever you need; deleting one moves its clothes to "All Wardrobes" rather than removing them.
 
-This makes the wardrobe cleaner, easier to manage and much more useful for recommendations later.
+### 🤖 Smart Clothing Analysis
+When adding a new item, just take a photo (or upload one from your gallery) and optionally scan its care tag. The AI analyzes the image and automatically fills in:
+- 📋 **Basic info** — category, sub-category, colors, material, brand
+- 🎨 **Styling info** — occasions, seasonality, style vibe
+- 🫧 **Laundry info** — washing instructions, care requirements
+- 🌱 **Sustainability info** — estimated lifespan, eco notes
+- 📊 **Usage stats** — how often you wear it, last worn date
 
----
+The background is automatically removed from clothing photos for a clean look. 🪄
 
-### 👗 AI Stylist
-The app can generate outfit suggestions using the items that already exist in the user’s wardrobe.
+### ✏️ Clothing Detail
+View and edit every detail of each item across five organized sections. Everything is editable after the initial AI scan.
 
-It takes into account:
-- the user’s clothing items
-- weather conditions
-- context or occasion
-- clothing compatibility
+### 📖 Lookbook (Outfits)
+Save your favorite outfit combinations and browse them in a grid. Tap any outfit to see its full details and the items it's made of.
 
-The result is not just a set of items, but also an explanation of why the outfit works.
+### 💬 AI Stylist Chat
+Chat with your personal AI stylist. Describe what you need — a look for a job interview, a date night, a beach day — and get outfit suggestions built from your actual wardrobe. The AI also takes the **current weather** into account automatically. Each suggestion shows a visual card with the items and you can preview any outfit in full screen.
 
----
+You can give **thumbs up or thumbs down** on any suggestion. A dislike opens a reason picker (style mismatch, weather mismatch, or context mismatch) — this feedback is saved and the AI uses it in future suggestions to avoid repeating combinations you didn't like and favour ones you did. 🧠
 
-### 🌦️ Weather-adaptive outfit recommendations
-Wardrobe Master AI integrates weather data so outfit suggestions are more practical and realistic.
-
-For example, the app can avoid recommending outfits that do not fit the current temperature or weather conditions and instead propose combinations that are both stylish and wearable.
-
----
+The AI can be set to **prioritize neglected items** (clothes you haven't worn in a while) from Settings. ♻️
 
 ### 🪞 Virtual Dressing Room
-Users can manually build outfits from the clothes they already own.
+An interactive outfit builder where you layer clothing items one by one. Scroll through your wardrobe in category rows, toggle layers on and off, and see the full look come together. Can be opened with pre-selected items or start fresh.
 
-This feature allows them to:
-- combine clothing items freely
-- experiment with different looks
-- create outfits without physically trying everything on
-- save favorite combinations for later
+### 🛍️ Shopping Assistant — "Should I Buy This?"
+Take or upload a photo of a clothing item you're considering buying. The AI analyzes it and checks how well it fits with your existing wardrobe, giving you:
+- 🎯 A **match score** showing how compatible it is with what you already own
+- ✅ **Why it works** — the things that make it a good addition
+- ⚠️ **Keep in mind** — potential clashes or gaps to watch out for
+- 👀 **Generated outfits** showing exactly how you'd wear it with items you already have
 
-It works like a digital space for outfit planning.
+At the end you can either **Buy & Add to Wardrobe** (jumping straight into the add flow with the item pre-analyzed) or **Discard** if it's not the right fit. 🗑️
 
----
+### 📅 Calendar
+Track what you wore and when. Browse by date and see outfit history with a swipeable outfit carousel for each day.
 
-### 💾 Saved outfits
-Both manually created outfits and AI-generated outfits can be saved inside the app.
+### 🧺 Laundry Manager
+A smart laundry tracking system built right into the app:
+- 🧺 Add items to a **virtual laundry basket** from your wardrobe grid
+- 🔍 Filter by category and sub-category
+- 🚨 Get **animated care alerts** when items in your basket can't safely be washed together
+- ✂️ Use **Auto-Split Load** to break the wash into safe groups by color or fabric
+- 💨 Tap **"Washing done?"** to see drying and ironing tips for every item in the basket
+- 🟢 A **status banner** shows whether the current basket is safe, has warnings, or has a critical issue
 
-This helps users keep their favorite combinations in one place and reuse them later instead of rebuilding them every time.
+### 🌱 Sustainability Dashboard
+See how well you're actually using your wardrobe:
+- 📈 **Wear-rate stats** — how often each item gets used
+- 😴 **Neglected items** — clothes that haven't been worn in a long time
+- 💰 **Investment tracking** — cost-per-wear breakdown
 
----
+### 🧳 Smart Packing (Trips)
+Plan what to pack for any trip with AI help:
+1. 🌍 Enter your **destination** — with city autocomplete as you type
+2. 📆 Pick your **travel period** using the date range picker
+3. ✨ Choose a **trip vibe** (City Break, Business, Event, etc.)
+4. 🧳 Select your **luggage size**
+5. 📝 Optionally describe your **itinerary** (e.g. "visiting museums, hiking on Tuesday, fancy dinner") so the AI can tailor the packing list to your actual plans
+6. 🤖 The AI picks the best items from your wardrobe and builds a complete capsule wardrobe for the trip
+7. 👀 View your trip in two tabs:
+   - 🧳 **Suitcase** — all packed items, with a "Stylist's Secret" note explaining the AI's reasoning. Tap **Edit** to add or remove items, then hit **Sync & Re-style** to regenerate outfits based on your updated suitcase
+   - 👗 **Daily Outfits** — pre-planned looks built from your suitcase. Tap the edit icon on any outfit to **tweak it** with a custom instruction (e.g. "make it more formal"), or use the **"Add another outfit"** field at the bottom to generate a brand new outfit for a specific occasion
+8. 💾 All trips are saved so you can revisit them anytime from **My Trips**
 
-### 🛍️ Should I Buy It?
-This is a shopping assistant built to help users decide whether a new clothing item is actually worth buying.
+### 🌤️ Live Weather on Home Screen
+The home screen shows current weather conditions so you can dress accordingly before you even open the stylist.
 
-Instead of making a decision in isolation, the app evaluates the item in relation to the user’s existing wardrobe.
-
-It provides:
-- a **match score**
-- an explanation of **why the item fits or does not fit**
-- useful things to **keep in mind before buying**
-- **3 possible outfit ideas** that could be created using the new item
-
-This feature supports smarter shopping decisions and helps reduce redundant purchases.
-
----
-
-### 📅 Style Calendar
-Users can mark an outfit as worn and the app adds it to a calendar view.
-
-This makes it easier to:
-- track previously worn outfits
-- avoid repeating the same looks too often
-- understand wardrobe usage over time
-- keep a visual history of styling choices
-
----
-
-### 🌱 Sustainability Tracker
-The app also focuses on more conscious wardrobe usage.
-
-It helps users better understand how they use their clothes by showing insights such as:
-- **cost per wear**
-- rarely worn items
-- items that may deserve more use
-- better long-term wardrobe value
-
-This feature encourages users to make better use of what they already own instead of constantly buying new pieces.
+### ⚙️ Settings
+- 👤 Edit your **display name**
+- 🔒 **Change your password** (for email accounts)
+- 🔑 Google Sign-In users have password managed by Google
+- ♻️ Toggle **"Prioritize neglected items"** for AI Stylist suggestions
+- 🗑️ **Delete account** with full data wipe
 
 ---
 
-### 🧺 Laundry Lens
-Wardrobe Master AI also includes support for clothing care.
+## 🛠️ Tech Stack
 
-Users can scan clothing labels and get help understanding care instructions more easily.
-
-This module includes:
-- care label scanning
-- decoding clothing care instructions
-- storing care details digitally for each item
-- attaching washing information to wardrobe items
-
-The goal is to reduce mistakes caused by unclear care symbols.
+| Layer | Technology |
+|---|---|
+| 📱 Mobile App | Flutter (iOS & Android) |
+| ⚙️ Backend API | Python · FastAPI |
+| 🤖 AI | Google Gemini |
+| 🗄️ Database | Firebase Firestore |
+| 🔐 Authentication | Firebase Auth (Email/Password + Google Sign-In) |
+| 🖼️ Image Processing | rembg (background removal) |
 
 ---
 
-### 🚨 Smart Laundry Basket
-Users can place multiple clothing items into a virtual laundry basket and the app checks whether they are safe to wash together.
+## 📁 Project Structure
 
-It can detect problems such as:
-- incompatible washing temperatures
-- risky color combinations
-- material-related incompatibilities
-
-Example warnings:
-- “Do not wash wool at 60°C”
-- “This red item may stain white clothes”
-
-This makes laundry decisions safer and more practical.
-
----
-
-## 🛠️ Tech stack
-
-### 📱 Mobile
-- Flutter
-- Dart
-
-### ⚙️ Backend
-- FastAPI
-- Python
-
-### ☁️ Database & storage
-- Firebase Firestore
-- Firebase Storage
-
-### 🔗 External integrations
-- Weather API
-- LLM-based AI flows
-- image processing pipeline
+```
+wardrobe-master-ai/
+├── mobile_app/          # Flutter app
+│   └── lib/
+│       ├── screens/     # All app screens and their view models
+│       ├── models/      # Data models (ClothingItem, Outfit, Trip, …)
+│       ├── services/    # Firebase, API, and state services
+│       ├── widgets/     # Shared UI components
+│       ├── navigation/  # Route definitions
+│       └── theme/       # Colors and styling
+└── backend/             # FastAPI server
+    ├── routers/         # API endpoints (clothing, stylist, shopping, trips, weather)
+    ├── core/            # Firebase + Gemini initialization
+    ├── models/          # Request/response schemas
+    └── utils/           # Gemini response parsing helpers
+```
 
 ---
 
-## 🔄 How it works
+## 🏁 Getting Started
 
-### 👕 Adding a clothing item
-1. The user uploads a photo of a clothing item
-2. The app processes the image
-3. Metadata is extracted
-4. The item is stored in the digital wardrobe
+### 🐍 Backend
 
-### 🤖 Getting an outfit recommendation
-1. The user opens the AI stylist
-2. The app uses wardrobe data and weather context
-3. A suitable outfit is generated
-4. The selected items and explanation are shown
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn main:app --reload
+```
 
-### 🛒 Checking if a new item is worth buying
-1. The user provides a potential new clothing item
-2. The app compares it against the existing wardrobe
-3. It returns a score, explanation and outfit suggestions
+You'll need a `.env` file (or environment variables) with:
+- `GEMINI_API_KEY` — your Google Gemini API key 🤖
+- Firebase service account credentials for Firestore access 🔥
 
-### 🫧 Getting laundry help
-1. The user scans a clothing label
-2. Care instructions are extracted
-3. Clothing items can be added to a laundry basket
-4. The app checks compatibility and warns about risks
+### 📱 Mobile App
 
----
+```bash
+cd mobile_app
+flutter pub get
+flutter run
+```
 
-## 🎯 Project goals
+Make sure your `google-services.json` (Android) and `GoogleService-Info.plist` (iOS) are in place for Firebase to work. 🔥
 
-This project was developed as a bachelor thesis application and combines:
-- mobile development
-- software engineering
-- practical AI integration
-- recommendation logic
-- sustainability-focused design
-
-The goal was not just to create a digital wardrobe, but to build an assistant that helps users make better everyday decisions related to clothing.
+> First time? The login screen also lets you **create a new account** with your name, email, and password — or jump straight in with Google Sign-In. 🚀
 
 ---
 
-## 💡 Final note
+## 🔌 Backend API Endpoints
 
-Wardrobe Master AI is built around a simple idea: clothes should be easier to organize, easier to wear, easier to care for and easier to understand.
-
-The app tries to turn wardrobe management from a frustrating daily task into a smarter and more helpful experience.
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/remove-bg/` | 🖼️ Remove background from a clothing photo |
+| POST | `/process-item/` | 🤖 AI analysis of a clothing item image |
+| POST | `/generate-outfit/` | 💬 AI stylist — generate an outfit from the user's wardrobe |
+| POST | `/generate-outfits/` | 🛍️ Shopping assistant — score a scanned item against the user's wardrobe |
+| POST | `/generate-packing/` | 🧳 AI-powered trip capsule wardrobe from wardrobe |
+| POST | `/generate-trip-outfit/` | 👗 Generate or tweak a specific outfit for a trip occasion |
+| GET | `/weather/current` | 🌤️ Current weather data by coordinates |
+| GET | `/weather/trip-summary` | 📆 Weather forecast summary for a trip date range |
+| GET | `/weather/city-suggestions` | 🔍 City autocomplete suggestions |

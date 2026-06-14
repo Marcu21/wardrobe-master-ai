@@ -138,9 +138,16 @@ class _WardrobeGalleryBody extends StatelessWidget {
             ),
           ),
           SafeArea(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: vm.clothingStream,
-              builder: (context, snapshot) {
+            child: Column(
+              children: [
+                const SizedBox(
+                  height: 56,
+                  child: Center(child: GlobalWardrobeSelector()),
+                ),
+                Expanded(
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: vm.clothingStream,
+                    builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return Center(
                     child: Padding(
@@ -376,14 +383,6 @@ class _WardrobeGalleryBody extends StatelessWidget {
                 return CustomScrollView(
                   physics: const BouncingScrollPhysics(),
                   slivers: [
-                    const SliverAppBar(
-                      pinned: false,
-                      floating: false,
-                      backgroundColor: Colors.transparent,
-                      elevation: 0,
-                      centerTitle: true,
-                      title: GlobalWardrobeSelector(),
-                    ),
                     SliverToBoxAdapter(
                       child: GalleryFilterChips(
                         items: categoryList,
@@ -404,6 +403,9 @@ class _WardrobeGalleryBody extends StatelessWidget {
                   ],
                 );
               },
+                  ),
+                ),
+              ],
             ),
           ),
         ],
